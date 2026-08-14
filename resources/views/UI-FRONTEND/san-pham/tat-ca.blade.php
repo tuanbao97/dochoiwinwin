@@ -28,6 +28,8 @@
       @include('UI-FRONTEND.partials.home-category-sidebar')
 
       <div class="min-w-0 px-3 xl:px-0">
+        @include('UI-FRONTEND.partials.listing-topics')
+
         <section class="section section-main-search" style="--section-margin: 0px 0px 40px; --section-margin-mb: 0px 0px 20px">
           <div class="bg-background rounded-lg px-3 py-4 md:p-6 mb-4 text-center">
             <h1 class="text-h4 font-semibold mb-2">Tất cả sản phẩm</h1>

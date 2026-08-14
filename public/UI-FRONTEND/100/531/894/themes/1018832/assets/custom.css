@@ -3161,3 +3161,88 @@ body.checkout .checkout-order-item {
 		background-size: 2rem;
 	}
 }
+
+/* Dai chu de dau trang danh sach san pham */
+.ww-topics__scroller {
+	display: flex;
+	flex-wrap: nowrap;
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	gap: 0.9rem;
+	overflow-x: auto;
+	overflow-y: hidden;
+	overscroll-behavior-x: contain;
+	touch-action: pan-x;
+	-webkit-overflow-scrolling: touch;
+	scroll-snap-type: x proximity;
+	padding-bottom: 5px;
+	margin-bottom: 5px;
+}
+.ww-topics__item {
+	flex: 0 0 auto;
+	width: 10.6rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.9rem;
+	padding: 1.2rem 0.8rem 1rem;
+	border-radius: 1.4rem;
+	background: var(--topic-bg, #f8fafc);
+	border: 1px solid transparent;
+	scroll-snap-align: start;
+	text-align: center;
+	transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.ww-topics__item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+}
+.ww-topics__item.is-active {
+	border-color: rgba(249, 115, 22, 0.55);
+	box-shadow: 0 8px 18px rgba(249, 115, 22, 0.16);
+}
+.ww-topics__thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 6.6rem;
+	height: 6.6rem;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05);
+	overflow: hidden;
+}
+.ww-topics__thumb img {
+	width: 78%;
+	height: 78%;
+	object-fit: contain;
+}
+.ww-topics__label {
+	font-size: 1.3rem;
+	line-height: 1.35;
+	color: #475569;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.ww-topics__item.is-active .ww-topics__label {
+	color: #ea580c;
+	font-weight: 600;
+}
+@media (min-width: 768px) {
+	.ww-topics__scroller {
+		gap: 1.2rem;
+	}
+	.ww-topics__item {
+		width: 13rem;
+	}
+	.ww-topics__thumb {
+		width: 8.4rem;
+		height: 8.4rem;
+	}
+	.ww-topics__label {
+		font-size: 1.4rem;
+	}
+}

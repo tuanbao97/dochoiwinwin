@@ -3,27 +3,6 @@
   use App\Enum\AppConstant;
   use App\Models\CategoryP;
 
-  $menuIconFor = static function (string $name): string {
-      $n = mb_strtolower($name);
-      if (str_contains($n, 'điều khiển') || str_contains($n, 'dieu khien')) {
-          return 'do-choi-dieu-khien.svg';
-      }
-      if (str_contains($n, 'lắp ghép') || str_contains($n, 'lap ghep') || str_contains($n, 'lego')) {
-          return 'do-choi-lap-ghep.svg';
-      }
-      if (str_contains($n, 'mô hình') || str_contains($n, 'mo hinh')) {
-          return 'do-choi-mo-hinh.svg';
-      }
-      if (str_contains($n, 'nước') || str_contains($n, 'nuoc')) {
-          return 'do-choi-nuoc.svg';
-      }
-      if (str_contains($n, 'giáo dục') || str_contains($n, 'giao duc')) {
-          return 'do-choi-giao-duc.svg';
-      }
-
-      return 'do-choi-dieu-khien.svg';
-  };
-
   try {
       $menuRoots = CategoryP::query()
           ->whereNull('PARENT_ID')
@@ -44,7 +23,7 @@
       $catName = (string) ($cat->NAME ?? '');
       $catId = (int) ($cat->ID ?? 0);
       $catUrl = storefrontProductCategoryUrl($catId, $catName);
-      $icon = asset('UI-FRONTEND/assets/ww-menu-icons/' . $menuIconFor($catName));
+      $icon = storefrontCategoryIconUrl($catName);
       $children = $cat->childrens ?? collect();
       $hasChildren = $children->isNotEmpty();
     @endphp
@@ -56,9 +35,9 @@
         data-prefetch="{{ parse_url($catUrl, PHP_URL_PATH) ?: $catUrl }}"
       >
         <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ $icon }}" alt="{{ $catName }}">
-        <span class="truncate">{{ $catName }}</span>
+        <span class="min-w-0 flex-1 leading-snug whitespace-normal break-words">{{ $catName }}</span>
         @if ($hasChildren)
-          <span class="ml-auto text-neutral-200 flex items-center" data-toggle-submenu="">
+          <span class="ml-auto shrink-0 text-neutral-200 flex items-center" data-toggle-submenu="">
             <i class="icon icon-carret-right"></i>
           </span>
         @endif
