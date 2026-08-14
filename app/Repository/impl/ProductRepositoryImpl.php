@@ -76,6 +76,13 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
         , int $page, int $perPage
         , ?bool $productVip = null) : LengthAwarePaginator {
         
+        // Ảnh hover (ảnh thứ 2 của card): lấy 1 ảnh DANH_SACH_HINH_ANH đầu tiên mỗi sản phẩm
+        $hoverImageQuery = DB::table('product_document_storage AS pds')
+                ->selectRaw('pds.PRODUCT_ID, pds.DOCUMENT_STORAGE_ID, pds.SORT_ORDER, pds.ATTR1, pds.ATTR2'
+                    . ', ROW_NUMBER() OVER (PARTITION BY pds.PRODUCT_ID ORDER BY pds.SORT_ORDER ASC, pds.ID ASC) AS ROW_NUM')
+                ->where('pds.ATTR1', '=', 'DANH_SACH_HINH_ANH')
+                ->where('pds.STATUS', '=', AppConstant::STATUS_USING);
+
         // Main query - không còn product_variant
         $query = DB::table('product AS p')
                 ->join('product_category AS pc', function ($join) {
@@ -94,6 +101,13 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                 })
                 ->leftJoin('document_storage as ds_avatar', function ($join) {
                     $join->on('ds_avatar.ID', '=', 'pds_avatar.DOCUMENT_STORAGE_ID');
+                })
+                ->leftJoinSub($hoverImageQuery, 'pds_hover', function ($join) {
+                    $join->on('p.id', '=', 'pds_hover.PRODUCT_ID')
+                        ->where('pds_hover.ROW_NUM', '=', 1);
+                })
+                ->leftJoin('document_storage as ds_hover', function ($join) {
+                    $join->on('ds_hover.ID', '=', 'pds_hover.DOCUMENT_STORAGE_ID');
                 })
                 ->whereIn('p.STATUS', [AppConstant::STATUS_USING, AppConstant::STATUS_SOLD])
                 ->distinct()
@@ -121,6 +135,28 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                     'pds_avatar.SORT_ORDER as OBJ_AVATAR_SORT_ORDER',
                     'pds_avatar.ATTR1 as OBJ_AVATAR_TYPE',
                     'pds_avatar.ATTR2 as OBJ_AVATAR_ASPECT_RATIO',
+
+                    'ds_hover.ID as OBJ_HOVER_ID',
+                    'ds_hover.NAME as OBJ_HOVER_NAME',
+                    'ds_hover.ORIGINAL_NAME as OBJ_HOVER_ORIGINAL_NAME',
+                    'ds_hover.EXTENSION as OBJ_HOVER_EXTENSION',
+                    'ds_hover.PATH as OBJ_HOVER_PATH',
+                    'ds_hover.DIRECTORY as OBJ_HOVER_DIRECTORY',
+                    'ds_hover.SIZE as OBJ_HOVER_SIZE',
+                    'ds_hover.MD5 as OBJ_HOVER_MD5',
+                    'ds_hover.TYPE_FILE as OBJ_HOVER_TYPE_FILE',
+                    'ds_hover.DESCRIPTION as OBJ_HOVER_DESCRIPTION',
+                    'ds_hover.CRT_ID as OBJ_HOVER_CRT_ID',
+                    'ds_hover.CRT_NAME as OBJ_HOVER_CRT_NAME',
+                    'ds_hover.CRT_DT as OBJ_HOVER_CRT_DT',
+                    'ds_hover.UPD_ID as OBJ_HOVER_UPD_ID',
+                    'ds_hover.UPD_NAME as OBJ_HOVER_UPD_NAME',
+                    'ds_hover.UPD_DT as OBJ_HOVER_UPD_DT',
+                    'ds_hover.IS_ACTIVE as OBJ_HOVER_IS_ACTIVE',
+                    'pds_hover.SORT_ORDER as OBJ_HOVER_SORT_ORDER',
+                    'pds_hover.ATTR1 as OBJ_HOVER_TYPE',
+                    'pds_hover.ATTR2 as OBJ_HOVER_ASPECT_RATIO',
+
                     
                     'cp.ID as OBJ_CATEGORY_ID',
                     'cp.NAME as OBJ_CATEGORY_NAME',

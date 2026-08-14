@@ -473,6 +473,37 @@ class ProductMapper
             $productDto->danhSachHinhAnhDaiDien[] = $avatarUpload;
         }
 
+        // Ảnh hover trên card danh sách (ảnh thứ 2 của sản phẩm)
+        if (!is_null($product->OBJ_HOVER_ID ?? null)) {
+            $hoverUpload = DocumentStorageDetailDto::createEmpty();
+            $hoverUpload->id = $product->OBJ_HOVER_ID;
+            $hoverUpload->name = $product->OBJ_HOVER_NAME;
+            $hoverUpload->originalName = $product->OBJ_HOVER_ORIGINAL_NAME;
+            $hoverUpload->extension = $product->OBJ_HOVER_EXTENSION;
+            $hoverUpload->path = $product->OBJ_HOVER_PATH;
+            $hoverUpload->directory = $product->OBJ_HOVER_DIRECTORY;
+            $hoverUpload->size = $product->OBJ_HOVER_SIZE;
+            $hoverUpload->md5 = $product->OBJ_HOVER_MD5;
+            $hoverUpload->typeFile = $product->OBJ_HOVER_TYPE_FILE;
+            $hoverUpload->description = $product->OBJ_HOVER_DESCRIPTION;
+
+            $hoverUpload->crtId = $product->OBJ_HOVER_CRT_ID;
+            $hoverUpload->crtName = $product->OBJ_HOVER_CRT_NAME;
+            $hoverUpload->crtDt = $product->OBJ_HOVER_CRT_DT;
+            $hoverUpload->updId = $product->OBJ_HOVER_UPD_ID;
+            $hoverUpload->updName = $product->OBJ_HOVER_UPD_NAME;
+            $hoverUpload->updDt = $product->OBJ_HOVER_UPD_DT;
+            if (!is_null($product->OBJ_HOVER_IS_ACTIVE)) $hoverUpload->isActive = filter_var($product->OBJ_HOVER_IS_ACTIVE, FILTER_VALIDATE_BOOLEAN);
+
+            // Pivot
+            $hoverUpload->sortOrder = $product->OBJ_HOVER_SORT_ORDER;
+            $hoverUpload->type = $product->OBJ_HOVER_TYPE;
+            $hoverUpload->isThumnail = false;
+            $hoverUpload->aspectRatio = $product->OBJ_HOVER_ASPECT_RATIO ?? '1x1';
+
+            $productDto->danhSachHinhAnh[] = $hoverUpload;
+        }
+
         // Danh mục sản phẩm
         if (!is_null($product->OBJ_CATEGORY_ID)) {
             $danhMucSanPham = CategoryPDetailDto::createEmpty();
