@@ -72,6 +72,11 @@ class SyncSapoCatalogJob
                 $import['deactivated'] = $importer->deactivateMissing($inactiveIds);
             }
 
+            // Cache public API sống 24h → phải xoá khi catalog vừa đổi, nếu không storefront giữ dữ liệu cũ
+            if ($import['products_ok'] > 0 || $import['deactivated'] > 0) {
+                evictCacheDataFrontEnd();
+            }
+
             $result['import'] = $import;
             Log::info('Sapo catalog job', [
                 'mode' => $mode,
