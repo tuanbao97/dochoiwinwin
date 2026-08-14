@@ -323,6 +323,7 @@ class ProductServiceImpl implements ProductService
 
     /**
      * Public storefront: lấy sản phẩm từ Sapo Admin API (Private App Basic Auth).
+     * Docs: GET /admin/products.json?product_type=&collection_id=&status=active
      *
      * @param  array<int, mixed>|mixed  $arrDanhMucSanPhamId
      * @param  array<int, mixed>|mixed  $arrNotInId
@@ -336,26 +337,36 @@ class ProductServiceImpl implements ProductService
         mixed $arrDanhMucSanPhamId,
         mixed $arrNotInId
     ): JsonResponse {
-        // TODO: tạm hardcode filter SAPO — bỏ khi nối lại PAGE/PER_PAGE/TU_KHOA từ request
-        $filter = [
-            'product_types' => ['Đồ chơi'],
-            'query' => '',
-            'page' => 10,
-            'limit' => 20,
-        ];
-
-        $page = $filter['page'];
-        $perPage = $filter['limit'];
+        $page = max(1, $page);
+        $perPage = max(1, $perPage);
+        $keyword = is_string($tuKhoa) ? trim($tuKhoa) : '';
+        $productType = trim((string) config('services.sapo.product_type', 'Đồ chơi'));
+        $categoryIds = [];
+        if (is_array($arrDanhMucSanPhamId)) {
+            foreach ($arrDanhMucSanPhamId as $id) {
+                $n = (int) $id;
+                if ($n > 0) {
+                    $categoryIds[] = $n;
+                }
+            }
+            $categoryIds = array_values(array_unique($categoryIds));
+        }
 
         $query = [
             'page' => $page,
-            'limit' => $perPage,
-            'product_types' => $filter['product_types'],
-            'query' => $filter['query'],
+            'limit' => min(250, $perPage),
+            'status' => 'active',
         ];
+        if ($productType !== '') {
+            $query['product_type'] = $productType;
+        }
+        if ($keyword !== '') {
+            $query['query'] = $keyword;
+        }
 
         try {
-            $result = $this->sapoService->getProducts($query);
+            $collectionIds = $this->resolveSapoCollectionIds($categoryIds);
+            $result = $this->fetchSapoProductsByCollections($query, $collectionIds, $page, $perPage);
             $mapped = SapoMapper::mapProducts($result['products']);
 
             if (is_array($arrNotInId) && $arrNotInId !== []) {
@@ -406,6 +417,140 @@ class ProductServiceImpl implements ProductService
                 )
             )->setStatusCode(JsonResponse::HTTP_BAD_GATEWAY);
         }
+    }
+
+    /**
+     * Map local menu category IDs → Sapo custom_collection IDs (ATTR2 hoặc khớp tên).
+     *
+     * @param  array<int, int>  $localCategoryIds
+     * @return array<int, int>
+     */
+    private function resolveSapoCollectionIds(array $localCategoryIds): array
+    {
+        if ($localCategoryIds === []) {
+            return [];
+        }
+
+        $rows = DB::table('category_p')
+            ->whereIn('ID', $localCategoryIds)
+            ->where('STATUS', AppConstant::STATUS_USING)
+            ->get(['ID', 'NAME', 'ATTR2']);
+
+        $ids = [];
+        $needNameMatch = [];
+        foreach ($rows as $row) {
+            $sapoId = (int) ($row->ATTR2 ?? 0);
+            if ($sapoId > 0) {
+                $ids[] = $sapoId;
+            } elseif ((int) $row->ID > 100000) {
+                $ids[] = (int) $row->ID;
+            } else {
+                $needNameMatch[] = mb_strtolower(trim((string) $row->NAME));
+            }
+        }
+
+        // ID gửi thẳng đã là collection Sapo (không có trong DB local)
+        $foundLocal = $rows->pluck('ID')->map(static fn ($id) => (int) $id)->all();
+        foreach ($localCategoryIds as $id) {
+            if ($id > 100000 && ! in_array($id, $foundLocal, true)) {
+                $ids[] = $id;
+            }
+        }
+
+        if ($needNameMatch !== []) {
+            try {
+                $collections = $this->sapoService->getCustomCollections(['limit' => 250, 'page' => 1]);
+                foreach ($collections as $collection) {
+                    if (! is_array($collection)) {
+                        continue;
+                    }
+                    $name = mb_strtolower(trim((string) ($collection['name'] ?? '')));
+                    if ($name !== '' && in_array($name, $needNameMatch, true)) {
+                        $cid = (int) ($collection['id'] ?? 0);
+                        if ($cid > 0) {
+                            $ids[] = $cid;
+                        }
+                    }
+                }
+            } catch (Throwable $e) {
+                Log::warning('Sapo resolve collections by name failed', ['message' => $e->getMessage()]);
+            }
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     * @param  array<int, int>  $collectionIds
+     * @return array{products: array<int, array<string, mixed>>, count: int}
+     */
+    private function fetchSapoProductsByCollections(array $query, array $collectionIds, int $page, int $perPage): array
+    {
+        $needsMerge = count($collectionIds) > 1 || $perPage > 250;
+        if (! $needsMerge) {
+            if (isset($collectionIds[0])) {
+                $query['collection_id'] = $collectionIds[0];
+            }
+
+            return $this->sapoService->getProducts($query);
+        }
+
+        $idsToFetch = $collectionIds === [] ? [null] : $collectionIds;
+        $byId = [];
+        foreach ($idsToFetch as $collectionId) {
+            $chunkQuery = $query;
+            unset($chunkQuery['page']);
+            if ($collectionId !== null) {
+                $chunkQuery['collection_id'] = $collectionId;
+            }
+            $all = $this->fetchAllSapoProductPages($chunkQuery);
+            foreach ($all['products'] as $product) {
+                if (! is_array($product)) {
+                    continue;
+                }
+                $id = (int) ($product['id'] ?? 0);
+                if ($id > 0) {
+                    $byId[$id] = $product;
+                }
+            }
+        }
+
+        $all = array_values($byId);
+        $total = count($all);
+        $offset = max(0, ($page - 1) * $perPage);
+
+        return [
+            'products' => array_slice($all, $offset, $perPage),
+            'count' => $total,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     * @return array{products: array<int, array<string, mixed>>, count: int}
+     */
+    private function fetchAllSapoProductPages(array $query): array
+    {
+        $query['limit'] = 250;
+        $pageNo = 1;
+        $products = [];
+        $reportedCount = 0;
+        do {
+            $query['page'] = $pageNo;
+            $chunk = $this->sapoService->getProducts($query);
+            $reportedCount = (int) ($chunk['count'] ?? 0);
+            foreach ($chunk['products'] as $product) {
+                $products[] = $product;
+            }
+            $got = count($chunk['products']);
+            $pageNo++;
+        } while ($got >= 250 && $pageNo <= 20);
+
+        return [
+            'products' => $products,
+            'count' => max($reportedCount, count($products)),
+        ];
     }
 
     public function activeSanPham($id, Request $request) {

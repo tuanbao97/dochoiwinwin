@@ -17,11 +17,11 @@ class CategoryPSeeder extends Seeder
     public function run(): void
     {
         $arrCategoryP = [
-            $this->row(2001, 'Đồ chơi điều khiển từ xa', 1, 0, null),
-            $this->row(2002, 'Đồ chơi lắp ghép', 2, 0, null),
-            $this->row(2003, 'Đồ chơi mô hình', 3, 0, null),
-            $this->row(2004, 'Đồ chơi nước', 4, 0, null),
-            $this->row(2005, 'Đồ chơi giáo dục', 5, 0, null),
+            $this->row(2001, 'Đồ chơi điều khiển từ xa', 1, 0, null, sapoCollectionId: '4342369'),
+            $this->row(2002, 'Đồ chơi lắp ghép', 2, 0, null, sapoCollectionId: '4342366'),
+            $this->row(2003, 'Đồ chơi mô hình', 3, 0, null, sapoCollectionId: '4342367'),
+            $this->row(2004, 'Đồ chơi nước', 4, 0, null, sapoCollectionId: '4342370'),
+            $this->row(2005, 'Đồ chơi giáo dục', 5, 0, null, sapoCollectionId: '4342368'),
         ];
 
         foreach ($arrCategoryP as $categoryP) {
@@ -47,7 +47,7 @@ class CategoryPSeeder extends Seeder
             ]);
     }
 
-    private function row(int $id, string $name, int $sortOrder, int $treeLevel, ?int $parentId, ?string $externalUrl = null): array
+    private function row(int $id, string $name, int $sortOrder, int $treeLevel, ?int $parentId, ?string $externalUrl = null, ?string $sapoCollectionId = null): array
     {
         return [
             'ID' => $id,
@@ -64,6 +64,7 @@ class CategoryPSeeder extends Seeder
             'STATUS' => AppConstant::STATUS_USING,
             'IS_ACTIVE' => true,
             'ATTR1' => $externalUrl,
+            'ATTR2' => $sapoCollectionId,
             'ATTR50' => 'UI-BACKEND/admin/san-pham/common/san-pham',
         ];
     }
