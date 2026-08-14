@@ -194,11 +194,22 @@ class ProductListRequest extends FormRequest
             ]
         ];
 
-        // Check tồn tại danh mục sản phẩm
+        // Check tồn tại danh mục sản phẩm (bỏ khi public + Sapo: ID có thể là collection_id)
         $arrDanhMucSanPhamId = $this->query('DANH_MUC_SAN_PHAM_ID', null);
-        if (!is_null($arrDanhMucSanPhamId) && is_array($arrDanhMucSanPhamId)) {
-            foreach($arrDanhMucSanPhamId as $index => $danhMucSanPhamId) {
-                if (is_numeric($danhMucSanPhamId)) $rules['DANH_MUC_SAN_PHAM_ID'][] = new CheckNotExistsFieldRule('category_p', 'ID', $danhMucSanPhamId, 'USING');
+        $isPublic = ((string) ($this->route()?->getPrefix() ?? '')) === AppConstant::PREFIX_API['API_PUBLIC'];
+        $skipLocalCategoryCheck = false;
+        if ($isPublic) {
+            try {
+                $skipLocalCategoryCheck = app(\App\Service\SapoService::class)->isEnabled();
+            } catch (\Throwable) {
+                $skipLocalCategoryCheck = false;
+            }
+        }
+        if (! $skipLocalCategoryCheck && ! is_null($arrDanhMucSanPhamId) && is_array($arrDanhMucSanPhamId)) {
+            foreach ($arrDanhMucSanPhamId as $danhMucSanPhamId) {
+                if (is_numeric($danhMucSanPhamId)) {
+                    $rules['DANH_MUC_SAN_PHAM_ID'][] = new CheckNotExistsFieldRule('category_p', 'ID', $danhMucSanPhamId, 'USING');
+                }
             }
         }
 

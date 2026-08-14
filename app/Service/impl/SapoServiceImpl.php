@@ -78,6 +78,19 @@ class SapoServiceImpl implements SapoService
         return is_array($items) ? $items : [];
     }
 
+    public function getSmartCollections(array $query = []): array
+    {
+        $params = array_merge([
+            'limit' => 250,
+            'page' => 1,
+        ], $query);
+
+        $data = $this->get('/admin/smart_collections.json', $params);
+        $items = $data['smart_collections'] ?? [];
+
+        return is_array($items) ? $items : [];
+    }
+
     public function getBlogs(array $query = []): array
     {
         $data = $this->get('/admin/blogs.json', $query);
@@ -142,7 +155,7 @@ class SapoServiceImpl implements SapoService
         }
 
         foreach ([
-            'vendor', 'alias', 'collection_id', 'ids', 'since_id', 'fields', 'published',
+            'vendor', 'alias', 'collection_id', 'ids', 'since_id', 'fields', 'published', 'status',
             'created_on_min', 'created_on_max', 'modified_on_min', 'modified_on_max',
             'published_on_min', 'published_on_max',
         ] as $key) {
