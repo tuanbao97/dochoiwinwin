@@ -113,6 +113,41 @@
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
         if (btn.dataset.loading === '1') return;
 
+        // Nút giỏ trên danh sách/card: có nhiều biến thể → mở QV; 1 biến thể → add thẳng
+        var inQuickView = !!btn.closest('#quick-view-product, .ww-qv-shell');
+        var card = btn.closest('card-product');
+        var requiresVariant =
+          btn.getAttribute('data-requires-variant') === '1' ||
+          (card && card.getAttribute('data-requires-variant') === '1');
+        if (card && !inQuickView && btn.id !== 'ww-qv-addtocart' && requiresVariant) {
+          var productId =
+            parseInt(card.getAttribute('data-product-id') || card.dataset.productId || '0', 10) ||
+            parseInt(btn.getAttribute('data-product-id') || '0', 10) ||
+            parseInt(btn.getAttribute('data-variant-id') || '0', 10) ||
+            0;
+          if (!productId) {
+            var form = btn.closest('form');
+            var input = form && form.querySelector('[name="variantId"]');
+            if (input && input.value) productId = parseInt(input.value, 10) || 0;
+          }
+          if (productId && typeof window.wwOpenQuickViewForCart === 'function') {
+            window.wwOpenQuickViewForCart(productId);
+          } else if (productId && typeof window.wwOpenQuickView === 'function') {
+            window.wwOpenQuickView(productId, { promptVariant: true, addIfNoVariant: true });
+          }
+          return;
+        }
+
+        if (typeof window.__wwBeforeAddToCart === 'function') {
+          try {
+            if (window.__wwBeforeAddToCart(btn, btn.closest('form')) === false) {
+              return;
+            }
+          } catch (guardErr) {
+            console.warn(guardErr);
+          }
+        }
+
         var form = btn.closest('form');
         var buynow = btn.getAttribute('name') === 'buynow';
         setLoading(btn, true);
@@ -164,4 +199,4 @@
     );
   })();
 </script>
-<script src="100/531/894/themes/1018832/assets/cart.js?ww-cart-suggest-row-1" defer fetchpriority="low"></script>
+<script src="100/531/894/themes/1018832/assets/cart.js?ww-cart-min-price-1" defer fetchpriority="low"></script>

@@ -17,9 +17,9 @@
 
     <script>
       var Bizweb = Bizweb || {};
-      Bizweb.store = 'ega-babymart.mysapo.net';
+      Bizweb.store = @json(config('services.sapo.store') ?: 'thegioisuawinwin.mysapo.net');
       Bizweb.id = 531894;
-      Bizweb.theme = { id: 1018832, name: 'Win Win Trái Cây Nhập Khẩu', role: 'main' };
+      Bizweb.theme = { id: 1018832, name: 'Đồ Chơi Win Win', role: 'main' };
       Bizweb.template = 'product';
       if (!Bizweb.fbEventId) {
         Bizweb.fbEventId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -29,28 +29,7 @@
         });
       }
     </script>
-    <script>
-      (function () {
-        function asyncLoad() {
-          var urls = [
-            '//newproductreviews.sapoapps.vn/assets/js/productreviews.min.js?store=ega-babymart.mysapo.net',
-            'https://aff.sapoapps.vn/api/proxy/scripttag.js?store=ega-babymart.mysapo.net',
-            'https://combo.sapoapps.vn/assets/script.js?store=ega-babymart.mysapo.net',
-          ];
-          for (var i = 0; i < urls.length; i++) {
-            var s = document.createElement('script');
-            s.type = 'text/javascript';
-            s.async = true;
-            s.src = urls[i];
-            var x = document.getElementsByTagName('script')[0];
-            x.parentNode.insertBefore(s, x);
-          }
-        }
-        window.attachEvent
-          ? window.attachEvent('onload', asyncLoad)
-          : window.addEventListener('load', asyncLoad, false);
-      })();
-    </script>
+    {{-- Tắt Sapo Apps (reviews/aff/combo): store cũ ega-babymart + CDN thường ERR_CONNECTION_RESET trên Laravel --}}
     <script>
       window.BizwebAnalytics = window.BizwebAnalytics || {};
       window.BizwebAnalytics.meta = window.BizwebAnalytics.meta || {};
@@ -161,7 +140,7 @@
     @include('UI-FRONTEND.common.theme-head-styles')
     <link
       rel="stylesheet"
-      href="100/531/894/themes/1018832/assets/product-detail.css?ww-pd-related-snap-1"
+      href="100/531/894/themes/1018832/assets/product-detail.css?ww-pd-variants-5"
       media="all"
     >
   </head>

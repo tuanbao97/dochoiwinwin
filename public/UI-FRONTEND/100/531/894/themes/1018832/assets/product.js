@@ -918,166 +918,188 @@ subscribe(window.themeConfigs.firstInteraction, () => {
   defineElement("quick-view", QuickView);
 });
 
-if (!customElements.get("compare-button")) {
-class CompareButton extends PortalOpener {
-  constructor() {
-    super();
-    this.storageKey = window.themeConfigs.compareProStorage;
-    this.eventUpdate = window.themeConfigs.copmareProUpdate;
-    this.updateText();
+/** Đăng ký compare-* sau khi main.js đã define PortalOpener / PortalComponent
+ *  (product.js defer có thể chạy trước main.js trên một số trang). */
+function wwRegisterCompareElements() {
+  if (typeof PortalOpener === "undefined" || typeof PortalComponent === "undefined") {
+    return false;
   }
-  connectedCallback() {
-    this.buttonSubsciber = subscribe(this.eventUpdate, (e) => {
-      let data = e.data;
-      this.updateText(data);
-    });
-  }
-  disconnectedCallback() {
-    if (this.buttonSubsciber) {
-      this.buttonSubsciber();
-    }
-  }
-  getStorage() {
-    return JSON.parse(localStorage.getItem(this.storageKey)) || [];
-  }
-  updateText(data) {
-    let label = this.button.querySelector("span");
-    const productId = this.button.dataset.product;
-    let compareProducts = data || this.getStorage();
-    label.textContent =
-      compareProducts.indexOf(productId) > -1 ? "Đã thêm so sánh" : "So sánh";
-  }
-  updateStorage() {
-    let compareProducts = this.getStorage();
-    const productId = this.button.dataset.product;
-    if (compareProducts.indexOf(productId) === -1) {
-      if (compareProducts.length >= 3) {
-        compareProducts.pop();
+
+  if (!customElements.get("compare-button")) {
+    class CompareButton extends PortalOpener {
+      constructor() {
+        super();
+        this.storageKey = window.themeConfigs.compareProStorage;
+        this.eventUpdate = window.themeConfigs.copmareProUpdate;
+        this.updateText();
       }
-      compareProducts.unshift(productId);
-      localStorage.setItem(this.storageKey, JSON.stringify(compareProducts));
-    }
-
-    publish(this.eventUpdate, {
-      data: compareProducts,
-    });
-  }
-  onClick(e) {
-    const type = this.button.dataset.productType;
-    if (document.querySelector("compare-qv.loading")) return;
-    if (
-      document.querySelector(".compare-product") &&
-      !document.querySelector(`.compare-product[data-product-type="${type}"]`)
-    ) {
-      publish(window.themeConfigs.error, {
-        error: {
-          message: "Sản phẩm bạn đang so sánh không cùng loại",
-        },
-      });
-      return;
-    }
-    this.updateStorage();
-    super.onClick(e);
-  }
-}
-
-defineElement("compare-button", CompareButton);
-}
-
-if (!customElements.get("compare-qv")) {
-class CompareQV extends PortalComponent {
-  constructor() {
-    super();
-    this.storageKey = window.themeConfigs.compareProStorage;
-    this.eventUpdate = window.themeConfigs.copmareProUpdate;
-  }
-  connectedCallback() {
-    super.connectedCallback();
-    subscribe(this.eventUpdate, (e) => {
-      this.getProductCompare();
-    });
-    this.getProductCompare();
-  }
-  getStorage() {
-    return JSON.parse(localStorage.getItem(this.storageKey)) || [];
-  }
-  getProductCompare() {
-    let compareProducts = this.getStorage();
-    if (compareProducts && compareProducts.length) {
-      const searchTerm = "(id:" + compareProducts.join(" OR id:") + ")";
-      this.classList.add("loading");
-      fetch(themeApiUrl(`/search?q=${searchTerm}&view=compare-item`))
-        .then((resposne) => resposne.text())
-        .then((res) => {
-          this.classList.remove("loading");
-          let html = new DOMParser().parseFromString(res, "text/html");
-          if (html.querySelector(".compare-product__qv-item")) {
-            this.querySelector(".compare-product-list").innerHTML = res;
-            this.initEvent();
-            let numberPro = html.querySelectorAll(".compare-product").length;
-            document.querySelector(".compare-count").textContent =
-              "(" + numberPro + ")";
-            this.toggelFloatButn(true);
-          } else {
-            this.hide();
-            this.toggelFloatButn(false);
-          }
-        })
-        .catch((err) => {
-          this.classList.remove("loading");
-          publish(window.themeConfigs.error, {
-            error: err,
-          });
+      connectedCallback() {
+        this.buttonSubsciber = subscribe(this.eventUpdate, (e) => {
+          let data = e.data;
+          this.updateText(data);
         });
-    } else {
-      this.hide();
-      this.toggelFloatButn(false);
-      this.querySelector(".compare-product-list").innerHTML = "";
+      }
+      disconnectedCallback() {
+        if (this.buttonSubsciber) {
+          this.buttonSubsciber();
+        }
+      }
+      getStorage() {
+        return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+      }
+      updateText(data) {
+        let label = this.button && this.button.querySelector("span");
+        if (!label || !this.button) return;
+        const productId = this.button.dataset.product;
+        let compareProducts = data || this.getStorage();
+        label.textContent =
+          compareProducts.indexOf(productId) > -1 ? "Đã thêm so sánh" : "So sánh";
+      }
+      updateStorage() {
+        let compareProducts = this.getStorage();
+        const productId = this.button.dataset.product;
+        if (compareProducts.indexOf(productId) === -1) {
+          if (compareProducts.length >= 3) {
+            compareProducts.pop();
+          }
+          compareProducts.unshift(productId);
+          localStorage.setItem(this.storageKey, JSON.stringify(compareProducts));
+        }
+
+        publish(this.eventUpdate, {
+          data: compareProducts,
+        });
+      }
+      onClick(e) {
+        const type = this.button.dataset.productType;
+        if (document.querySelector("compare-qv.loading")) return;
+        if (
+          document.querySelector(".compare-product") &&
+          !document.querySelector(`.compare-product[data-product-type="${type}"]`)
+        ) {
+          publish(window.themeConfigs.error, {
+            error: {
+              message: "Sản phẩm bạn đang so sánh không cùng loại",
+            },
+          });
+          return;
+        }
+        this.updateStorage();
+        super.onClick(e);
+      }
     }
-  }
-  toggelFloatButn(show) {
-    if (!document.querySelector(".compare-opener")) return;
-    if (show) {
-      document.querySelector(".compare-opener").classList.remove("hidden");
-    } else {
-      document.querySelector(".compare-opener").classList.add("hidden");
-      document.querySelector(".compare-count").textContent = 0;
-    }
-  }
-  initEvent() {
-    this.querySelectorAll(".compare-product__qv-remove").forEach((el) => {
-      el.addEventListener("click", this.removeItem.bind(this));
-    });
-    this.querySelector(".js-compare-product-remove-all").addEventListener(
-      "click",
-      this.removeAll.bind(this)
-    );
+
+    defineElement("compare-button", CompareButton);
   }
 
-  removeItem(e) {
-    const id = e.currentTarget.dataset.id;
-    const newCompareList = this.getStorage();
-    if (newCompareList.indexOf(id) > -1) {
-      newCompareList.splice(newCompareList.indexOf(id), 1);
-      localStorage.setItem(this.storageKey, JSON.stringify(newCompareList));
+  if (!customElements.get("compare-qv")) {
+    class CompareQV extends PortalComponent {
+      constructor() {
+        super();
+        this.storageKey = window.themeConfigs.compareProStorage;
+        this.eventUpdate = window.themeConfigs.copmareProUpdate;
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        subscribe(this.eventUpdate, (e) => {
+          this.getProductCompare();
+        });
+        this.getProductCompare();
+      }
+      getStorage() {
+        return JSON.parse(localStorage.getItem(this.storageKey)) || [];
+      }
+      getProductCompare() {
+        let compareProducts = this.getStorage();
+        if (compareProducts && compareProducts.length) {
+          const searchTerm = "(id:" + compareProducts.join(" OR id:") + ")";
+          this.classList.add("loading");
+          fetch(themeApiUrl(`/search?q=${searchTerm}&view=compare-item`))
+            .then((resposne) => resposne.text())
+            .then((res) => {
+              this.classList.remove("loading");
+              let html = new DOMParser().parseFromString(res, "text/html");
+              if (html.querySelector(".compare-product__qv-item")) {
+                this.querySelector(".compare-product-list").innerHTML = res;
+                this.initEvent();
+                let numberPro = html.querySelectorAll(".compare-product").length;
+                document.querySelector(".compare-count").textContent =
+                  "(" + numberPro + ")";
+                this.toggelFloatButn(true);
+              } else {
+                this.hide();
+                this.toggelFloatButn(false);
+              }
+            })
+            .catch((err) => {
+              this.classList.remove("loading");
+              publish(window.themeConfigs.error, {
+                error: err,
+              });
+            });
+        } else {
+          this.hide();
+          this.toggelFloatButn(false);
+          this.querySelector(".compare-product-list").innerHTML = "";
+        }
+      }
+      toggelFloatButn(show) {
+        if (!document.querySelector(".compare-opener")) return;
+        if (show) {
+          document.querySelector(".compare-opener").classList.remove("hidden");
+        } else {
+          document.querySelector(".compare-opener").classList.add("hidden");
+          document.querySelector(".compare-count").textContent = 0;
+        }
+      }
+      initEvent() {
+        this.querySelectorAll(".compare-product__qv-remove").forEach((el) => {
+          el.addEventListener("click", this.removeItem.bind(this));
+        });
+        this.querySelector(".js-compare-product-remove-all").addEventListener(
+          "click",
+          this.removeAll.bind(this)
+        );
+      }
 
-      publish(this.eventUpdate, {
-        data: newCompareList,
-      });
+      removeItem(e) {
+        const id = e.currentTarget.dataset.id;
+        const newCompareList = this.getStorage();
+        if (newCompareList.indexOf(id) > -1) {
+          newCompareList.splice(newCompareList.indexOf(id), 1);
+          localStorage.setItem(this.storageKey, JSON.stringify(newCompareList));
+
+          publish(this.eventUpdate, {
+            data: newCompareList,
+          });
+        }
+      }
+      removeAll() {
+        localStorage.setItem(this.storageKey, JSON.stringify([]));
+        publish(this.eventUpdate, {
+          data: [],
+        });
+      }
+
+      show() {
+        this.getProductCompare();
+        super.show();
+      }
     }
-  }
-  removeAll() {
-    localStorage.setItem(this.storageKey, JSON.stringify([]));
-    publish(this.eventUpdate, {
-      data: [],
-    });
+
+    defineElement("compare-qv", CompareQV);
   }
 
-  show() {
-    this.getProductCompare();
-    super.show();
-  }
+  return true;
 }
 
-defineElement("compare-qv", CompareQV);
-}
+(function wwWaitCompareDeps() {
+  if (wwRegisterCompareElements()) return;
+  var tries = 0;
+  var timer = setInterval(function () {
+    tries += 1;
+    if (wwRegisterCompareElements() || tries >= 200) {
+      clearInterval(timer);
+    }
+  }, 50);
+})();

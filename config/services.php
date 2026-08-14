@@ -36,4 +36,22 @@ return [
         'app_id' => env('FACEBOOK_APP_ID', ''),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sapo Private App (Basic Auth)
+    |--------------------------------------------------------------------------
+    | Docs: https://support.sapo.vn — API Reference
+    | Auth: https://apikey:apisecret@{store}/admin/{resource}.json
+    */
+    'sapo' => [
+        'enabled' => filter_var(env('SAPO_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'store' => env('SAPO_STORE', ''),
+        'api_key' => env('SAPO_API_KEY', ''),
+        'api_secret' => env('SAPO_API_SECRET', ''),
+        'access_token' => env('SAPO_ACCESS_TOKEN', ''),
+        'timeout' => (int) env('SAPO_TIMEOUT', 60),
+        // GET /admin/products.json?product_type=... (Sapo dùng số ít)
+        'product_type' => env('SAPO_PRODUCT_TYPE', 'Đồ chơi'),
+    ],
+
 ];

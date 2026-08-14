@@ -10,40 +10,34 @@ use Illuminate\Support\Facades\DB;
 class CategoryPSeeder extends Seeder
 {
     /**
-     * Danh mục sản phẩm Win Win — theo menu thực tế cửa hàng.
+     * Menu danh mục theo folder Drive:
+     * G:\My Drive\Kinh doanh\Đồ chơi Win Win\Đồ chơi Win Win
+     * 01–05 = danh mục cha (root). Con "B01. No Brands" chỉ là thư mục kho, không đưa vào menu.
      */
     public function run(): void
     {
         $arrCategoryP = [
-            $this->row(1004, 'Giỏ quà trái cây', 1, 0, null),
-            $this->row(1041, 'Mẫu giỏ trái cây đẹp', 1, 1, 1004),
-            $this->row(1042, 'Giỏ trái cây đám tang', 2, 1, 1004),
-
-            $this->row(1005, 'Hộp quà trái cây', 2, 0, null),
-
-            $this->row(1001, 'Trái cây nhập khẩu', 3, 0, null),
-            $this->row(1002, 'Trái cây sấy', 4, 0, null),
-            $this->row(1003, 'Yến sào Cao Cấp', 5, 0, null),
-            $this->row(1006, 'Bánh kẹo nhập khẩu', 6, 0, null),
-            $this->row(1007, 'Tháp Bánh Kẹo', 7, 0, null),
-            $this->row(1008, 'Sữa & Sữa chua', 8, 0, null),
+            $this->row(2001, 'Đồ chơi điều khiển từ xa', 1, 0, null),
+            $this->row(2002, 'Đồ chơi lắp ghép', 2, 0, null),
+            $this->row(2003, 'Đồ chơi mô hình', 3, 0, null),
+            $this->row(2004, 'Đồ chơi nước', 4, 0, null),
+            $this->row(2005, 'Đồ chơi giáo dục', 5, 0, null),
         ];
 
         foreach ($arrCategoryP as $categoryP) {
             $exists = DB::table('category_p')->where('ID', $categoryP['ID'])->exists();
 
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('category_p')->insert($categoryP);
             } else {
                 DB::table('category_p')->where('ID', $categoryP['ID'])->update($categoryP);
             }
         }
 
-        // Menu "Đồ chơi" không còn trong DB — FE hardcode link ngoài
+        // Vô hiệu hóa danh mục cũ (trái cây / sữa / bất động sản…) không còn dùng
+        $keepIds = collect($arrCategoryP)->pluck('ID')->all();
         DB::table('category_p')
-            ->where(function ($q) {
-                $q->where('ID', 1009)->orWhere('NAME', 'Đồ chơi trẻ em');
-            })
+            ->whereNotIn('ID', $keepIds)
             ->update([
                 'STATUS' => AppConstant::STATUS_DELETED,
                 'IS_ACTIVE' => false,

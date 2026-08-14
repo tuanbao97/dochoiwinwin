@@ -8,11 +8,14 @@
     defaultImg: @json(asset('image/UI-BACKEND/default-image.png')),
     /** Trang chi tiết storefront UI-FRONTEND (không dùng /admin) */
     detailPath: '/san-pham/chi-tiet',
-    frameSrc: @json(asset('UI-FRONTEND/images/Khung vien xanh.png')),
   };
 
   function joinAppUrl(pathRel, updDt) {
     if (!pathRel) return '';
+    if (window.wwStorefrontImage && window.wwStorefrontImage.resolveMediaUrl) {
+      return window.wwStorefrontImage.resolveMediaUrl(pathRel, updDt, cfg.appUrl);
+    }
+    if (/^https?:\/\//i.test(String(pathRel))) return String(pathRel);
     var p = String(pathRel).replace(/^\/+/, '');
     var url = cfg.appUrl + '/' + p;
     return (window.wwStorefrontImage && window.wwStorefrontImage.appendUpdTime)
@@ -51,6 +54,7 @@
 
   function relativeImagePathFromImg(img) {
     if (!img) return '';
+    if (img.PATH && /^https?:\/\//i.test(String(img.PATH))) return String(img.PATH);
     var fname = storageFileName(img);
     // Thumbnail card: ưu tiên bản crop theo aspect_ratio (vd 1x1_file.jpg)
     var ar = (img.ASPECT_RATIO && String(img.ASPECT_RATIO).trim()) || '1x1';
@@ -94,6 +98,43 @@
     return cfg.appUrl + cfg.detailPath + '/' + slug + '-' + p.ID;
   }
 
+  function productRequiresVariantSelect(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    return Array.isArray(list) && list.length > 1;
+  }
+
+  function productCartVariantId(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    if (Array.isArray(list) && list.length && list[0] && list[0].ID) return list[0].ID;
+    if (p && p.ATTR1) return p.ATTR1;
+    return p && p.ID;
+  }
+
+  function productListPriceInfo(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    var minPrice = 0;
+    var minCompare = 0;
+    if (Array.isArray(list)) {
+      for (var i = 0; i < list.length; i++) {
+        var v = list[i];
+        if (!v) continue;
+        var vp = Math.round(Number(v.GIA_BAN) || 0);
+        if (vp <= 0) continue;
+        if (minPrice <= 0 || vp < minPrice) {
+          minPrice = vp;
+          minCompare = Math.round(Number(v.GIA_GOC) || 0);
+        }
+      }
+    }
+    if (minPrice > 0) {
+      return { price: minPrice, compare: minCompare };
+    }
+    return {
+      price: Math.round(Number(p && p.GIA_CA) || 0),
+      compare: Math.round(Number(p && p.GIA_GOC) || 0),
+    };
+  }
+
   function prefetchPath(fullUrl) {
     try {
       return new URL(fullUrl, window.location.origin).pathname || '';
@@ -114,16 +155,19 @@
     var href = detailUrl(p);
     var pref = prefetchPath(href);
     var imgRel = relativeImagePath(p);
-    var priceInt = Math.round(Number(p.GIA_CA) || 0);
+    var priceInfo = productListPriceInfo(p);
+    var priceInt = priceInfo.price;
+    var compareInt = priceInfo.compare;
     var displayText = p.GIA_HIEN_THI != null ? String(p.GIA_HIEN_THI).trim() : '';
     var isContactPrice =
+      priceInt <= 0 ||
       p.IS_GIA_CA_LIEN_HE === true ||
       p.IS_GIA_CA_LIEN_HE === 1 ||
       p.IS_GIA_CA_LIEN_HE === '1';
+    if (priceInt > 0) isContactPrice = false;
     var priceLabel = isContactPrice
       ? 'Liên hệ'
       : displayText || (priceInt > 0 ? formatPriceShortVnd(priceInt) : 'Liên hệ');
-    var compareInt = Math.round(Number(p.GIA_GOC) || 0);
     var showCompare = !isContactPrice && !displayText && priceInt > 0 && compareInt > priceInt;
     var compareLabel = showCompare ? formatPriceShortVnd(compareInt) : '';
     var hov = (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches)
@@ -158,30 +202,25 @@
     if (hasHover) {
       hoverPictures =
         '<picture><source media="(max-width: 600px)" srcset="' + escapeHtml(hov) + '">' +
-        '<img class="card-product__image-2 max-h-full w-auto object-contain opacity-0 scale-[var(--image-scale)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[0] group-hover/card:opacity-1 group-hover/card:z-[1] group-hover/card:opacity-100 transition duration-300 ease-out" width="480" height="480" loading="lazy" style="--image-scale:0.9" src="' +
+        '<img class="card-product__image-2 max-h-full w-auto object-contain opacity-0 scale-[var(--image-scale)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[0] group-hover/card:opacity-1 group-hover/card:z-[1] group-hover/card:opacity-100 transition duration-300 ease-out" width="480" height="480" loading="lazy" style="--image-scale:1" src="' +
         escapeHtml(hov) +
         '" alt="' +
         escapeHtml(title) +
         '"></picture>';
     }
 
-    // Tắt stock-countdown (flash sale bar)
-    // var stockRow = wrapFlash
-    //   ? '<stock-countdown class="stock-countdown" data-id="section-flashsale-0" data-product-id="' +
-    //     escapeHtml(p.ID) +
-    //     '" data-type="tag" data-max-qty="" data-real-qty="0" data-available="true"></stock-countdown>'
-    //   : '';
+    var requiresVariant = productRequiresVariantSelect(p);
+    var cartVariantId = productCartVariantId(p);
     var stockRow = '';
 
-    // Background bên trong card (chỉ section bên dưới, không đổi flash sale)
-    // Gradient xanh blue nhẹ -> trắng
-    var cardInnerStyle = wrapFlash
-      ? ''
-      : ' style="border: 1px solid rgba(2, 132, 199, 0.18);"';
+    // Không border trên form (ảnh không bị viền khung); border chỉ ở body qua CSS
+    var cardInnerStyle = '';
 
     var inner =
       '<card-product class="h-full card-product--vertical ww-card-opens-qv" data-product-id="' +
       escapeHtml(p.ID) +
+      '" data-requires-variant="' +
+      (requiresVariant ? '1' : '0') +
       '" data-prefetch="' +
       escapeHtml(pref) +
       '">' +
@@ -207,7 +246,7 @@
       '<input type="hidden" name="category_id" value="' +
       escapeHtml((p.DANH_MUC_SAN_PHAM && p.DANH_MUC_SAN_PHAM.ID) || '') +
       '">' +
-      '<div class="card-product__top relative overflow-visible group/card p-2">' +
+      '<div class="card-product__top relative overflow-visible group/card">' +
       '<div class="sapo-combo-badge" data-id="' +
       escapeHtml(p.ID) +
       '"></div>' +
@@ -217,15 +256,12 @@
       escapeHtml(title) +
       '">' +
       '<div class="card-product__badges absolute top-2 left-2 z-10 flex items-center gap-2"></div>' +
-      '<img class="product-frame w-full  object-contain absolute  top-1/2 left-1/2   -translate-x-1/2 -translate-y-1/2 z-10" src="' +
-      escapeHtml(cfg.frameSrc) +
-      '" alt="" loading="lazy" width="480" height="480">' +
       '<picture><source media="(max-width: 600px)" srcset="' +
       escapeHtml(avatarUrl(p)) +
       '">' +
       '<img class="' +
       imgMainClass +
-      '" width="480" height="480" decoding="async" loading="lazy" style="--image-scale:0.9" src="' +
+      '" width="480" height="480" decoding="async" loading="lazy" style="--image-scale:1" src="' +
       escapeHtml(avatarUrl(p)) +
       '" alt="' +
       escapeHtml(title) +
@@ -239,7 +275,7 @@
       '" title="' +
       escapeHtml(title) +
       '">' +
-      '<div class="card-product__title text-base line-clamp-3">' +
+      '<div class="card-product__title text-sm font-normal line-clamp-3">' +
       escapeHtml(title) +
       '</div>' +
       '<div class="sapo-product-reviews-badge" data-id="' +
@@ -259,12 +295,14 @@
       '<div class="card-product__price-actions shrink-0 flex flex-col items-center gap-1">' +
       '<div class="card-product__cart-btn">' +
       '<input type="hidden" name="variantId" value="' +
-      escapeHtml(p.ID) +
+      escapeHtml(cartVariantId) +
       '">' +
       '<button type="button" class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3" data-variant-id="' +
-      escapeHtml(p.ID) +
+      escapeHtml(cartVariantId) +
       '" data-product="' +
       escapeHtml(pref) +
+      '" data-requires-variant="' +
+      (requiresVariant ? '1' : '0') +
       '" data-action="addtocart" aria-label="Thêm vào giỏ">' +
       '<span class="loading-icon gap-1 hidden items-center justify-center">' +
       '<span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>' +
@@ -405,8 +443,8 @@
   }
 
   function productSellPrice(p) {
-    var n = Math.round(Number(p && p.GIA_CA) || 0);
-    return n > 0 ? n : null;
+    var info = productListPriceInfo(p);
+    return info.price > 0 ? info.price : null;
   }
 
   function productNameKey(p) {
@@ -886,12 +924,8 @@
         }
 
         // Chỉ đổ section cho danh mục root (PARENT_ID = null)
-        // Bỏ qua menu ngoài (Đồ chơi → dochoiwinwin.com) — không tạo section sản phẩm
         var roots = cats.filter(function (c) {
           if (!c || c.PARENT_ID != null) return false;
-          var name = String(c.TEN_DANH_MUC_SAN_PHAM || c.NAME || '').replace(/\s+/g, ' ').trim();
-          if (Number(c.ID) === 1009) return false;
-          if (name === 'Đồ chơi trẻ em' || name === 'Đồ chơi') return false;
           var external = String(c.ATTR1 || '').trim();
           if (external.indexOf('http') === 0) return false;
           return true;

@@ -257,10 +257,24 @@
 
   
     
-{{-- Win Win: một biến thể từ API, không dùng variant-picker theme Sapo --}}
-  
-	
-	
+{{-- Biến thể: hydrate từ API (Sapo) — cùng UX quick-view --}}
+    <div
+      class="ww-pd-variants mb-4"
+      id="ww-pd-variants"
+      hidden
+      data-requires-variant="0"
+    >
+      <div class="flex items-center gap-2 mb-2 ww-pd-variant-heading">
+        <span class="text-neutral-400 shrink-0" id="ww-pd-variant-group-label">Phân loại</span>
+        <span class="ww-pd-variant-sep text-neutral-400 shrink-0" aria-hidden="true">-</span>
+        <span class="text-neutral-300" id="ww-pd-variant-label">Vui lòng chọn</span>
+      </div>
+      <div class="ww-pd-variant-list flex flex-wrap gap-2" id="ww-pd-variant-list" role="listbox" aria-label="Phân loại"></div>
+      <p class="ww-pd-variant-error" id="ww-pd-variant-error" hidden role="alert">
+        Vui lòng chọn Phân loại hàng
+      </p>
+    </div>
+
 </div>
 
 
@@ -278,6 +292,7 @@
   <form class="" enctype="multipart/form-data" id="add-to-cart-form" action="/cart/add" method="post">
 	@csrf
 	<input type="hidden" name="variantId" value="{{ $productId }}" id="ww-pd-variant-id">
+	<input type="hidden" name="variant_title" id="ww-pd-variant-title" value="">
 	<input type="hidden" name="product_title" id="ww-pd-product-title" value="">
 	<input type="hidden" name="product_handle" id="ww-pd-product-handle" value="{{ $productSlug ?? '' }}">
 	<input type="hidden" name="price" id="ww-pd-product-price" value="0">
@@ -308,7 +323,7 @@
 	  <div class="flex gap-2 mt-4 border-t border-neutral-50 pt-4">
     
 		  
-    <button type="button" name="buynow" class=" font-semibold  btn bg-[var(--color-addtocart-color)] text-[var(--color-addtocart-bg)] border border-[var(--color-addtocart-bg)]  hover:bg-[var(--color-addtocart-bg)] hover:text-[var(--color-addtocart)] btn-buynow w-full">
+    <button type="button" name="buynow" class=" font-semibold  btn bg-[var(--color-addtocart-color)] text-[var(--color-addtocart-bg)] border border-[var(--color-addtocart-bg)]  hover:bg-[var(--color-addtocart-bg)] hover:text-[var(--color-addtocart)] btn-buynow w-full" data-requires-variant="0" id="ww-pd-buynow">
 		    
 		MUA NGAY
 				 <span class="loading-icon gap-1 hidden items-center justify-center">
@@ -324,7 +339,7 @@
     </button>
 	
   
-    <button type="button" name="addtocart" class=" font-semibold  btn bg-[var(--color-addtocart-bg)] text-[var(--color-addtocart)] btn-add-to-cart add_to_cart w-full">
+    <button type="button" name="addtocart" class=" font-semibold  btn bg-[var(--color-addtocart-bg)] text-[var(--color-addtocart)] btn-add-to-cart add_to_cart w-full" data-requires-variant="0" id="ww-pd-addtocart">
      THÊM VÀO GIỎ
 <br><span>Giao hàng tận nơi hoặc nhận tại cửa hàng</span>
    <span class="loading-icon gap-1 hidden items-center justify-center">
@@ -490,6 +505,8 @@
   <div class="ww-pd-content">
     
       
+{{-- Tắt Sapo Combo App: combo.sapoapps.vn trả 403 trên store Laravel (không phải store Sapo theme gốc) --}}
+@if (false)
        <div class="sapo-appcombo-module-detail"></div>
 <script type="text/x-custom-template" data-template="comboModuleDetail">
   <div class="module-combo">
@@ -799,7 +816,7 @@
     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 </script>
-     
+@endif
         
    
      

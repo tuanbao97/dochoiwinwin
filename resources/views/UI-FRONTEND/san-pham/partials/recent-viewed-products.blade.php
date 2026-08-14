@@ -38,12 +38,15 @@
     appUrl: @json(rtrim(url('/'), '/')),
     defaultImg: @json(asset('image/UI-BACKEND/default-image.png')),
     detailPath: '/san-pham/chi-tiet',
-    frameSrc: @json(asset('UI-FRONTEND/images/Khung vien xanh.png')),
     limit: 10,
   };
 
   function joinAppUrl(pathRel, updDt) {
     if (!pathRel) return '';
+    if (window.wwStorefrontImage && window.wwStorefrontImage.resolveMediaUrl) {
+      return window.wwStorefrontImage.resolveMediaUrl(pathRel, updDt, cfg.appUrl);
+    }
+    if (/^https?:\/\//i.test(String(pathRel))) return String(pathRel);
     var url = cfg.appUrl + '/' + String(pathRel).replace(/^\/+/, '');
     return (window.wwStorefrontImage && window.wwStorefrontImage.appendUpdTime)
       ? window.wwStorefrontImage.appendUpdTime(url, updDt)
@@ -74,6 +77,7 @@
 
   function relativeImagePathFromImg(img) {
     if (!img) return '';
+    if (img.PATH && /^https?:\/\//i.test(String(img.PATH))) return String(img.PATH);
     var fname = img.IMAGE_THUMNAIL || img.NAME || '';
     var ar = (img.ASPECT_RATIO && String(img.ASPECT_RATIO).trim()) || '1x1';
     if (img.DIRECTORY && fname) {
@@ -116,6 +120,43 @@
     return cfg.appUrl + cfg.detailPath + '/' + slug + '-' + p.ID;
   }
 
+  function productRequiresVariantSelect(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    return Array.isArray(list) && list.length > 1;
+  }
+
+  function productCartVariantId(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    if (Array.isArray(list) && list.length && list[0] && list[0].ID) return list[0].ID;
+    if (p && p.ATTR1) return p.ATTR1;
+    return p && p.ID;
+  }
+
+  function productListPriceInfo(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    var minPrice = 0;
+    var minCompare = 0;
+    if (Array.isArray(list)) {
+      for (var i = 0; i < list.length; i++) {
+        var v = list[i];
+        if (!v) continue;
+        var vp = Math.round(Number(v.GIA_BAN) || 0);
+        if (vp <= 0) continue;
+        if (minPrice <= 0 || vp < minPrice) {
+          minPrice = vp;
+          minCompare = Math.round(Number(v.GIA_GOC) || 0);
+        }
+      }
+    }
+    if (minPrice > 0) {
+      return { price: minPrice, compare: minCompare };
+    }
+    return {
+      price: Math.round(Number(p && p.GIA_CA) || 0),
+      compare: Math.round(Number(p && p.GIA_GOC) || 0),
+    };
+  }
+
   function csrfField() {
     var m = document.querySelector('meta[name="csrf-token"]');
     if (!m || !m.content) return '';
@@ -126,16 +167,19 @@
     var title = p.TEN_SAN_PHAM || 'Sản phẩm';
     var href = detailUrl(p);
     var imgRel = relativeImagePath(p);
-    var priceInt = Math.round(Number(p.GIA_CA) || 0);
+    var priceInfo = productListPriceInfo(p);
+    var priceInt = priceInfo.price;
+    var compareInt = priceInfo.compare;
     var displayText = p.GIA_HIEN_THI != null ? String(p.GIA_HIEN_THI).trim() : '';
     var isContactPrice =
+      priceInt <= 0 ||
       p.IS_GIA_CA_LIEN_HE === true ||
       p.IS_GIA_CA_LIEN_HE === 1 ||
       p.IS_GIA_CA_LIEN_HE === '1';
+    if (priceInt > 0) isContactPrice = false;
     var priceLabel = isContactPrice
       ? 'Liên hệ'
       : displayText || (priceInt > 0 ? formatPriceShortVnd(priceInt) : 'Liên hệ');
-    var compareInt = Math.round(Number(p.GIA_GOC) || 0);
     var showCompare = !isContactPrice && !displayText && priceInt > 0 && compareInt > priceInt;
     var compareLabel = showCompare ? formatPriceShortVnd(compareInt) : '';
     var hov = hoverUrl(p);
@@ -159,7 +203,7 @@
     var hoverPictures = hasHover
       ? '<picture><source media="(max-width: 600px)" srcset="' +
         escapeHtml(hov) +
-        '"><img class="card-product__image-2 max-h-full w-auto object-contain opacity-0 scale-[var(--image-scale)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[0] group-hover/card:opacity-100 transition duration-300 ease-out" width="480" height="480" loading="lazy" style="--image-scale:0.9" src="' +
+        '"><img class="card-product__image-2 max-h-full w-auto object-contain opacity-0 scale-[var(--image-scale)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[0] group-hover/card:opacity-100 transition duration-300 ease-out" width="480" height="480" loading="lazy" style="--image-scale:1" src="' +
         escapeHtml(hov) +
         '" alt="' +
         escapeHtml(title) +
@@ -169,34 +213,35 @@
     return (
       '<card-product class="h-full card-product--vertical ww-card-opens-qv" data-product-id="' +
       escapeHtml(p.ID) +
+      '" data-requires-variant="' +
+      (productRequiresVariantSelect(p) ? '1' : '0') +
       '">' +
       '<div class="item_product_main card-product relative transition-transform duration-200 ease-in-out h-full">' +
-      '<form action="/cart/add" method="post" enctype="multipart/form-data" class="bg-background relative z-10 m-0 h-full" style="border: 1px solid rgba(2, 132, 199, 0.18);">' +
+      '<form action="/cart/add" method="post" enctype="multipart/form-data" class="bg-background relative z-10 m-0 h-full">' +
       csrfField() +
       '<input type="hidden" name="product_title" value="' + escapeHtml(title) + '">' +
       '<input type="hidden" name="product_handle" value="' + escapeHtml(p.TEN_SAN_PHAM_SLUG || '') + '">' +
       '<input type="hidden" name="price" value="' + escapeHtml(priceInt) + '">' +
       '<input type="hidden" name="image" value="' + escapeHtml(imgRel) + '">' +
       '<input type="hidden" name="category_id" value="' + escapeHtml((p.DANH_MUC_SAN_PHAM && p.DANH_MUC_SAN_PHAM.ID) || '') + '">' +
-      '<div class="card-product__top relative overflow-visible group/card p-2">' +
+      '<div class="card-product__top relative overflow-visible group/card">' +
       '<a class="link aspect-square flex items-center justify-center w-full relative overflow-hidden" href="' + escapeHtml(href) + '" title="' + escapeHtml(title) + '">' +
-      '<img class="product-frame w-full object-contain absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10" src="' + escapeHtml(cfg.frameSrc) + '" alt="" loading="lazy" width="480" height="480">' +
       '<picture><source media="(max-width: 600px)" srcset="' + escapeHtml(avatarUrl(p)) + '">' +
-      '<img class="' + imgMainClass + '" width="480" height="480" loading="lazy" style="--image-scale:0.9" src="' + escapeHtml(avatarUrl(p)) + '" alt="' + escapeHtml(title) + '"></picture>' +
+      '<img class="' + imgMainClass + '" width="480" height="480" loading="lazy" style="--image-scale:1" src="' + escapeHtml(avatarUrl(p)) + '" alt="' + escapeHtml(title) + '"></picture>' +
       hoverPictures +
       '</a>' +
       '</div>' +
       '<div class="card-product__body flex flex-col gap-2 px-2 pb-2 md:gap-1 md:px-2 md:pb-2">' +
       '<a class="link block" href="' + escapeHtml(href) + '" title="' + escapeHtml(title) + '">' +
-      '<div class="card-product__title text-base line-clamp-3">' + escapeHtml(title) + '</div>' +
+      '<div class="card-product__title text-sm font-normal line-clamp-3">' + escapeHtml(title) + '</div>' +
       '</a>' +
       '<div class="card-product__price-row flex justify-between gap-3 w-full min-w-0">' +
       '<a class="link flex-1 min-w-0" href="' + escapeHtml(href) + '" title="' + escapeHtml(title) + '">' +
       '<div class="price-box flex-1 min-w-0 flex flex-col items-start gap-1">' + priceBlock + '</div>' +
       '</a>' +
       '<div class="card-product__cart-btn shrink-0">' +
-      '<input type="hidden" name="variantId" value="' + escapeHtml(p.ID) + '">' +
-      '<button type="button" class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3" data-variant-id="' + escapeHtml(p.ID) + '" data-action="addtocart" aria-label="Thêm vào giỏ">' +
+      '<input type="hidden" name="variantId" value="' + escapeHtml(productCartVariantId(p)) + '">' +
+      '<button type="button" class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3" data-variant-id="' + escapeHtml(productCartVariantId(p)) + '" data-requires-variant="' + (productRequiresVariantSelect(p) ? '1' : '0') + '" data-action="addtocart" aria-label="Thêm vào giỏ">' +
       '<span class="loading-icon gap-1 hidden items-center justify-center">' +
       '<span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>' +
       '<span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>' +

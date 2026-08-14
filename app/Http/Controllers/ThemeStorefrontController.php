@@ -124,9 +124,10 @@ class ThemeStorefrontController extends Controller
             if ($categoryId > 0) {
                 $existing['category_id'] = $categoryId;
             }
-            $items[] = $existing;
+            // Đưa dòng vừa thêm/cập nhật lên đầu danh sách
+            array_unshift($items, $existing);
         } else {
-            $items[] = [
+            array_unshift($items, [
                 'variant_id' => $variantId,
                 'title' => $title,
                 'variant_title' => $request->input('variant_title', 'Mặc định'),
@@ -136,7 +137,7 @@ class ThemeStorefrontController extends Controller
                 'image' => $imageRel,
                 'handle' => $handle,
                 'category_id' => $categoryId,
-            ];
+            ]);
         }
 
         session([self::SESSION_KEY => array_values($items)]);
@@ -846,7 +847,9 @@ class ThemeStorefrontController extends Controller
         $fallback = storefrontSeo(['type' => 'product']);
 
         try {
-            $response = $this->productService->getDetailSanPham($productId, Request::create('/', 'GET'));
+            $response = $this->productService->getDetailSanPham($productId, Request::create('/', 'GET', [
+                'IS_API_PUBLIC' => true,
+            ]));
             $body = json_decode($response->getContent(), true);
             $product = $body['DATAS']['PRODUCT'] ?? null;
         } catch (Throwable) {
@@ -904,7 +907,9 @@ class ThemeStorefrontController extends Controller
     private function productQuickViewFragment(int $productId, string $slug): Response
     {
         try {
-            $response = $this->productService->getDetailSanPham($productId, Request::create('/', 'GET'));
+            $response = $this->productService->getDetailSanPham($productId, Request::create('/', 'GET', [
+                'IS_API_PUBLIC' => true,
+            ]));
             $body = json_decode($response->getContent(), true);
             $product = $body['DATAS']['PRODUCT'] ?? null;
         } catch (Throwable) {
@@ -1224,7 +1229,9 @@ class ThemeStorefrontController extends Controller
         }
 
         try {
-            $response = $this->productService->getDetailSanPham($productId, Request::create('/', 'GET'));
+            $response = $this->productService->getDetailSanPham($productId, Request::create('/', 'GET', [
+                'IS_API_PUBLIC' => true,
+            ]));
             $body = json_decode($response->getContent(), true);
             $category = $body['DATAS']['PRODUCT']['DANH_MUC_SAN_PHAM'] ?? null;
             return (int) ($category['ID'] ?? 0);

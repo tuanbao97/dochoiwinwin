@@ -236,6 +236,9 @@ class AppServiceProvider extends ServiceProvider
         // Đăng ký bean TransactionRepository
         $this->app->singleton(TransactionRepository::class, TransactionRepositoryImpl::class);
 
+        // Sapo Private App API
+        $this->app->singleton(\App\Service\SapoService::class, \App\Service\impl\SapoServiceImpl::class);
+
     }
 
 

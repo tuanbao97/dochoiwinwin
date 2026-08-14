@@ -7,6 +7,7 @@ use App\Dto\product\ProductDetailDto;
 use App\Dto\response\ApiResponseDto;
 use App\Enum\AppConstant;
 use App\Mapper\ProductMapper;
+use App\Mapper\SapoMapper;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Repository\ProductCategoryRepository;
@@ -14,10 +15,14 @@ use App\Repository\ProductDocumentStorageRepository;
 use App\Repository\ProductRepository;
 use App\Repository\ProductVariantRepository;
 use App\Service\ProductService;
+use App\Service\SapoService;
 use App\Utils\PaginationUtils;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProductServiceImpl implements ProductService
 {
@@ -26,6 +31,7 @@ class ProductServiceImpl implements ProductService
     private ProductDocumentStorageRepository $productDocumentStorageRepository;
     private ProductCategoryRepository $productCategoryRepository;
     private ProductVariantRepository $productVariantRepository;
+    private SapoService $sapoService;
 
     /**
      * Create a new class instance.
@@ -34,12 +40,14 @@ class ProductServiceImpl implements ProductService
         ProductRepository $productRepository,
         ProductDocumentStorageRepository $productDocumentStorageRepository,
         ProductCategoryRepository $productCategoryRepository,
-        ProductVariantRepository $productVariantRepository
+        ProductVariantRepository $productVariantRepository,
+        SapoService $sapoService
     ) {
         $this->productRepository = $productRepository;
         $this->productDocumentStorageRepository = $productDocumentStorageRepository;
         $this->productCategoryRepository = $productCategoryRepository;
         $this->productVariantRepository = $productVariantRepository;
+        $this->sapoService = $sapoService;
     }
 
     public function getOrNewSanPham($id): Product
@@ -197,6 +205,21 @@ class ProductServiceImpl implements ProductService
     }
 
     public function getDetailSanPham($id, Request $request) {
+        $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($isApiPublic && $this->sapoService->isEnabled()) {
+            $sapoProduct = $this->sapoService->getProduct((int) $id);
+            if ($sapoProduct !== null) {
+                return response()->json(
+                    new ApiResponseDto(AppConstant::STATUS_SUCCESS
+                        , 'Truy vấn thành công.'
+                        , [
+                            camelToSnakeUpper(class_basename(Product::class)) => SapoMapper::mapProduct($sapoProduct)
+                        ]
+                    )
+                )->setStatusCode(JsonResponse::HTTP_OK);
+            }
+        }
+
         $product = $this->productRepository->getDetailSanPhamWithFetchEdger($id);
         $sanPhamDetail = null;
 
@@ -247,8 +270,8 @@ class ProductServiceImpl implements ProductService
 
     public function getListSanPham(Request $request) {
         $draw = $request->input('DRAW', 1);
-        $page = $request->query('PAGE', 1);
-        $perPage = $request->query('PER_PAGE', 10);
+        $page = (int) $request->query('PAGE', 1);
+        $perPage = (int) $request->query('PER_PAGE', 10);
         $isGetAllElements = filter_var($request->query('IS_GET_ALL_ELEMENTS', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($isGetAllElements === true) {
             $perPage = 2147483647;  
@@ -263,6 +286,11 @@ class ProductServiceImpl implements ProductService
         $productVip = filter_var($request->query('PRODUCT_VIP', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     
         $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+        if ($isApiPublic && $this->sapoService->isEnabled()) {
+            return $this->getListSanPhamFromSapo($request, $draw, $page, $perPage, $tuKhoa, $arrDanhMucSanPhamId, $arrNotInId);
+        }
+
         $resultPagination = $this->productRepository->getListSanPham($tuKhoa, $arrDanhMucSanPhamId, $trangThaiHoatDong
             , $boLoc
             , $arrNotInId
@@ -291,6 +319,93 @@ class ProductServiceImpl implements ProductService
                 , JsonResponse::HTTP_OK
             )
         )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    /**
+     * Public storefront: lấy sản phẩm từ Sapo Admin API (Private App Basic Auth).
+     *
+     * @param  array<int, mixed>|mixed  $arrDanhMucSanPhamId
+     * @param  array<int, mixed>|mixed  $arrNotInId
+     */
+    private function getListSanPhamFromSapo(
+        Request $request,
+        mixed $draw,
+        int $page,
+        int $perPage,
+        mixed $tuKhoa,
+        mixed $arrDanhMucSanPhamId,
+        mixed $arrNotInId
+    ): JsonResponse {
+        // TODO: tạm hardcode filter SAPO — bỏ khi nối lại PAGE/PER_PAGE/TU_KHOA từ request
+        $filter = [
+            'product_types' => ['Đồ chơi'],
+            'query' => '',
+            'page' => 10,
+            'limit' => 20,
+        ];
+
+        $page = $filter['page'];
+        $perPage = $filter['limit'];
+
+        $query = [
+            'page' => $page,
+            'limit' => $perPage,
+            'product_types' => $filter['product_types'],
+            'query' => $filter['query'],
+        ];
+
+        try {
+            $result = $this->sapoService->getProducts($query);
+            $mapped = SapoMapper::mapProducts($result['products']);
+
+            if (is_array($arrNotInId) && $arrNotInId !== []) {
+                $exclude = array_map('intval', $arrNotInId);
+                $mapped = array_values(array_filter($mapped, static function (ProductDetailDto $p) use ($exclude): bool {
+                    return ! in_array((int) $p->id, $exclude, true);
+                }));
+            }
+
+            $paginator = new LengthAwarePaginator(
+                $mapped,
+                (int) $result['count'],
+                $perPage,
+                $page,
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+
+            $customResponsePagination = PaginationUtils::pagination($paginator);
+            $customResponsePagination['DRAW'] = $draw;
+
+            return response()->json(
+                new ApiResponseDto(AppConstant::STATUS_SUCCESS
+                    , 'Truy vấn thành công.'
+                    , [
+                        camelToSnakeUpper(class_basename(Product::class)) => $customResponsePagination
+                    ]
+                    , JsonResponse::HTTP_OK
+                )
+            )->setStatusCode(JsonResponse::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error('Sapo product list failed', ['message' => $e->getMessage()]);
+
+            return response()->json(
+                new ApiResponseDto(false
+                    , 'Không lấy được dữ liệu Sapo: '.$e->getMessage()
+                    , [
+                        camelToSnakeUpper(class_basename(Product::class)) => [
+                            'DATA' => [],
+                            'CURRENT_PAGE' => $page,
+                            'TOTAL_ITEM' => 0,
+                            'PER_PAGE' => $perPage,
+                            'TOTAL_PAGE' => 0,
+                            'LINKS' => ['FIRST' => null, 'LAST' => null, 'NEXT' => null, 'PREVIOUS' => null],
+                            'DRAW' => $draw,
+                        ]
+                    ]
+                    , JsonResponse::HTTP_BAD_GATEWAY
+                )
+            )->setStatusCode(JsonResponse::HTTP_BAD_GATEWAY);
+        }
     }
 
     public function activeSanPham($id, Request $request) {

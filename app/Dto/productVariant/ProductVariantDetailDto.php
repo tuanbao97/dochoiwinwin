@@ -19,6 +19,8 @@ class ProductVariantDetailDto implements \JsonSerializable
      /* @var array<DocumentStorageDetailDto>|null */
     public ?array $danhSachHinhAnhDaiDien;
 
+    public ?string $title;
+
     public ?string $crtDt;
     public ?string $crtId;
     public ?string $updDt;
@@ -35,7 +37,8 @@ class ProductVariantDetailDto implements \JsonSerializable
         , ?bool $isContactPrice = null, ?float $productPrice = null, ?float $productOriginalPrice = null
         , ?bool $isInStock = null
         , ?array $danhSachHinhAnhDaiDien = null
-        , ?string $crtDt = null, ?string $crtId = null, ?string $updDt = null, ?string $updId = null, ?string $crtName = null, ?string $updName = null, ?bool $isActive = null)
+        , ?string $crtDt = null, ?string $crtId = null, ?string $updDt = null, ?string $updId = null, ?string $crtName = null, ?string $updName = null, ?bool $isActive = null
+        , ?string $title = null)
     {
         $this->id = $id;
         $this->productId = $productId;
@@ -51,6 +54,7 @@ class ProductVariantDetailDto implements \JsonSerializable
         $this->isInStock = $isInStock;
 
         $this->danhSachHinhAnhDaiDien = $danhSachHinhAnhDaiDien;
+        $this->title = $title;
 
         $this->crtDt = $crtDt;
         $this->crtId = $crtId;
@@ -70,6 +74,7 @@ class ProductVariantDetailDto implements \JsonSerializable
             'ID' => $this->id
             , 'PRODUCT_ID' => $this->productId
 
+            , 'TEN_BIEN_THE' => $this->title
             , 'TINH_TRANG_SAN_PHAM' => $this->productStatus
             , 'MAU_SAC' => $this->productColor
             , 'DUNG_LUONG' => $this->productStorage

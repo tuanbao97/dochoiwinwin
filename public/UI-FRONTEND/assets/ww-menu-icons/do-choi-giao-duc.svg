@@ -1,0 +1,18 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="18" cy="18" r="16" fill="#FCE7F3"/>
+  <!-- Block A (red) -->
+  <rect x="5" y="15.5" width="12" height="12" rx="2.4" fill="#EF4444" transform="rotate(-7 11 21.5)"/>
+  <rect x="6.6" y="17" width="8.8" height="8.8" rx="1.8" fill="#FEE2E2" transform="rotate(-7 11 21.4)"/>
+  <path d="M9.2 24.6l1.7-5.2h1.6l1.7 5.2h-1.5l-.3-1.1h-1.5l-.3 1.1H9.2Zm1.8-2.2h1.2l-.6-2.1-.6 2.1Z" fill="#DC2626" transform="rotate(-7 11.5 21.5)"/>
+  <!-- Block B (blue) -->
+  <rect x="13" y="7.5" width="12" height="12" rx="2.4" fill="#3B82F6" transform="rotate(6 19 13.5)"/>
+  <rect x="14.6" y="9" width="8.8" height="8.8" rx="1.8" fill="#DBEAFE" transform="rotate(6 19 13.4)"/>
+  <path d="M16.4 10.8h2.2c1.1 0 1.8.5 1.8 1.35 0 .55-.3.95-.75 1.15.6.25 1 .75 1 1.4 0 1-.75 1.5-1.95 1.5h-2.3v-5.4Zm1.35 1.1v1.25h.8c.45 0 .75-.2.75-.6s-.3-.65-.75-.65h-.8Zm0 2.25v1.35h1c.5 0 .85-.25.85-.7s-.35-.65-.9-.65h-.95Z" fill="#2563EB" transform="rotate(6 19 13.5)"/>
+  <!-- Block C (green) -->
+  <rect x="20.2" y="17" width="12" height="12" rx="2.4" fill="#22C55E" transform="rotate(9 26.2 23)"/>
+  <rect x="21.8" y="18.5" width="8.8" height="8.8" rx="1.8" fill="#DCFCE7" transform="rotate(9 26.2 22.9)"/>
+  <path d="M28.6 21.2c-.35-.55-.95-.9-1.7-.9-1.25 0-2.15 1-2.15 2.45s.9 2.45 2.15 2.45c.75 0 1.35-.35 1.7-.9l-1.1-.7c-.15.25-.4.4-.65.4-.55 0-.95-.5-.95-1.25s.4-1.25.95-1.25c.25 0 .5.15.65.4l1.1-.7Z" fill="#16A34A" transform="rotate(9 26.2 23)"/>
+  <!-- Stars -->
+  <path d="M9.2 8.8l.75 1.55 1.7.25-1.25 1.2.3 1.65-1.5-.8-1.5.8.3-1.65-1.25-1.2 1.7-.25.75-1.55Z" fill="#FACC15"/>
+  <path d="M28.8 8l.55 1.2 1.3.2-1 .9.25 1.25-1.1-.6-1.1.6.25-1.25-1-.9 1.3-.2.55-1.2Z" fill="#FB923C"/>
+</svg>

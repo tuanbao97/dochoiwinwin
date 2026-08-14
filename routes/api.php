@@ -130,7 +130,7 @@ Route::prefix('public')->middleware(['cache-public-api-response'])->group(functi
     Route::get('/categoryn/list/tree', [CategoryNController::class, 'getPublicListDanhMucTinTucTree']);
     
     Route::get('/product/list', [ProductController::class, 'getListSanPhamPublic']);
-    Route::get('/product/detail/{ID}', [ProductController::class, 'getDetailSanPham']);
+    Route::get('/product/detail/{ID}', [ProductController::class, 'getDetailSanPhamPublic']);
 
     Route::get('/news/list', [NewsController::class, 'getListTinTucPublic']);
     Route::get('/news/detail/{ID}', [NewsController::class, 'getDetailTinTuc']);

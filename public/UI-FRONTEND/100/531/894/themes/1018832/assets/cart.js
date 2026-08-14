@@ -1,4 +1,4 @@
-﻿function themeApiUrl(path) {
+function themeApiUrl(path) {
   return typeof window.themeUrl === "function"
     ? window.themeUrl(path)
     : path.startsWith("/")
@@ -170,21 +170,48 @@ function wwProductDetailUrl(product) {
   return themeApiUrl("/san-pham/chi-tiet/" + slug + "-" + product.ID);
 }
 
+function wwProductListPriceInfo(product) {
+  const list = product && product.DANH_SACH_BIEN_THE;
+  let minPrice = 0;
+  let minCompare = 0;
+  if (Array.isArray(list)) {
+    for (let i = 0; i < list.length; i++) {
+      const v = list[i];
+      if (!v) continue;
+      const vp = Math.round(Number(v.GIA_BAN) || 0);
+      if (vp <= 0) continue;
+      if (minPrice <= 0 || vp < minPrice) {
+        minPrice = vp;
+        minCompare = Math.round(Number(v.GIA_GOC) || 0);
+      }
+    }
+  }
+  if (minPrice > 0) return { price: minPrice, compare: minCompare };
+  return {
+    price: Math.round(Number(product && product.GIA_CA) || 0),
+    compare: Math.round(Number(product && product.GIA_GOC) || 0),
+  };
+}
+
 function wwBuildCartRecommendationCard(product, slideClass) {
   const title = product.TEN_SAN_PHAM || "Sản phẩm";
   const href = wwProductDetailUrl(product);
   const imgUrl = wwProductImageUrl(product);
   const imgRel = wwProductImageRel(product);
-  const priceInt = Math.round(Number(product.GIA_CA) || 0);
+  const priceInfo = wwProductListPriceInfo(product);
+  const priceInt = priceInfo.price;
   const priceLabel = wwFormatPriceShortVnd(priceInt);
   const categoryId = product.DANH_MUC_SAN_PHAM && product.DANH_MUC_SAN_PHAM.ID
     ? product.DANH_MUC_SAN_PHAM.ID
     : "";
-  const compareRaw = product.GIA_GOC;
-  const compareInt = compareRaw == null || compareRaw === "" ? 0 : Math.round(Number(compareRaw) || 0);
+  const compareInt = priceInfo.compare;
   const showCompare = priceInt > 0 && compareInt > priceInt;
   const compareLabel = showCompare ? wwFormatPriceShortVnd(compareInt) : "";
   const frameSrc = themeApiUrl("/UI-FRONTEND/images/Khung vien xanh.png");
+  const variants = Array.isArray(product.DANH_SACH_BIEN_THE) ? product.DANH_SACH_BIEN_THE : [];
+  const requiresVariant = variants.length > 1 ? "1" : "0";
+  const cartVariantId =
+    (variants[0] && variants[0].ID) || product.ATTR1 || product.ID;
 
   const priceBlock =
     priceInt <= 0
@@ -200,7 +227,7 @@ function wwBuildCartRecommendationCard(product, slideClass) {
 
   return (
     '<div class="' + wwEscapeHtml(slideClass || "") + '">' +
-    '<card-product class="h-full card-product--vertical">' +
+    '<card-product class="h-full card-product--vertical" data-product-id="' + wwEscapeHtml(product.ID) + '" data-requires-variant="' + requiresVariant + '">' +
     '<div class="item_product_main card-product relative transition-transform duration-200 ease-in-out h-full">' +
     '<form action="/cart/add" method="post" enctype="multipart/form-data" class="bg-background relative z-10 m-0 h-full" style="border: 1px solid rgba(2, 132, 199, 0.18);">' +
     '<input type="hidden" name="product_title" value="' + wwEscapeHtml(title) + '">' +
@@ -223,8 +250,8 @@ function wwBuildCartRecommendationCard(product, slideClass) {
     priceBlock +
     '</div></a>' +
     '<div class="card-product__cart-btn shrink-0">' +
-    '<input type="hidden" name="variantId" value="' + wwEscapeHtml(product.ID) + '">' +
-    '<button type="button" class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3" data-variant-id="' + wwEscapeHtml(product.ID) + '" data-action="addtocart" aria-label="Thêm vào giỏ">' +
+    '<input type="hidden" name="variantId" value="' + wwEscapeHtml(cartVariantId) + '">' +
+    '<button type="button" class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3" data-variant-id="' + wwEscapeHtml(cartVariantId) + '" data-requires-variant="' + requiresVariant + '" data-action="addtocart" aria-label="Thêm vào giỏ">' +
     '<span class="loading-icon gap-1 hidden items-center justify-center"><span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span><span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span><span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span></span>' +
     '<span class="flex items-center justify-center"><i class="icon icon-cart text-[1.35rem]"></i></span>' +
     '</button></div></div></div></form></div></card-product></div>'
@@ -520,6 +547,20 @@ __wwBootCartComponents(() => {
         cro.querySelector(".cart-bottom").innerHTML =
           html.querySelector(".cart-bottom").innerHTML;
       }
+      this.scrollCartListToTop();
+    }
+    scrollCartListToTop() {
+      const scroller =
+        this.querySelector(".cart-left") ||
+        (this.closest("cart-drawer") &&
+          this.closest("cart-drawer").querySelector(".cart-left")) ||
+        document.querySelector("cart-drawer .cart-left");
+      if (!scroller) return;
+      try {
+        scroller.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (e) {
+        scroller.scrollTop = 0;
+      }
     }
     onSubmit(e) {
       e.preventDefault();
@@ -724,6 +765,14 @@ __wwBootCartComponents(() => {
         document.querySelectorAll("cart-form").forEach((el) => {
           if (el && typeof el.updateCart === "function") el.updateCart();
         });
+        // Đảm bảo danh sách trong drawer scroll lên đầu để thấy sp vừa thêm
+        window.setTimeout(function () {
+          document.querySelectorAll("cart-form").forEach(function (el) {
+            if (el && typeof el.scrollCartListToTop === "function") {
+              el.scrollCartListToTop();
+            }
+          });
+        }, 120);
         if(e.action == "popup"){
           const activeQuickView = document.querySelector("quick-view.active, quick-view.ww-open");
           if (activeQuickView && typeof activeQuickView.hide === "function") {

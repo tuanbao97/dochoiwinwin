@@ -14,10 +14,25 @@
 
   function appendUpdTime(url, updDt) {
     if (!url) return '';
+    if (/^https?:\/\//i.test(String(url)) && String(url).indexOf('bizweb.dktcdn.net') !== -1) {
+      return url; // CDN Sapo đã có ?v= — không gắn upd_time
+    }
     var bust = toUpdTime(updDt);
     if (!bust) return url;
     if (url.indexOf('upd_time=') !== -1) return url;
     return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'upd_time=' + encodeURIComponent(bust);
+  }
+
+  /** URL ảnh: hỗ trợ path local và URL tuyệt đối (Sapo CDN) */
+  function resolveMediaUrl(pathRel, updDt, appUrl) {
+    if (!pathRel) return '';
+    var p = String(pathRel).trim();
+    if (/^https?:\/\//i.test(p) || p.indexOf('//') === 0) {
+      return appendUpdTime(p, updDt);
+    }
+    var base = (appUrl != null && appUrl !== '') ? String(appUrl).replace(/\/+$/, '') : '';
+    var url = base ? (base + '/' + p.replace(/^\/+/, '')) : p;
+    return appendUpdTime(url, updDt);
   }
 
   /** Ưu tiên UPD_DT entity (sản phẩm/tin), fallback UPD_DT ảnh */
@@ -143,6 +158,7 @@
   w.wwStorefrontImage = {
     toUpdTime: toUpdTime,
     appendUpdTime: appendUpdTime,
+    resolveMediaUrl: resolveMediaUrl,
     pickUpdTime: pickUpdTime,
     basenameFromUrl: basenameFromUrl,
     downloadImageFile: downloadImageFile,
