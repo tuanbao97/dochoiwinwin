@@ -40,6 +40,8 @@ class Product extends Model
     /* Thiêt lập giá trịm mặc định cho instance */
     protected $attributes = [
         'ID' => null,
+        'SAPO_ID' => null,
+        'SAPO_PAYLOAD' => null,
         'UUID' => null,
         'MA_SAN_PHAM' => null,
         'NAME' => null,
@@ -75,6 +77,7 @@ class Product extends Model
     /* Định nghĩa kiểu dữ liệu các attributes */
     protected $casts = [
         'IS_ACTIVE' => 'boolean',
+        'SAPO_ID' => 'integer',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
     ];

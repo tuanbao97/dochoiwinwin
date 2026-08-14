@@ -1642,10 +1642,6 @@ img.ww-card-img-lazy:not([data-img-loaded]) {
   background: #f1f5f9;
 }
 
-.ww-search-grid-sentinel {
-  overflow-anchor: none;
-}
-
 #search-results-grid {
   overflow-anchor: auto;
 }

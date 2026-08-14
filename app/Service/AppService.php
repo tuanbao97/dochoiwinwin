@@ -24,4 +24,6 @@ interface AppService
 
     public function evictCache(Request $request);
 
+    public function syncSapoCatalog(Request $request);
+
 }

@@ -2,6 +2,7 @@
 
 namespace App\Service\impl;
 
+use App\Jobs\SyncSapoCatalogJob;
 use App\Service\AppService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -110,6 +111,49 @@ class AppServiceImpl implements AppService
                 , 'Xóa cache thành công.'
                 , []
             )
+        )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    public function syncSapoCatalog(Request $request)
+    {
+        $forceFull = filter_var($request->input('FULL', false), FILTER_VALIDATE_BOOLEAN);
+        $result = SyncSapoCatalogJob::dispatchSync($forceFull, true, false);
+
+        $mode = $result['mode'] ?? '';
+        $fetched = (int) ($result['fetched'] ?? 0);
+        $lastFetch = $result['last_fetch_api_sapo'] ?? null;
+        $import = is_array($result['import'] ?? null) ? $result['import'] : [];
+        $productsOk = (int) ($import['products_ok'] ?? 0);
+        $imagesOk = (int) ($import['images_ok'] ?? 0);
+        $imagesSkip = (int) ($import['images_skip'] ?? 0);
+        $errors = (int) ($import['products_error'] ?? 0) + (int) ($import['images_error'] ?? 0);
+
+        $detail = match ($mode) {
+            'disabled' => 'Sapo chưa được bật.',
+            'locked' => 'Đang có tiến trình fetch khác, vui lòng thử lại sau.',
+            'fresh' => 'Cache còn mới, chưa cần fetch lại.',
+            'full' => 'Fetch full thành công ('.$fetched.' sản phẩm).',
+            'incremental' => 'Fetch thành công ('.$fetched.' sản phẩm cập nhật).',
+            'import-only' => 'Import từ cache hoàn tất.',
+            default => 'Fetch Sapo hoàn tất.',
+        };
+        if (! in_array($mode, ['disabled', 'locked'], true)) {
+            $detail .= ' Import '.$productsOk.' sản phẩm, '.$imagesOk.' ảnh mới'
+                .($imagesSkip > 0 ? ', '.$imagesSkip.' ảnh tái sử dụng' : '')
+                .($errors > 0 ? ', '.$errors.' lỗi' : '')
+                .'.';
+        }
+
+        $status = in_array($mode, ['disabled', 'locked'], true)
+            ? AppConstant::STATUS_FAILURE
+            : AppConstant::STATUS_SUCCESS;
+
+        return response()->json(
+            new ApiResponseDto($status, $detail, [
+                'SAPO_SYNC' => $result,
+                'SAPO_IMPORT' => $import,
+                'LAST_FETCH_API_SAPO' => $lastFetch,
+            ])
         )->setStatusCode(JsonResponse::HTTP_OK);
     }
 

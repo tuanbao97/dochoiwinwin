@@ -39,6 +39,7 @@ class ProductVariant extends Model
     /* Thiêt lập giá trịm mặc định cho instance */
     protected $attributes = [
         'ID' => null,
+        'SAPO_VARIANT_ID' => null,
         'PRODUCT_ID' => null,
         'PRODUCT_STATUS' => null,
         'PRODUCT_COLOR' => null,
@@ -64,6 +65,7 @@ class ProductVariant extends Model
         'IS_ACTIVE' => 'boolean',
         'IS_CONTACT_PRICE' => 'boolean',
         'IS_IN_STOCK' => 'boolean',
+        'SAPO_VARIANT_ID' => 'integer',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
     ];

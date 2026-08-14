@@ -15,49 +15,17 @@
     priceOptions: @json($priceFilterOptions ?? []),
     page: @json($page ?? 1),
     perPage: @json($perPage ?? 20),
-    skeletonCount: 20,
+    skeletonCount: @json($perPage ?? 20),
     containerId: 'search-results-grid',
     paginationId: 'search-pagination',
     listAll: @json(!empty($listAll)),
     productHot: @json(!empty($productHot)),
     productVip: @json(!empty($productVip)),
     pageBasePath: @json($pageBasePath ?? '/tat-ca-san-pham'),
-    noPagination: true,
   };
 
   var canHover =
     window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-  /** Render dần khi scroll — không phân trang nhưng không nhồi hết DOM một lần */
-  var listStream = {
-    rows: [],
-    rendered: 0,
-    batchSize: window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 12 : 20,
-    io: null,
-    sentinel: null,
-    appending: false,
-    pendingBatches: 0,
-    container: null,
-  };
-
-  function getGridCols() {
-    if (window.matchMedia && window.matchMedia('(min-width: 976px)').matches) return 4;
-    if (window.matchMedia && window.matchMedia('(min-width: 480px)').matches) return 3;
-    return 2;
-  }
-
-  function updateSentinelReserve() {
-    if (!listStream.sentinel) return;
-    var remaining = listStream.rows.length - listStream.rendered;
-    if (remaining <= 0) {
-      listStream.sentinel.style.minHeight = '1px';
-      return;
-    }
-    var cols = getGridCols();
-    var rowsLeft = Math.ceil(remaining / cols);
-    // Giữ chiều cao phía dưới → scroll không nhảy khi batch chèn thêm
-    listStream.sentinel.style.minHeight = rowsLeft * 440 + 'px';
-  }
 
   var cardImgIo = null;
 
@@ -108,152 +76,13 @@
     });
   }
 
-  function resetListStream() {
-    if (listStream.io && listStream.sentinel) {
-      listStream.io.unobserve(listStream.sentinel);
-    }
-    listStream.rows = [];
-    listStream.rendered = 0;
-    listStream.sentinel = null;
-  }
-
-  function ensureListSentinel(container) {
-    var s = document.getElementById('ww-search-grid-sentinel');
-    if (!s) {
-      s = document.createElement('div');
-      s.id = 'ww-search-grid-sentinel';
-      s.className = 'ww-search-grid-sentinel';
-      s.setAttribute('aria-hidden', 'true');
-      s.style.cssText =
-        'width:100%;grid-column:1/-1;pointer-events:none;min-height:1px;overflow-anchor:none;';
-      container.appendChild(s);
-    }
-    listStream.sentinel = s;
-    return s;
-  }
-
-  function appendProductBatch(container, maxBatches) {
-    if (listStream.rendered >= listStream.rows.length) return false;
-    maxBatches = maxBatches || 1;
-    var batches = 0;
-    var html = '';
-
-    while (batches < maxBatches && listStream.rendered < listStream.rows.length) {
-      var end = Math.min(listStream.rendered + listStream.batchSize, listStream.rows.length);
-      for (var i = listStream.rendered; i < end; i++) {
-        html += buildCardHtml(listStream.rows[i]);
-      }
-      listStream.rendered = end;
-      batches++;
-    }
-
-    if (!html) return false;
-
-    var sentinel = ensureListSentinel(container);
-    sentinel.insertAdjacentHTML('beforebegin', html);
-    activateLazyCardImages(container);
-
-    updateSentinelReserve();
-
-    if (listStream.rendered >= listStream.rows.length && listStream.io && listStream.sentinel) {
-      listStream.io.unobserve(listStream.sentinel);
-      listStream.sentinel.remove();
-      listStream.sentinel = null;
-    }
-
-    return true;
-  }
-
-  function scheduleAppendBatches(container, maxBatches) {
-    if (listStream.rendered >= listStream.rows.length) return;
-    listStream.container = container;
-    listStream.pendingBatches = Math.max(listStream.pendingBatches || 0, maxBatches || 1);
-    if (listStream.appending) return;
-
-    function drain() {
-      if (listStream.rendered >= listStream.rows.length) {
-        listStream.appending = false;
-        listStream.pendingBatches = 0;
-        return;
-      }
-
-      var batches = listStream.pendingBatches || 1;
-      listStream.pendingBatches = 0;
-      listStream.appending = true;
-
-      requestAnimationFrame(function () {
-        appendProductBatch(container, batches);
-        listStream.appending = false;
-
-        if (listStream.pendingBatches > 0) {
-          drain();
-          return;
-        }
-
-        if (
-          listStream.rendered < listStream.rows.length &&
-          listStream.sentinel
-        ) {
-          var rect = listStream.sentinel.getBoundingClientRect();
-          if (rect.top < window.innerHeight * 2.2) {
-            scheduleAppendBatches(container, 1);
-          }
-        }
-      });
-    }
-
-    drain();
-  }
-
-  function setupListStreamObserver(container) {
-    if (listStream.rendered >= listStream.rows.length) return;
-
-    var sentinel = ensureListSentinel(container);
-    updateSentinelReserve();
-
-    if (!listStream.io) {
-      var preloadPx = Math.max(900, Math.round(window.innerHeight * 1.8));
-      listStream.io = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (entry) {
-            if (!entry.isIntersecting) return;
-            // Preload sớm + nạp 2 batch/lần khi kéo nhanh
-            scheduleAppendBatches(container, 2);
-          });
-        },
-        { rootMargin: preloadPx + 'px 0px ' + preloadPx + 'px 0px', threshold: 0 }
-      );
-    }
-
-    listStream.io.observe(sentinel);
-  }
-
   function renderProductList(container, rows) {
-    resetListStream();
-    listStream.rows = rows;
-    container.innerHTML = '';
-    // Mở đầu 2 batch để kéo nhanh không đụng “tường” cuối list
-    appendProductBatch(container, 2);
-    if (listStream.rendered < listStream.rows.length) {
-      setupListStreamObserver(container);
-      // Nền: nạp thêm batch khi trình duyệt rảnh
-      var preloadMore = function () {
-        if (listStream.rendered >= listStream.rows.length) return;
-        scheduleAppendBatches(container, 1);
-        if (listStream.rendered < listStream.rows.length) {
-          if ('requestIdleCallback' in window) {
-            requestIdleCallback(preloadMore, { timeout: 1200 });
-          } else {
-            setTimeout(preloadMore, 400);
-          }
-        }
-      };
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(preloadMore, { timeout: 800 });
-      } else {
-        setTimeout(function () { scheduleAppendBatches(container, 1); }, 300);
-      }
+    var html = '';
+    for (var i = 0; i < rows.length; i++) {
+      html += buildCardHtml(rows[i]);
     }
+    container.innerHTML = html;
+    activateLazyCardImages(container);
   }
 
   if (!cfg.query && !cfg.categoryId && !cfg.listAll && !cfg.productHot && !cfg.productVip) return;
@@ -688,43 +517,90 @@
     window.history.replaceState({}, '', url.pathname);
   }
 
+  /** Dải số trang quanh trang hiện tại, luôn giữ trang đầu/cuối */
+  function buildPageWindow(totalPages, currentPage) {
+    var pages = [];
+    var span = window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 1 : 2;
+    var from = Math.max(1, currentPage - span);
+    var to = Math.min(totalPages, currentPage + span);
+
+    if (from > 1) {
+      pages.push(1);
+      if (from > 2) pages.push('...');
+    }
+    for (var p = from; p <= to; p++) {
+      pages.push(p);
+    }
+    if (to < totalPages) {
+      if (to < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+
+    return pages;
+  }
+
+  function buildPageLinkHtml(page, label, isActive, isDisabled) {
+    var base =
+      'ww-search-page-btn btn px-3 py-1.5 rounded-sm border text-sm font-semibold select-none ';
+    if (isDisabled) {
+      return (
+        '<span class="' +
+        base +
+        'border-neutral-50 text-neutral-300 pointer-events-none">' +
+        label +
+        '</span>'
+      );
+    }
+
+    return (
+      '<a href="' +
+      escapeHtml(buildSearchPageUrl(page).pathname) +
+      '" data-page="' +
+      page +
+      '" class="' +
+      base +
+      (isActive ? 'bg-primary text-white border-primary' : 'border-neutral-50 hover:bg-neutral-50') +
+      '">' +
+      label +
+      '</a>'
+    );
+  }
+
   function renderPagination(totalPages, currentPage) {
     var nav = document.getElementById(cfg.paginationId);
     if (!nav) return;
-    // Danh sách sản phẩm: không phân trang
-    if (cfg.noPagination) {
+    if (!totalPages || totalPages <= 1) {
       nav.innerHTML = '';
       nav.setAttribute('hidden', 'hidden');
       return;
     }
-    if (!totalPages || totalPages <= 1) {
-      nav.innerHTML = '';
-      return;
-    }
+    nav.removeAttribute('hidden');
 
-    var html = '';
-    for (var p = 1; p <= totalPages; p++) {
-      var pageUrl = buildSearchPageUrl(p);
-      html +=
-        '<a href="' +
-        escapeHtml(pageUrl.pathname) +
-        '" data-page="' +
-        p +
-        '" class="ww-search-page-btn btn px-3 py-1.5 rounded-sm border border-neutral-50 text-sm font-semibold ' +
-        (p === currentPage ? 'bg-primary text-white border-primary' : 'hover:bg-neutral-50') +
-        '">' +
-        p +
-        '</a>';
-    }
+    var html = buildPageLinkHtml(currentPage - 1, '&laquo;', false, currentPage <= 1);
+    buildPageWindow(totalPages, currentPage).forEach(function (item) {
+      if (item === '...') {
+        html += '<span class="px-2 py-1.5 text-sm text-neutral-400">…</span>';
+        return;
+      }
+      html += buildPageLinkHtml(item, String(item), item === currentPage, false);
+    });
+    html += buildPageLinkHtml(currentPage + 1, '&raquo;', false, currentPage >= totalPages);
     nav.innerHTML = html;
 
-    nav.querySelectorAll('.ww-search-page-btn').forEach(function (btn) {
+    nav.querySelectorAll('a.ww-search-page-btn').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         var page = parseInt(btn.getAttribute('data-page'), 10) || 1;
-        loadSearchResults(page);
+        loadSearchResults(page, true);
       });
     });
+  }
+
+  function scrollToResultsTop() {
+    var section = document.getElementById(cfg.containerId);
+    if (!section) return;
+    var top = section.getBoundingClientRect().top + window.pageYOffset - 120;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }
 
   function updateTotalCount(total) {
@@ -733,22 +609,17 @@
     el.textContent = formatIntViDots(total);
   }
 
-  function loadSearchResults(page) {
-    cfg.page = cfg.noPagination ? 1 : page || 1;
+  function loadSearchResults(page, shouldScroll) {
+    cfg.page = Math.max(1, page || 1);
     cfg.selectedGia = getSelectedGiaFromDom();
 
     var el = document.getElementById(cfg.containerId);
     if (el) el.innerHTML = buildSkeletonHtml(cfg.skeletonCount || cfg.perPage || 20);
+    if (shouldScroll) scrollToResultsTop();
 
     var params = new URLSearchParams();
-    params.set('PAGE', '1');
-    if (cfg.noPagination) {
-      params.set('IS_GET_ALL_ELEMENTS', 'true');
-      params.set('PER_PAGE', '9999');
-    } else {
-      params.set('PAGE', String(cfg.page));
-      params.set('PER_PAGE', String(cfg.perPage));
-    }
+    params.set('PAGE', String(cfg.page));
+    params.set('PER_PAGE', String(cfg.perPage));
     params.set('BO_LOC', cfg.boLoc || 'default');
     params.set('TRANG_THAI_HOAT_DONG', 'true');
     params.set('IS_API_PUBLIC', 'true');
@@ -776,25 +647,15 @@
         var currentPage = Number(pagination.CURRENT_PAGE) || cfg.page;
 
         updateTotalCount(totalItems);
-        renderPagination(cfg.noPagination ? 1 : totalPages, cfg.noPagination ? 1 : currentPage);
-        syncBrowserUrl(cfg.noPagination ? 1 : currentPage);
+        renderPagination(totalPages, currentPage);
+        syncBrowserUrl(currentPage);
 
         if (!rows.length) {
           el.innerHTML = '<p class="col-span-full text-center text-sm text-slate-600 py-8">Không tìm thấy sản phẩm phù hợp.</p>';
-          resetListStream();
           return;
         }
 
-        if (cfg.noPagination) {
-          renderProductList(el, rows);
-        } else {
-          var html = '';
-          for (var i = 0; i < rows.length; i++) {
-            html += buildCardHtml(rows[i]);
-          }
-          el.innerHTML = html;
-          activateLazyCardImages(el);
-        }
+        renderProductList(el, rows);
       })
       .catch(function () {
         if (el) {

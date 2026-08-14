@@ -51,30 +51,35 @@ class ProductDetailRequest extends FormRequest
             ]
         ];
 
-        // Public + Sapo: cho phép ID từ Sapo (không bắt buộc có trong DB local)
+        // Public: cho phép ID local hoặc SAPO_ID (URL cũ)
         $rules['ID'][] = function ($attribute, $value, $fail) {
+            $exists = DB::table('product')
+                ->whereIn('STATUS', ['USING', 'SOLD'])
+                ->where(function ($q) use ($value) {
+                    $q->where('ID', $value)->orWhere('SAPO_ID', $value);
+                })
+                ->exists();
+
+            if ($exists) {
+                return;
+            }
+
             $routePrefix = (string) ($this->route()?->getPrefix() ?? '');
             $isPublic = $routePrefix === AppConstant::PREFIX_API['API_PUBLIC'];
             if ($isPublic) {
                 try {
-                    if (app(SapoService::class)->isEnabled()) {
+                    $source = strtolower((string) config('services.sapo.storefront_source', 'local'));
+                    if ($source === 'sapo' && app(SapoService::class)->isEnabled()) {
                         return;
                     }
                 } catch (\Throwable) {
-                    // Fall through to local DB check
+                    // Fall through
                 }
             }
 
-            $exists = DB::table('product')
-                ->where('ID', $value)
-                ->whereIn('STATUS', ['USING', 'SOLD'])
-                ->exists();
-
-            if (! $exists) {
-                $locale = app()->getLocale();
-                $messages = json_decode(file_get_contents(resource_path("lang/{$locale}/validation.json")), true);
-                $fail($messages['does_not_exists'] ?? ':attribute không tồn tại.');
-            }
+            $locale = app()->getLocale();
+            $messages = json_decode(file_get_contents(resource_path("lang/{$locale}/validation.json")), true);
+            $fail($messages['does_not_exists'] ?? ':attribute không tồn tại.');
         };
 
         return $rules;

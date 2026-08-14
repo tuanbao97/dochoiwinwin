@@ -23,4 +23,8 @@ class AppController extends Controller
     public function evictCache(Request $request) {
         return $this->appService->evictCache($request);
     }
+
+    public function syncSapoCatalog(Request $request) {
+        return $this->appService->syncSapoCatalog($request);
+    }
 }

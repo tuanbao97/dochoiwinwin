@@ -15,6 +15,7 @@ use App\Repository\ProductDocumentStorageRepository;
 use App\Repository\ProductRepository;
 use App\Repository\ProductVariantRepository;
 use App\Service\ProductService;
+use App\Service\SapoCatalogCache;
 use App\Service\SapoService;
 use App\Utils\PaginationUtils;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +33,7 @@ class ProductServiceImpl implements ProductService
     private ProductCategoryRepository $productCategoryRepository;
     private ProductVariantRepository $productVariantRepository;
     private SapoService $sapoService;
+    private SapoCatalogCache $sapoCatalogCache;
 
     /**
      * Create a new class instance.
@@ -41,13 +43,15 @@ class ProductServiceImpl implements ProductService
         ProductDocumentStorageRepository $productDocumentStorageRepository,
         ProductCategoryRepository $productCategoryRepository,
         ProductVariantRepository $productVariantRepository,
-        SapoService $sapoService
+        SapoService $sapoService,
+        SapoCatalogCache $sapoCatalogCache
     ) {
         $this->productRepository = $productRepository;
         $this->productDocumentStorageRepository = $productDocumentStorageRepository;
         $this->productCategoryRepository = $productCategoryRepository;
         $this->productVariantRepository = $productVariantRepository;
         $this->sapoService = $sapoService;
+        $this->sapoCatalogCache = $sapoCatalogCache;
     }
 
     public function getOrNewSanPham($id): Product
@@ -59,7 +63,7 @@ class ProductServiceImpl implements ProductService
     public function getOrNewSanPhamWithFetchEdger($id): Product
     {
         $product = ($id != null) ? $this->productRepository->getDetailSanPhamWithFetchEdger($id) : new Product();
-        return $product;
+        return $product ?? new Product();
     }
 
     public function handleSaveFileDinhKem($productId,  array $documentStorages)
@@ -206,8 +210,8 @@ class ProductServiceImpl implements ProductService
 
     public function getDetailSanPham($id, Request $request) {
         $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($isApiPublic && $this->sapoService->isEnabled()) {
-            $sapoProduct = $this->sapoService->getProduct((int) $id);
+        if ($isApiPublic && $this->useSapoStorefront()) {
+            $sapoProduct = $this->sapoCatalogCache->getProduct((int) $id);
             if ($sapoProduct !== null) {
                 return response()->json(
                     new ApiResponseDto(AppConstant::STATUS_SUCCESS
@@ -220,7 +224,23 @@ class ProductServiceImpl implements ProductService
             }
         }
 
-        $product = $this->productRepository->getDetailSanPhamWithFetchEdger($id);
+        $product = $this->productRepository->getDetailSanPhamWithFetchEdger((int) $id);
+        if ($product === null && $isApiPublic) {
+            $localId = Product::query()->where('SAPO_ID', (int) $id)->value('ID');
+            if ($localId) {
+                $product = $this->productRepository->getDetailSanPhamWithFetchEdger((int) $localId);
+            }
+        }
+        if ($product === null) {
+            return response()->json(
+                new ApiResponseDto(AppConstant::STATUS_FAILURE
+                    , 'Sản phẩm không tồn tại.'
+                    , [
+                        camelToSnakeUpper(class_basename(Product::class)) => null
+                    ]
+                )
+            )->setStatusCode(JsonResponse::HTTP_NOT_FOUND);
+        }
         $sanPhamDetail = null;
 
         switch ($product->ATTR49) {
@@ -287,7 +307,7 @@ class ProductServiceImpl implements ProductService
     
         $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
-        if ($isApiPublic && $this->sapoService->isEnabled()) {
+        if ($isApiPublic && $this->useSapoStorefront()) {
             return $this->getListSanPhamFromSapo($request, $draw, $page, $perPage, $tuKhoa, $arrDanhMucSanPhamId, $arrNotInId);
         }
 
@@ -352,21 +372,9 @@ class ProductServiceImpl implements ProductService
             $categoryIds = array_values(array_unique($categoryIds));
         }
 
-        $query = [
-            'page' => $page,
-            'limit' => min(250, $perPage),
-            'status' => 'active',
-        ];
-        if ($productType !== '') {
-            $query['product_type'] = $productType;
-        }
-        if ($keyword !== '') {
-            $query['query'] = $keyword;
-        }
-
         try {
             $collectionIds = $this->resolveSapoCollectionIds($categoryIds);
-            $result = $this->fetchSapoProductsByCollections($query, $collectionIds, $page, $perPage);
+            $result = $this->sapoCatalogCache->listProducts($page, $perPage, $productType, $collectionIds, $keyword);
             $mapped = SapoMapper::mapProducts($result['products']);
 
             if (is_array($arrNotInId) && $arrNotInId !== []) {
@@ -480,79 +488,6 @@ class ProductServiceImpl implements ProductService
         return array_values(array_unique(array_filter($ids)));
     }
 
-    /**
-     * @param  array<string, mixed>  $query
-     * @param  array<int, int>  $collectionIds
-     * @return array{products: array<int, array<string, mixed>>, count: int}
-     */
-    private function fetchSapoProductsByCollections(array $query, array $collectionIds, int $page, int $perPage): array
-    {
-        $needsMerge = count($collectionIds) > 1 || $perPage > 250;
-        if (! $needsMerge) {
-            if (isset($collectionIds[0])) {
-                $query['collection_id'] = $collectionIds[0];
-            }
-
-            return $this->sapoService->getProducts($query);
-        }
-
-        $idsToFetch = $collectionIds === [] ? [null] : $collectionIds;
-        $byId = [];
-        foreach ($idsToFetch as $collectionId) {
-            $chunkQuery = $query;
-            unset($chunkQuery['page']);
-            if ($collectionId !== null) {
-                $chunkQuery['collection_id'] = $collectionId;
-            }
-            $all = $this->fetchAllSapoProductPages($chunkQuery);
-            foreach ($all['products'] as $product) {
-                if (! is_array($product)) {
-                    continue;
-                }
-                $id = (int) ($product['id'] ?? 0);
-                if ($id > 0) {
-                    $byId[$id] = $product;
-                }
-            }
-        }
-
-        $all = array_values($byId);
-        $total = count($all);
-        $offset = max(0, ($page - 1) * $perPage);
-
-        return [
-            'products' => array_slice($all, $offset, $perPage),
-            'count' => $total,
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $query
-     * @return array{products: array<int, array<string, mixed>>, count: int}
-     */
-    private function fetchAllSapoProductPages(array $query): array
-    {
-        $query['limit'] = 250;
-        $pageNo = 1;
-        $products = [];
-        $reportedCount = 0;
-        do {
-            $query['page'] = $pageNo;
-            $chunk = $this->sapoService->getProducts($query);
-            $reportedCount = (int) ($chunk['count'] ?? 0);
-            foreach ($chunk['products'] as $product) {
-                $products[] = $product;
-            }
-            $got = count($chunk['products']);
-            $pageNo++;
-        } while ($got >= 250 && $pageNo <= 20);
-
-        return [
-            'products' => $products,
-            'count' => max($reportedCount, count($products)),
-        ];
-    }
-
     public function activeSanPham($id, Request $request) {
         // Bắt đầu một transaction
         DB::beginTransaction();
@@ -595,6 +530,12 @@ class ProductServiceImpl implements ProductService
                 ]
             )
         )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    private function useSapoStorefront(): bool
+    {
+        return $this->sapoService->isEnabled()
+            && strtolower((string) config('services.sapo.storefront_source', 'local')) === 'sapo';
     }
 
 }

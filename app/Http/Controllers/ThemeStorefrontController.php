@@ -449,7 +449,7 @@ class ThemeStorefrontController extends Controller
             $listAll,
             $productHot,
             $productVip,
-            $view !== 'quick-search'
+            false
         );
         $appUrl = rtrim(url('/'), '/');
         $categoryName = $categoryId > 0 ? $this->resolveCategoryName($categoryId) : '';
