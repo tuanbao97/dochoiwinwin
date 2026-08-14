@@ -8,7 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ProductRepository extends RepositoryInterface
 {
-    public function getDetailSanPhamWithFetchEdger(int $id) : Product;
+    public function getDetailSanPhamWithFetchEdger(int $id) : ?Product;
 
     public function getDetailSanPham(int $id) : Product;
 

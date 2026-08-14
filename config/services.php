@@ -52,6 +52,10 @@ return [
         'timeout' => (int) env('SAPO_TIMEOUT', 60),
         // GET /admin/products.json?product_type=... (Sapo dùng số ít)
         'product_type' => env('SAPO_PRODUCT_TYPE', 'Đồ chơi'),
+        // Không GET all mỗi request: cache local + modified_on_min từ last_fetch_api_sapo (UTC)
+        'sync_min_interval' => (int) env('SAPO_SYNC_MIN_INTERVAL', 60),
+        // local = storefront đọc bảng product; sapo = đọc cache API
+        'storefront_source' => env('SAPO_STOREFRONT_SOURCE', 'local'),
     ],
 
 ];

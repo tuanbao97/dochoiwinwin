@@ -109,6 +109,7 @@ Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
         Route::get('/role/list', [RoleController::class, 'getListRole']);
 
         Route::post('/cache/evict', [AppController::class, 'evictCache']);
+        Route::post('/sapo/sync', [AppController::class, 'syncSapoCatalog']);
     });
 });
 

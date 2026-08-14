@@ -238,6 +238,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Sapo Private App API
         $this->app->singleton(\App\Service\SapoService::class, \App\Service\impl\SapoServiceImpl::class);
+        $this->app->singleton(\App\Service\SapoCatalogCache::class, \App\Service\impl\SapoCatalogCacheImpl::class);
+        $this->app->singleton(\App\Service\SapoImageDownloader::class, \App\Service\impl\SapoImageDownloaderImpl::class);
+        $this->app->singleton(\App\Service\SapoProductImporter::class, \App\Service\impl\SapoProductImporterImpl::class);
 
     }
 

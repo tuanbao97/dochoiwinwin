@@ -56,10 +56,10 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
         return $query->first();
     }
 
-    public function getDetailSanPhamWithFetchEdger(int $id) : Product {
+    public function getDetailSanPhamWithFetchEdger(int $id) : ?Product {
         return Product::query()
         ->from('product AS p')
-        ->with(['avatars', 'images', 'videos', 'files', 'categories', 'variants'])
+        ->with(['avatars', 'images', 'videos', 'files', 'categories', 'variants.productImage'])
         ->where('p.ID', $id)
         ->whereIn('p.STATUS', [AppConstant::STATUS_USING, AppConstant::STATUS_SOLD])
         ->select('p.*')

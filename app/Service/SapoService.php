@@ -35,6 +35,12 @@ interface SapoService
      * @param  array<string, mixed>  $query
      * @return array<int, array<string, mixed>>
      */
+    public function getCollects(array $query = []): array;
+
+    /**
+     * @param  array<string, mixed>  $query
+     * @return array<int, array<string, mixed>>
+     */
     public function getBlogs(array $query = []): array;
 
     /**

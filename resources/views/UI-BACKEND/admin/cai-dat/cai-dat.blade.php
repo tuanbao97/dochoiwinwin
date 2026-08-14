@@ -420,6 +420,50 @@
 
 
 
+	<div class="col-lg-12 grid-margin stretch-card">
+		<div class="card">
+			<div class="card-body">
+				<div class="row justify-content-between">
+					<div class="col-md-8 col-sm-12">
+						<h4 class="card-title">
+							FETCH SẢN PHẨM <span class="one-line">SAPO</span>
+						</h4>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-12 d-flex justify-content-end">
+						<div class="action-web">
+							<button type="button" class="btn btn-action btn-light btn-icon-text me-1" name="BTN_GO_BACK">
+								<i class="fa fa-caret-left btn-icon-prepend"></i>Quay về
+							</button>
+
+							<button type="button" class="btn btn-action btn-info btn-icon-text" name="BTN_FETCH_SAPO">
+								<i class="fa fa-refresh btn-icon-prepend"></i>Fetch Sapo
+							</button>
+						</div>
+						
+						<div class="action-mobile">
+							<button type="button" class="btn btn-action btn-light btn-icon-text me-1" name="BTN_GO_BACK">
+								<i class="fa fa-caret-left btn-icon-prepend"></i>Quay về
+							</button>
+
+							<button type="button" class="btn btn-action btn-info btn-icon-text" name="BTN_FETCH_SAPO">
+								<i class="fa fa-refresh btn-icon-prepend"></i>Fetch Sapo
+							</button>
+						</div>
+					</div>
+
+				</div>
+
+				
+
+			</div>
+		</div>
+	</div>
+
+
+
 </div>
 
 <!-- Modal Chi tiết lượt xem -->
@@ -1733,6 +1777,42 @@ $(document).ready(function () {
 			},
 			error: function(request, textStatus, errorThrown) {
 				// Some error in ajax call
+				try {
+					request.responseJSON = request.responseText ? JSON.parse(request.responseText) : null;
+					showToastFailure('top-right', request.responseJSON && !isEmpty(request.responseJSON.STATUS_DETAIL) ? request.responseJSON.STATUS_DETAIL : 'Internal server');
+				} catch(err) {
+					showToastFailure('top-right', 'Internal server');
+				}
+			},
+			complete: function() {
+			}
+		});
+	}
+
+	/* Xử lý event click btn fetch Sapo */
+	$('button[name="BTN_FETCH_SAPO"]').on('click', function() {
+		showSwalWarningPopup(function callback(result) {
+			if (result.isConfirmed === true) {
+				fetchSapoCatalog();
+			}
+		}, 'Bạn có chắc chắn muốn <span style="display: inline-block;">fetch sản phẩm Sapo?</span>');
+	});
+
+	fetchSapoCatalog = function() {
+		$.ajax({
+			type: "POST",
+			url: '{{ url("/api/sapo/sync") }}',
+			contentType: "application/json",
+			showLoading: true,
+			data: JSON.stringify({}),
+			success: function(data, textStatus, request) {
+				if (data.STATUS === false) {
+					showToastFailure('top-right', data.STATUS_DETAIL || 'Fetch Sapo thất bại!');
+					return;
+				}
+				showToastSuccess('top-right', data.STATUS_DETAIL || 'Fetch Sapo thành công!');
+			},
+			error: function(request, textStatus, errorThrown) {
 				try {
 					request.responseJSON = request.responseText ? JSON.parse(request.responseText) : null;
 					showToastFailure('top-right', request.responseJSON && !isEmpty(request.responseJSON.STATUS_DETAIL) ? request.responseJSON.STATUS_DETAIL : 'Internal server');

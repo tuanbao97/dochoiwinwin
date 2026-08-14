@@ -38,6 +38,8 @@ class DocumentStorage extends Model
     /* Thiêt lập giá trịm mặc định cho instance */
     protected $attributes = [
         'ID' => null,
+        'SAPO_IMAGE_ID' => null,
+        'SOURCE_URL' => null,
         'NAME' => null,
         'ORIGINAL_NAME' => null,
         'EXTENSION' => null,
@@ -58,6 +60,7 @@ class DocumentStorage extends Model
 
     /* Định nghĩa kiểu dữ liệu các attributes */
     protected $casts = [
+        'SAPO_IMAGE_ID' => 'integer',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
     ];

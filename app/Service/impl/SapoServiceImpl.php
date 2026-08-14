@@ -22,16 +22,27 @@ class SapoServiceImpl implements SapoService
 
     public function getProducts(array $query = []): array
     {
+        $skipCount = ! empty($query['skip_count']);
+        unset($query['skip_count']);
+
         $params = $this->normalizeProductQuery($query);
 
         $data = $this->get('/admin/products.json', $params);
         $products = $data['products'] ?? [];
+        $products = is_array($products) ? $products : [];
+
+        if ($skipCount) {
+            return [
+                'products' => $products,
+                'count' => count($products),
+            ];
+        }
 
         $countParams = $params;
         unset($countParams['page'], $countParams['limit'], $countParams['fields'], $countParams['since_id'], $countParams['ids']);
 
         return [
-            'products' => is_array($products) ? $products : [],
+            'products' => $products,
             'count' => $this->getProductsCount($countParams),
         ];
     }
@@ -87,6 +98,19 @@ class SapoServiceImpl implements SapoService
 
         $data = $this->get('/admin/smart_collections.json', $params);
         $items = $data['smart_collections'] ?? [];
+
+        return is_array($items) ? $items : [];
+    }
+
+    public function getCollects(array $query = []): array
+    {
+        $params = array_merge([
+            'limit' => 250,
+            'page' => 1,
+        ], $query);
+
+        $data = $this->get('/admin/collects.json', $params);
+        $items = $data['collects'] ?? [];
 
         return is_array($items) ? $items : [];
     }

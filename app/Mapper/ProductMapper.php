@@ -277,6 +277,9 @@ class ProductMapper
         }
 
         // Biến thể sản phẩm
+        $productDto->danhSachBienThe = [];
+        $optionGroup = trim((string) ($product->ATTR3 ?? ''));
+        $productDto->tenNhomBienThe = $optionGroup !== '' ? $optionGroup : 'Phân loại';
         if (isset($product->variants) && count($product->variants) > 0) {
             foreach ($product->variants as $index => $variant) {
                 $bienTheSanPham = ProductVariantDetailDto::createEmpty();
@@ -284,12 +287,14 @@ class ProductMapper
                 $bienTheSanPham->productId = $product->ID;
                 $bienTheSanPham->productStatus = $variant->PRODUCT_STATUS;
                 $bienTheSanPham->productColor = $variant->PRODUCT_COLOR;
+                $bienTheSanPham->title = $variant->ATTR4 ?: $variant->PRODUCT_COLOR;
                 $bienTheSanPham->productStorage = $variant->PRODUCT_STORAGE;
                 $bienTheSanPham->isContactPrice = $variant->IS_CONTACT_PRICE;
                 $bienTheSanPham->productPrice = $variant->PRODUCT_PRICE;
                 $bienTheSanPham->productOriginalPrice = $variant->PRODUCT_ORIGINAL_PRICE;
                 $bienTheSanPham->isInStock = $variant->IS_IN_STOCK;
                 $bienTheSanPham->isActive = $variant->IS_ACTIVE;
+                $bienTheSanPham->danhSachHinhAnhDaiDien = [];
 
                 $bienTheSanPham->crtId = $variant->CRT_ID;
                 $bienTheSanPham->crtName = $variant->CRT_NAME;
@@ -328,9 +333,10 @@ class ProductMapper
                     $hinhAnhDaiDien->updDt = $file->UPD_DT;
                     if (!is_null($file->IS_ACTIVE)) $hinhAnhDaiDien->isActive = filter_var($file->IS_ACTIVE, FILTER_VALIDATE_BOOLEAN);
 
-                    // Thêm vào danh sách mảng
-                    $productDto->danhSachHinhAnhDaiDien[] = $hinhAnhDaiDien;
+                    $bienTheSanPham->danhSachHinhAnhDaiDien[] = $hinhAnhDaiDien;
                 }
+
+                $productDto->danhSachBienThe[] = $bienTheSanPham;
             }
         }
         
