@@ -83,15 +83,44 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                 ->where('pds.ATTR1', '=', 'DANH_SACH_HINH_ANH')
                 ->where('pds.STATUS', '=', AppConstant::STATUS_USING);
 
+        // Một sản phẩm có thể thuộc nhiều danh mục. Chỉ join một danh mục đại diện
+        // để mỗi sản phẩm luôn có đúng một dòng trong list/pagination.
+        $categoryQuery = DB::table('product_category AS pc')
+                ->join('category_p AS category', function ($join) use ($isApiPublic) {
+                    $join->on('category.ID', '=', 'pc.CATEGORY_ID')
+                        ->where('category.STATUS', '=', AppConstant::STATUS_USING);
+                    if ($isApiPublic === true) {
+                        $join->where('category.IS_ACTIVE', true);
+                    }
+                })
+                ->where('pc.STATUS', '=', AppConstant::STATUS_USING)
+                ->when($isApiPublic === true, fn ($q) => $q->where('pc.IS_ACTIVE', true))
+                ->select([
+                    'pc.PRODUCT_ID',
+                    'category.ID',
+                    'category.NAME',
+                    'category.PARENT_ID',
+                    'category.SORT_ORDER',
+                    'category.DESCRIPTION',
+                    'category.TREE_LEVEL',
+                    'category.CRT_ID',
+                    'category.CRT_NAME',
+                    'category.CRT_DT',
+                    'category.UPD_ID',
+                    'category.UPD_NAME',
+                    'category.UPD_DT',
+                    'category.IS_ACTIVE',
+                ])
+                ->selectRaw(
+                    'ROW_NUMBER() OVER (PARTITION BY pc.PRODUCT_ID '
+                    . 'ORDER BY category.TREE_LEVEL ASC, category.SORT_ORDER ASC, pc.ID ASC) AS ROW_NUM'
+                );
+
         // Main query - không còn product_variant
         $query = DB::table('product AS p')
-                ->join('product_category AS pc', function ($join) {
-                    $join->on('p.id', '=', 'pc.product_id')
-                        ->where('pc.STATUS', '=', AppConstant::STATUS_USING);
-                })
-                ->join('category_p AS cp', function ($join) {
-                    $join->on('cp.id', '=', 'pc.category_id')
-                        ->where('cp.STATUS', '=', AppConstant::STATUS_USING);
+                ->joinSub($categoryQuery, 'cp', function ($join) {
+                    $join->on('p.ID', '=', 'cp.PRODUCT_ID')
+                        ->where('cp.ROW_NUM', '=', 1);
                 })
                 ->leftJoin('product_document_storage as pds_avatar', function ($join) {
                     $join->on('p.id', '=', 'pds_avatar.product_id')
@@ -235,19 +264,32 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
         
         
         if ($isApiPublic === true) {
-            $query->where([
-                ['p.IS_ACTIVE', true],
-                ['cp.IS_ACTIVE', true],
-            ]);
+            $query->where('p.IS_ACTIVE', true);
         }
         
         if (!is_null($arrDanhMucSanPhamId) && is_array($arrDanhMucSanPhamId) && count($arrDanhMucSanPhamId) > 0) {
             // Lấy toàn bộ ID danh mục con
             $allCategoryIds = $arrDanhMucSanPhamId;
             $childIds = CategoryP::getAllChildCategoryIds($arrDanhMucSanPhamId, [], $isApiPublic);
-            $allCategoryIds = array_merge($allCategoryIds, $childIds);
+            $allCategoryIds = array_values(array_unique(array_map('intval', array_merge($allCategoryIds, $childIds))));
 
-            $query->whereIn('cp.ID', $allCategoryIds);
+            // Lọc bằng EXISTS trên toàn bộ pivot, không lọc theo danh mục đại diện.
+            // Nhờ vậy sản phẩm multiple-category vẫn lọc đúng nhưng không bị duplicate.
+            $query->whereExists(function ($subquery) use ($allCategoryIds, $isApiPublic) {
+                $subquery->selectRaw('1')
+                    ->from('product_category AS pc_filter')
+                    ->join('category_p AS cp_filter', function ($join) use ($isApiPublic) {
+                        $join->on('cp_filter.ID', '=', 'pc_filter.CATEGORY_ID')
+                            ->where('cp_filter.STATUS', '=', AppConstant::STATUS_USING);
+                        if ($isApiPublic === true) {
+                            $join->where('cp_filter.IS_ACTIVE', true);
+                        }
+                    })
+                    ->whereColumn('pc_filter.PRODUCT_ID', 'p.ID')
+                    ->where('pc_filter.STATUS', '=', AppConstant::STATUS_USING)
+                    ->when($isApiPublic === true, fn ($q) => $q->where('pc_filter.IS_ACTIVE', true))
+                    ->whereIn('pc_filter.CATEGORY_ID', $allCategoryIds);
+            });
         }
 
         if (!is_null($trangThaiHoatDong)) {
@@ -398,6 +440,9 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                 $query->orderBy('p.CRT_DT', 'desc');
             }
         }
+
+        // Tie-breaker cố định để cùng một sản phẩm không nhảy giữa hai trang.
+        $query->orderBy('p.ID', 'asc');
 
         $query = $query->paginate($perPage, ['*'], 'page', $page);
         return $query;

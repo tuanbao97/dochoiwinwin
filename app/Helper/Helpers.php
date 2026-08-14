@@ -474,6 +474,29 @@ use Illuminate\Support\Facades\DB;
         }
     }
 
+    if (!function_exists('storefrontCategoryIconUrl')) {
+        /** Icon minh hoạ danh mục sản phẩm, suy ra từ tên danh mục. */
+        function storefrontCategoryIconUrl(?string $name): string
+        {
+            $n = mb_strtolower(trim((string) $name));
+
+            $file = match (true) {
+                str_contains($n, 'bé gái') || str_contains($n, 'be gai') => 'do-choi-be-gai.svg',
+                str_contains($n, 'vận động') || str_contains($n, 'van dong') => 'do-choi-van-dong.svg',
+                str_contains($n, 'máy bay') || str_contains($n, 'may bay') => 'may-bay-dieu-khien.svg',
+                str_starts_with($n, 'xe ') => 'xe-dieu-khien.svg',
+                str_contains($n, 'vui nhộn') || str_contains($n, 'vui nhon') => 'do-choi-vui-nhon.svg',
+                str_contains($n, 'lắp ghép') || str_contains($n, 'lap ghep') || str_contains($n, 'lego') => 'do-choi-lap-ghep.svg',
+                str_contains($n, 'mô hình') || str_contains($n, 'mo hinh') => 'do-choi-mo-hinh.svg',
+                str_contains($n, 'nước') || str_contains($n, 'nuoc') => 'do-choi-nuoc.svg',
+                str_contains($n, 'giáo dục') || str_contains($n, 'giao duc') => 'do-choi-giao-duc.svg',
+                default => 'do-choi-dieu-khien.svg',
+            };
+
+            return asset('UI-FRONTEND/assets/ww-menu-icons/' . $file);
+        }
+    }
+
     if (!function_exists('storefrontGioQuaPriceRanges')) {
         /**
          * Khoảng giá Giỏ trái cây:

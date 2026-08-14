@@ -11,6 +11,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
@@ -520,6 +521,7 @@ class ThemeStorefrontController extends Controller
             'productVip' => $productVip,
             'pageBasePath' => $pageBasePath,
             'listingMode' => $mode,
+            'listingTopics' => $this->productListingTopics($categoryId),
         ];
 
         if ($listAll && $query === '' && $categoryId <= 0 && ! $productHot && ! $productVip) {
@@ -527,6 +529,55 @@ class ThemeStorefrontController extends Controller
         }
 
         return view('UI-FRONTEND.tim-kiem.ket-qua', $viewData);
+    }
+
+    /**
+     * Dải chủ đề đầu trang danh sách: ưu tiên danh mục con của danh mục đang xem,
+     * nếu danh mục đó không có con thì hiển thị các danh mục cùng cấp.
+     *
+     * @return array<int, array{id: int, name: string, url: string, icon: string, active: bool}>
+     */
+    private function productListingTopics(int $categoryId): array
+    {
+        try {
+            $categories = DB::table('category_p')
+                ->where('STATUS', AppConstant::STATUS_USING)
+                ->where('IS_ACTIVE', true)
+                ->orderBy('SORT_ORDER')
+                ->orderBy('ID')
+                ->get(['ID', 'NAME', 'PARENT_ID']);
+        } catch (Throwable) {
+            return [];
+        }
+
+        $current = $categoryId > 0
+            ? $categories->firstWhere('ID', $categoryId)
+            : null;
+
+        $parentId = null;
+        if ($current !== null) {
+            $hasChildren = $categories->contains(fn ($c) => (int) ($c->PARENT_ID ?? 0) === (int) $current->ID);
+            $parentId = $hasChildren ? (int) $current->ID : ($current->PARENT_ID !== null ? (int) $current->PARENT_ID : null);
+        }
+
+        $topics = [];
+        foreach ($categories as $category) {
+            $itemParent = $category->PARENT_ID !== null ? (int) $category->PARENT_ID : null;
+            if ($itemParent !== $parentId) {
+                continue;
+            }
+
+            $name = (string) $category->NAME;
+            $topics[] = [
+                'id' => (int) $category->ID,
+                'name' => $name,
+                'url' => storefrontProductCategoryUrl((int) $category->ID, $name),
+                'icon' => storefrontCategoryIconUrl($name),
+                'active' => (int) $category->ID === $categoryId,
+            ];
+        }
+
+        return count($topics) > 1 ? $topics : [];
     }
 
     /**

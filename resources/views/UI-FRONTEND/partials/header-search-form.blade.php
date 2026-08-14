@@ -50,8 +50,8 @@
           @php
             $popularKeywords = [
               [
-                'label' => 'Điều khiển từ xa',
-                'url' => storefrontProductCategoryUrl(2001, 'Đồ chơi điều khiển từ xa'),
+                'label' => 'Điều khiển',
+                'url' => storefrontProductCategoryUrl(2001, 'Đồ chơi điều khiển'),
               ],
               [
                 'label' => 'Lắp ghép',
