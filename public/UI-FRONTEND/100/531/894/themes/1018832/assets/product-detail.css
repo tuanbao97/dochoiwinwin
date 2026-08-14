@@ -332,3 +332,135 @@ body:not(.product-detail-loading) #ww-pd-breadcrumb-skeleton {
 }
 
 /* Related / đã xem: dùng chung .ww-product-row-carousel trong cart-drawer.css */
+
+/* Biến thể trang chi tiết — to rõ, dễ chọn (font tối đa 16px) */
+.main-product .ww-pd-variants {
+	margin-top: 0.5rem;
+	margin-bottom: 0.25rem;
+	font-size: 16px;
+}
+
+.main-product .ww-pd-variants > .flex.items-center,
+.main-product .ww-pd-variant-heading {
+	font-size: 16px !important;
+	line-height: 1.45;
+	gap: 0.6rem;
+	margin-bottom: 0.75rem !important;
+}
+
+.main-product #ww-pd-variant-group-label,
+.main-product #ww-pd-variant-label {
+	font-size: 16px !important;
+}
+
+.main-product #ww-pd-variant-group-label {
+	font-weight: 400;
+	color: #374151;
+}
+
+.main-product #ww-pd-variant-label {
+	font-weight: 400;
+	color: #111827;
+}
+
+.main-product .ww-pd-variant-list {
+	gap: 0.75rem !important;
+}
+
+.main-product .ww-pd-variant-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.75rem;
+	max-width: 100%;
+	min-height: 52px;
+	padding: 8px 16px 8px 8px;
+	border: 1.5px solid #d1d5db;
+	border-radius: 10px;
+	background: #fff;
+	color: inherit;
+	font-size: 16px !important;
+	line-height: 1.35;
+	cursor: pointer;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.main-product .ww-pd-variant-btn:not(.has-thumb) {
+	padding-left: 16px;
+}
+
+.main-product .ww-pd-variant-thumb {
+	display: inline-flex;
+	width: 44px !important;
+	height: 44px !important;
+	border-radius: 8px;
+	overflow: hidden;
+	flex-shrink: 0;
+	border: 1px solid transparent;
+	background: var(--color-neutral-50, #f3f4f6);
+}
+
+.main-product .ww-pd-variant-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.main-product .ww-pd-variant-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 16px !important;
+	font-weight: 400;
+}
+
+.main-product .ww-pd-variant-btn:hover {
+	border-color: var(--color-primary, #0ea5e9);
+}
+
+.main-product .ww-pd-variant-btn.is-active {
+	border-color: var(--color-primary, #0ea5e9);
+	box-shadow: 0 0 0 1px var(--color-primary, #0ea5e9);
+	background: color-mix(in srgb, var(--color-primary, #0ea5e9) 8%, white);
+}
+
+.main-product .ww-pd-variant-btn.is-active .ww-pd-variant-thumb {
+	border-color: var(--color-primary, #0ea5e9);
+}
+
+.main-product .ww-pd-variant-btn.is-soldout {
+	opacity: 0.45;
+	cursor: not-allowed;
+	text-decoration: line-through;
+}
+
+.main-product .ww-pd-variants.is-error {
+	outline: 1px solid #ee4d2d;
+	outline-offset: 6px;
+	border-radius: 10px;
+	animation: ww-pd-variant-shake 0.35s ease;
+}
+
+.main-product .ww-pd-variant-error {
+	margin: 0.65rem 0 0;
+	color: #ee4d2d;
+	font-size: 16px !important;
+	font-weight: 600;
+	line-height: 1.4;
+}
+
+.main-product .ww-pd-variants.is-error .ww-pd-variant-error {
+	display: block;
+}
+
+@keyframes ww-pd-variant-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-4px);
+	}
+	75% {
+		transform: translateX(4px);
+	}
+}

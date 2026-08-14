@@ -7,6 +7,7 @@ use App\Enum\PermissionEnum;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Rules\CheckNotExistsFieldRule;
+use App\Service\SapoService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
@@ -50,14 +51,26 @@ class ProductDetailRequest extends FormRequest
             ]
         ];
 
-        // Check tồn tại ID với STATUS IN ['USING', 'SOLD']
-        $rules['ID'][] = function($attribute, $value, $fail) {
+        // Public + Sapo: cho phép ID từ Sapo (không bắt buộc có trong DB local)
+        $rules['ID'][] = function ($attribute, $value, $fail) {
+            $routePrefix = (string) ($this->route()?->getPrefix() ?? '');
+            $isPublic = $routePrefix === AppConstant::PREFIX_API['API_PUBLIC'];
+            if ($isPublic) {
+                try {
+                    if (app(SapoService::class)->isEnabled()) {
+                        return;
+                    }
+                } catch (\Throwable) {
+                    // Fall through to local DB check
+                }
+            }
+
             $exists = DB::table('product')
                 ->where('ID', $value)
                 ->whereIn('STATUS', ['USING', 'SOLD'])
                 ->exists();
-            
-            if (!$exists) {
+
+            if (! $exists) {
                 $locale = app()->getLocale();
                 $messages = json_decode(file_get_contents(resource_path("lang/{$locale}/validation.json")), true);
                 $fail($messages['does_not_exists'] ?? ':attribute không tồn tại.');

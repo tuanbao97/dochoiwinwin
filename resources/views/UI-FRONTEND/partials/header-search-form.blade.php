@@ -10,8 +10,8 @@
           autocomplete="off"
           class="border-0 bg-transparent focus:ring-transparent py-0 pl-1 pr-2 w-full text-base text-foreground text-ellipsis self-center"
           required
-          data-placeholder="Tìm trái cây, giỏ quà, yến sào,...; Tìm theo loại quà...;"
-          placeholder="Tìm trái cây, giỏ quà, yến sào,..."
+          data-placeholder="Tìm đồ chơi, xe điều khiển, lego,...; Tìm theo loại đồ chơi...;"
+          placeholder="Tìm đồ chơi, xe điều khiển, lego,..."
         >
         <button type="submit" aria-label="search" class="search-button btn flex items-center justify-center shrink-0 text-foreground rounded-none rounded-r bg-[var(--color-search)] text-white">
           <i class="icon icon-search"></i>
@@ -50,16 +50,16 @@
           @php
             $popularKeywords = [
               [
-                'label' => 'Giỏ quà trái cây',
-                'url' => storefrontProductCategoryUrl(1004, 'Giỏ quà trái cây'),
+                'label' => 'Điều khiển từ xa',
+                'url' => storefrontProductCategoryUrl(2001, 'Đồ chơi điều khiển từ xa'),
               ],
               [
-                'label' => 'Hộp quà trái cây',
-                'url' => storefrontProductCategoryUrl(1005, 'Hộp quà trái cây'),
+                'label' => 'Lắp ghép',
+                'url' => storefrontProductCategoryUrl(2002, 'Đồ chơi lắp ghép'),
               ],
               [
-                'label' => 'Yến sào chính hãng',
-                'url' => storefrontProductCategoryUrl(1003, 'Yến sào Cao Cấp'),
+                'label' => 'Mô hình',
+                'url' => storefrontProductCategoryUrl(2003, 'Đồ chơi mô hình'),
               ],
             ];
           @endphp

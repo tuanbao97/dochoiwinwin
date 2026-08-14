@@ -36,11 +36,11 @@
     <link rel="stylesheet" href="100/531/894/themes/1018832/assets/icon.css?1768901692132" media="all">
     <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/global.css?ww-scroll-mid-1">
     <link rel="stylesheet" href="100/531/894/themes/1018832/assets/global.css?ww-scroll-mid-1" media="all">
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/custom.css?ww-cart-icon-9-10">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/custom.css?ww-cart-icon-9-10" media="all">
+    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/custom.css?ww-card-corner-fit-4">
+    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/custom.css?ww-card-corner-fit-4" media="all">
     <link
       rel="stylesheet"
-      href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-btn-bold-circle-2"
+      href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-variant-warn-1"
       media="print"
       onload="this.media='all'"
     >
@@ -52,7 +52,7 @@
     >
     <noscript>
       <link
-        href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-btn-bold-circle-2"
+        href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-variant-warn-1"
         rel="stylesheet"
         type="text/css"
         media="all"

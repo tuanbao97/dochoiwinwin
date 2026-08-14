@@ -48,6 +48,13 @@ class ProductController extends Controller
         return $this->productService->getListSanPham($request);
     }
 
+    public function getDetailSanPhamPublic($ID, ProductDetailRequest $request) {
+        $request->merge([
+            'IS_API_PUBLIC' => true
+        ]);
+        return $this->productService->getDetailSanPham($ID, $request);
+    }
+
     public function activeSanPham($ID, ProductActiveRequest $request): mixed {
         return $this->productService->activeSanPham($ID, $request);
     }

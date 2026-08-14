@@ -220,6 +220,7 @@
     destroyQuickViewGallery(gallery);
 
     const emblaMain = EmblaCarousel(mainViewport, {});
+    gallery._wwQvEmblaMain = emblaMain;
     let emblaThumb = null;
 
     const thumbsEl = gallery.querySelector('[id^="GalleryThumbnails"]');
@@ -230,6 +231,7 @@
           containScroll: "keepSnaps",
           dragFree: true,
         });
+        gallery._wwQvEmblaThumb = emblaThumb;
         const thumbSlides = emblaThumb.slideNodes();
         thumbSlides.forEach(function (slide, index) {
           slide.addEventListener(
@@ -276,6 +278,8 @@
     gallery._wwQvTeardown = function () {
       if (prevBtn) prevBtn.removeEventListener("click", onPrev, false);
       if (nextBtn) nextBtn.removeEventListener("click", onNext, false);
+      gallery._wwQvEmblaMain = null;
+      gallery._wwQvEmblaThumb = null;
       emblaMain.destroy();
       if (emblaThumb) emblaThumb.destroy();
     };
@@ -363,7 +367,8 @@
     wrapper.innerHTML = quickViewSkeletonHtml();
   }
 
-  function injectQuickViewHtml(html) {
+  function injectQuickViewHtml(html, options) {
+    options = options || {};
     const wrapper = document.querySelector("#quick-view-product .product-wrapper");
     if (!wrapper) return false;
 
@@ -384,6 +389,22 @@
       wrapper.classList.remove("is-ready");
     }, 320);
     initQuickViewGallery(wrapper);
+    bindQuickViewVariants(wrapper);
+
+    if (options.promptVariant) {
+      window.setTimeout(function () {
+        const liveShell = wrapper.querySelector(".ww-qv-shell") || wrapper;
+        const list = liveShell.querySelector("#ww-qv-variants");
+        if (list) {
+          showVariantRequiredError(liveShell, list);
+        } else if (options.addIfNoVariant) {
+          const addBtn = liveShell.querySelector("#ww-qv-addtocart");
+          if (addBtn && typeof addBtn.click === "function") {
+            addBtn.click();
+          }
+        }
+      }, 60);
+    }
 
     if (window.EGATheme && window.EGATheme.publish && window.themeConfigs) {
       window.EGATheme.publish(window.themeConfigs.productLoaded);
@@ -393,11 +414,343 @@
     return true;
   }
 
+  function formatQvPrice(n) {
+    n = Math.round(Number(n) || 0);
+    if (n <= 0) return "Liên hệ";
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  }
+
+  function normalizeImageKey(url) {
+    if (!url) return "";
+    try {
+      const u = new URL(url, window.location.origin);
+      let path = (u.pathname || "").toLowerCase();
+      path = path.replace(/\/\d+x\d+_([^/]+)$/i, "/$1");
+      return path;
+    } catch (e) {
+      return String(url)
+        .split("?")[0]
+        .toLowerCase()
+        .replace(/\/\d+x\d+_([^/]+)$/i, "/$1");
+    }
+  }
+
+  function findGalleryImageIndex(galleryRoot, imageUrl, preferredIndex) {
+    const slides = galleryRoot
+      ? galleryRoot.querySelectorAll("#ww-qv-gallery-main .embla__slide")
+      : [];
+    if (!slides.length) return -1;
+
+    const pref = parseInt(preferredIndex, 10);
+    if (!isNaN(pref) && pref >= 0 && pref < slides.length) return pref;
+
+    const key = normalizeImageKey(imageUrl);
+    if (!key) return -1;
+
+    for (let i = 0; i < slides.length; i++) {
+      const slide = slides[i];
+      const img = slide.querySelector("img");
+      const candidates = [
+        slide.getAttribute("data-display-src"),
+        slide.getAttribute("data-original-src"),
+        slide.getAttribute("data-src"),
+        img && img.getAttribute("src"),
+        img && img.currentSrc,
+      ];
+      for (let c = 0; c < candidates.length; c++) {
+        const k = normalizeImageKey(candidates[c] || "");
+        if (k && (k === key || k.indexOf(key) !== -1 || key.indexOf(k) !== -1)) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
+  function scrollQuickViewGalleryTo(index) {
+    if (index < 0) return;
+    const gallery = document.querySelector("#quick-view-product media-gallery");
+    if (!gallery) return;
+
+    if (gallery._wwQvEmblaMain && typeof gallery._wwQvEmblaMain.scrollTo === "function") {
+      gallery._wwQvEmblaMain.scrollTo(index);
+      return;
+    }
+    if (gallery.mainGallery && typeof gallery.mainGallery.scrollTo === "function") {
+      gallery.mainGallery.scrollTo(index);
+      return;
+    }
+
+    const slides = gallery.querySelectorAll("#ww-qv-gallery-main .embla__slide");
+    const thumbs = gallery.querySelectorAll("#ww-qv-gallery-thumbs .embla__slide");
+    slides.forEach(function (slide, i) {
+      slide.style.display = i === index ? "" : "none";
+    });
+    thumbs.forEach(function (slide, i) {
+      slide.classList.toggle("embla-thumbs__slide--selected", i === index);
+    });
+  }
+
+  function setQuickViewAddCartEnabled(shell, enabled, hintText) {
+    const addBtn = shell.querySelector("#ww-qv-addtocart");
+    if (!addBtn) return;
+    // Nút luôn bấm được; chỉ khóa khi biến thể đã chọn mà hết hàng
+    const requires = addBtn.getAttribute("data-requires-variant") === "1";
+    const lockSoldout = requires && enabled === false && hintText && /hết hàng/i.test(hintText);
+    addBtn.disabled = !!lockSoldout;
+    addBtn.setAttribute("aria-disabled", lockSoldout ? "true" : "false");
+    addBtn.classList.toggle("opacity-60", !!lockSoldout);
+    addBtn.classList.toggle("pointer-events-none", !!lockSoldout);
+    const hint = addBtn.querySelector("span");
+    if (hint) {
+      hint.textContent = hintText || "Giao hàng tận nơi hoặc nhận tại cửa hàng";
+    }
+  }
+
+  function variantErrorMessage(listRoot) {
+    const group = (listRoot && listRoot.getAttribute("data-group-label")) || "Phân loại";
+    if (!group || /^phân loại$/i.test(group.trim())) {
+      return "Vui lòng chọn Phân loại hàng";
+    }
+    return "Vui lòng chọn " + group;
+  }
+
+  function showVariantRequiredError(shell, listRoot, message) {
+    const box = listRoot || (shell && shell.querySelector("#ww-qv-variants"));
+    if (!box) return;
+    box.classList.add("is-error");
+    const err = box.querySelector("#ww-qv-variant-error") || box.querySelector(".ww-qv-variant-error");
+    if (err) {
+      err.hidden = false;
+      err.textContent = message || variantErrorMessage(box);
+    }
+    try {
+      box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function clearVariantRequiredError(shellOrList) {
+    const box =
+      shellOrList && shellOrList.id === "ww-qv-variants"
+        ? shellOrList
+        : shellOrList && shellOrList.querySelector
+          ? shellOrList.querySelector("#ww-qv-variants")
+          : document.querySelector("#ww-qv-variants");
+    if (!box) return;
+    box.classList.remove("is-error");
+    const err = box.querySelector("#ww-qv-variant-error") || box.querySelector(".ww-qv-variant-error");
+    if (err) err.hidden = true;
+  }
+
+  function quickViewHasSelectedVariant(shell) {
+    if (!shell) return false;
+    const input = shell.querySelector("#ww-qv-variant-id");
+    const id = input && String(input.value || "").trim();
+    if (!id) return false;
+    const active = shell.querySelector("#ww-qv-variants .ww-qv-variant-btn.is-active");
+    return !!active;
+  }
+
+  window.__wwBeforeAddToCart = function (btn, form) {
+    if (!btn || btn.id !== "ww-qv-addtocart") return true;
+    if (btn.getAttribute("data-requires-variant") !== "1") return true;
+    const shell = btn.closest(".ww-qv-shell") || document.getElementById("quick-view-product");
+    const list = shell && shell.querySelector("#ww-qv-variants");
+    if (!quickViewHasSelectedVariant(shell)) {
+      showVariantRequiredError(shell, list);
+      return false;
+    }
+    const active = list && list.querySelector(".ww-qv-variant-btn.is-active");
+    if (active && active.getAttribute("data-in-stock") !== "1") {
+      showVariantRequiredError(shell, list, "Biến thể đã hết hàng");
+      return false;
+    }
+    clearVariantRequiredError(list);
+    return true;
+  };
+
+  function applyQuickViewVariant(btn, root) {
+    if (!btn) return;
+    const shell = root && root.closest ? root.closest(".ww-qv-shell") || root : document;
+    const listRoot = shell.querySelector("#ww-qv-variants") || root;
+    const alreadyActive = btn.classList.contains("is-active");
+
+    // Click lại biến thể đang chọn → bỏ chọn (giống Shopee)
+    if (alreadyActive && listRoot && listRoot.getAttribute("data-require-select") === "1") {
+      listRoot.querySelectorAll(".ww-qv-variant-btn").forEach(function (el) {
+        el.classList.remove("is-active");
+        el.setAttribute("aria-selected", "false");
+      });
+      const label = shell.querySelector("#ww-qv-variant-label");
+      if (label) {
+        label.textContent = "Vui lòng chọn";
+        label.classList.add("text-neutral-300");
+        label.classList.remove("text-foreground");
+      }
+      const minPrice = parseInt(listRoot.getAttribute("data-min-price") || "0", 10) || 0;
+      const minCompare = parseInt(listRoot.getAttribute("data-min-compare") || "0", 10) || 0;
+      const priceEl = shell.querySelector("#ww-qv-price");
+      if (priceEl) {
+        priceEl.innerHTML =
+          minPrice > 0 ? formatQvPrice(minPrice) + '<span class="ww-vnd">&#8363;</span>' : "Liên hệ";
+      }
+      const compareEl = shell.querySelector("#ww-qv-compare");
+      const discountEl = shell.querySelector("#ww-qv-discount");
+      const showCompare = minPrice > 0 && minCompare > minPrice;
+      if (compareEl) {
+        compareEl.classList.toggle("hidden", !showCompare);
+        if (showCompare) {
+          compareEl.innerHTML = formatQvPrice(minCompare) + '<span class="ww-vnd">&#8363;</span>';
+        }
+      }
+      if (discountEl) {
+        const pct = showCompare
+          ? Math.min(99, Math.max(1, Math.round((1 - minPrice / minCompare) * 100)))
+          : 0;
+        discountEl.classList.toggle("hidden", pct <= 0);
+        if (pct > 0) discountEl.textContent = "-" + pct + "%";
+      }
+      const skuEl = shell.querySelector("#ww-qv-sku");
+      const productSku = listRoot.getAttribute("data-product-sku") || "";
+      if (skuEl && productSku) skuEl.textContent = productSku;
+      const stockEl = shell.querySelector("#ww-qv-stock");
+      if (stockEl) {
+        stockEl.textContent = "Còn hàng";
+        stockEl.classList.add("text-success");
+        stockEl.classList.remove("text-danger");
+      }
+      const variantInput = shell.querySelector("#ww-qv-variant-id");
+      if (variantInput) variantInput.value = "";
+      const titleInput = shell.querySelector("#ww-qv-variant-title");
+      if (titleInput) titleInput.value = "";
+      const priceInput = shell.querySelector("#ww-qv-price-input");
+      if (priceInput) priceInput.value = String(minPrice || 0);
+      const addBtn = shell.querySelector("#ww-qv-addtocart");
+      if (addBtn) addBtn.dataset.variantId = "";
+      setQuickViewAddCartEnabled(shell, true, "Giao hàng tận nơi hoặc nhận tại cửa hàng");
+      return;
+    }
+
+    clearVariantRequiredError(listRoot);
+
+    const id = btn.getAttribute("data-variant-id") || "";
+    const title = btn.getAttribute("data-title") || "";
+    const price = parseInt(btn.getAttribute("data-price") || "0", 10) || 0;
+    const compare = parseInt(btn.getAttribute("data-compare") || "0", 10) || 0;
+    const inStock = btn.getAttribute("data-in-stock") === "1";
+    const image = btn.getAttribute("data-image") || "";
+    const imageIndexAttr = btn.getAttribute("data-image-index");
+
+    if (listRoot) {
+      listRoot.querySelectorAll(".ww-qv-variant-btn").forEach(function (el) {
+        el.classList.toggle("is-active", el === btn);
+        el.setAttribute("aria-selected", el === btn ? "true" : "false");
+      });
+    }
+
+    const label = shell.querySelector("#ww-qv-variant-label");
+    if (label) {
+      label.textContent = title;
+      label.classList.remove("text-neutral-300");
+      label.classList.add("text-foreground");
+    }
+
+    const priceEl = shell.querySelector("#ww-qv-price");
+    if (priceEl) {
+      priceEl.innerHTML =
+        price > 0 ? formatQvPrice(price) + '<span class="ww-vnd">&#8363;</span>' : "Liên hệ";
+    }
+
+    const compareEl = shell.querySelector("#ww-qv-compare");
+    const discountEl = shell.querySelector("#ww-qv-discount");
+    const showCompare = price > 0 && compare > price;
+    if (compareEl) {
+      compareEl.classList.toggle("hidden", !showCompare);
+      if (showCompare) {
+        compareEl.innerHTML = formatQvPrice(compare) + '<span class="ww-vnd">&#8363;</span>';
+      }
+    }
+    if (discountEl) {
+      const pct = showCompare ? Math.min(99, Math.max(1, Math.round((1 - price / compare) * 100))) : 0;
+      discountEl.classList.toggle("hidden", pct <= 0);
+      if (pct > 0) discountEl.textContent = "-" + pct + "%";
+    }
+
+    const skuEl = shell.querySelector("#ww-qv-sku");
+    if (skuEl && id) skuEl.textContent = id;
+
+    const stockEl = shell.querySelector("#ww-qv-stock");
+    if (stockEl) {
+      stockEl.textContent = inStock ? "Còn hàng" : "Hết hàng";
+      stockEl.classList.toggle("text-success", inStock);
+      stockEl.classList.toggle("text-danger", !inStock);
+    }
+
+    const variantInput = shell.querySelector("#ww-qv-variant-id");
+    if (variantInput) variantInput.value = id;
+    const titleInput = shell.querySelector("#ww-qv-variant-title");
+    if (titleInput) titleInput.value = title;
+    const priceInput = shell.querySelector("#ww-qv-price-input");
+    if (priceInput) priceInput.value = String(price);
+
+    const addBtn = shell.querySelector("#ww-qv-addtocart");
+    if (addBtn) addBtn.dataset.variantId = id;
+    setQuickViewAddCartEnabled(
+      shell,
+      inStock,
+      inStock ? "Giao hàng tận nơi hoặc nhận tại cửa hàng" : "Biến thể đã hết hàng"
+    );
+
+    const galleryRoot = shell.querySelector("media-gallery") || shell;
+    let idx = findGalleryImageIndex(galleryRoot, image, imageIndexAttr);
+    if (idx < 0 && image) {
+      const mainImg = shell.querySelector("#ww-qv-gallery-main .embla__slide img.gallery-main-img");
+      if (mainImg) {
+        mainImg.src = image;
+        const slide = mainImg.closest(".embla__slide");
+        if (slide) {
+          slide.setAttribute("data-src", image);
+          slide.setAttribute("data-original-src", image);
+          slide.setAttribute("data-display-src", image);
+        }
+        idx = 0;
+      }
+    }
+    if (idx >= 0) {
+      scrollQuickViewGalleryTo(idx);
+    }
+
+    if (window.EGATheme && window.EGATheme.publish && window.themeConfigs && window.themeConfigs.variantChanged) {
+      window.EGATheme.publish(window.themeConfigs.variantChanged, {
+        variantId: id,
+        title: title,
+        price: price,
+        image: image,
+        imageIndex: idx,
+      });
+    }
+  }
+
+  function bindQuickViewVariants(root) {
+    const list = (root || document).querySelector("#ww-qv-variants");
+    if (!list || list.dataset.bound === "1") return;
+    list.dataset.bound = "1";
+    list.addEventListener("click", function (e) {
+      const btn = e.target && e.target.closest ? e.target.closest(".ww-qv-variant-btn") : null;
+      if (!btn || !list.contains(btn)) return;
+      e.preventDefault();
+      applyQuickViewVariant(btn, list);
+    });
+  }
+
   let loadingId = 0;
 
-  function loadProduct(id) {
+  function loadProduct(id, options) {
     if (!id) return;
     loadingId = id;
+    options = options || {};
 
     const wrapper = document.querySelector("#quick-view-product .product-wrapper");
     if (wrapper) {
@@ -416,7 +769,7 @@
       })
       .then(function (html) {
         if (loadingId !== id) return;
-        if (!injectQuickViewHtml(html)) throw new Error("empty");
+        if (!injectQuickViewHtml(html, options)) throw new Error("empty");
       })
       .catch(function () {
         if (loadingId !== id) return;
@@ -429,6 +782,9 @@
   }
 
   window.wwOpenQuickView = loadProduct;
+  window.wwOpenQuickViewForCart = function (id) {
+    loadProduct(parseInt(id, 10) || 0, { promptVariant: true, addIfNoVariant: true });
+  };
   window.wwQuickViewClick = function (e, btn) {
     if (e) {
       e.preventDefault();

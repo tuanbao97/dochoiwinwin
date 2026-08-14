@@ -10,6 +10,7 @@ use App\Models\CategoryP;
 use App\Repository\CategoryPDocumentStorageRepository;
 use App\Repository\CategoryPRepository;
 use App\Service\CategoryPService;
+use App\Service\SapoService;
 use App\Utils\PaginationUtils;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,10 +24,16 @@ class CategoryPServiceImpl implements CategoryPService
 
     private CategoryPDocumentStorageRepository $categoryPDocumentStorageRepository;
 
-    public function __construct(CategoryPRepository $categoryPRepository, CategoryPDocumentStorageRepository $categoryPDocumentStorageRepository)
-    {
+    private SapoService $sapoService;
+
+    public function __construct(
+        CategoryPRepository $categoryPRepository,
+        CategoryPDocumentStorageRepository $categoryPDocumentStorageRepository,
+        SapoService $sapoService
+    ) {
         $this->categoryPRepository = $categoryPRepository;
         $this->categoryPDocumentStorageRepository = $categoryPDocumentStorageRepository;
+        $this->sapoService = $sapoService;
     }
 
     /**
@@ -45,6 +52,9 @@ class CategoryPServiceImpl implements CategoryPService
         }
 
         $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+        // Menu / section danh mục luôn lấy từ DB local (seed folder Đồ chơi Win Win).
+        // Sapo chỉ dùng cho sản phẩm, không override cây danh mục.
         $resultPagination = $this->categoryPRepository->getListDanhMucSanPhamWithChilds($isApiPublic, $page, $perPage);
 
         // Mapping entity to dto

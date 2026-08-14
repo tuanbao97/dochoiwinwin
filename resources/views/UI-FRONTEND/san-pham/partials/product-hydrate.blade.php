@@ -22,6 +22,10 @@
 
   function joinAppUrl(pathRel, updDt) {
     if (!pathRel) return '';
+    if (window.wwStorefrontImage && window.wwStorefrontImage.resolveMediaUrl) {
+      return window.wwStorefrontImage.resolveMediaUrl(pathRel, updDt, cfg.appUrl);
+    }
+    if (/^https?:\/\//i.test(String(pathRel))) return String(pathRel);
     var url = cfg.appUrl + '/' + String(pathRel).replace(/^\/+/, '');
     return (window.wwStorefrontImage && window.wwStorefrontImage.appendUpdTime)
       ? window.wwStorefrontImage.appendUpdTime(url, updDt)
@@ -36,6 +40,7 @@
 
   function relativeDisplayImagePathFromImg(img) {
     if (!img) return '';
+    if (img.PATH && /^https?:\/\//i.test(String(img.PATH))) return String(img.PATH);
     var fname = img.IMAGE_THUMNAIL || img.NAME || '';
     // Gallery / thumbnail: luôn dùng bản crop aspect ratio (mặc định 1x1)
     var ar = (img.ASPECT_RATIO && String(img.ASPECT_RATIO).trim()) || '1x1';
@@ -49,6 +54,7 @@
   /** Ảnh gốc (không prefix aspect ratio) — lightbox + download */
   function relativeOriginalImagePathFromImg(img) {
     if (!img) return '';
+    if (img.PATH && /^https?:\/\//i.test(String(img.PATH))) return String(img.PATH);
     var fname = img.IMAGE_THUMNAIL || img.NAME || '';
     // Ưu tiên DIRECTORY/NAME — đúng file gốc lúc upload
     if (img.DIRECTORY && fname) {
@@ -97,6 +103,11 @@
     }
     push(p.DANH_SACH_HINH_ANH_DAI_DIEN);
     push(p.DANH_SACH_HINH_ANH);
+    if (Array.isArray(p.DANH_SACH_BIEN_THE)) {
+      p.DANH_SACH_BIEN_THE.forEach(function (v) {
+        if (v) push(v.DANH_SACH_HINH_ANH_DAI_DIEN);
+      });
+    }
     if (!items.length) {
       items.push({
         display: cfg.defaultImg,
@@ -281,6 +292,346 @@
       .replace(/>/g, '&gt;');
   }
 
+  function normalizeImgKey(url) {
+    var u = String(url || '').trim();
+    if (!u) return '';
+    try {
+      var a = document.createElement('a');
+      a.href = u;
+      u = a.pathname || u;
+    } catch (e) {
+      u = u.split('?')[0].split('#')[0];
+    }
+    return String(u)
+      .replace(/\/\d+x\d+_([^\/?#]+)(\?[^#]*)?(#.*)?$/i, '/$1')
+      .toLowerCase();
+  }
+
+  function variantImageUrl(v, productUpd) {
+    var list = v && v.DANH_SACH_HINH_ANH_DAI_DIEN;
+    if (!Array.isArray(list) || !list[0]) return '';
+    var img = list[0];
+    var path = '';
+    if (img.PATH && /^https?:\/\//i.test(String(img.PATH))) {
+      path = String(img.PATH);
+    } else {
+      path = relativeDisplayImagePathFromImg(img) || relativeOriginalImagePathFromImg(img);
+    }
+    if (!path) return '';
+    var upd = (window.wwStorefrontImage && window.wwStorefrontImage.pickUpdTime)
+      ? window.wwStorefrontImage.pickUpdTime({ UPD_DT: productUpd }, img)
+      : (productUpd || img.UPD_DT || '');
+    return joinAppUrl(path, upd);
+  }
+
+  function parseVariants(p, imageUrls) {
+    var raw = Array.isArray(p.DANH_SACH_BIEN_THE) ? p.DANH_SACH_BIEN_THE : [];
+    var keys = (imageUrls || []).map(normalizeImgKey);
+    var productUpd = p.UPD_DT || '';
+    var out = [];
+    raw.forEach(function (v) {
+      if (!v) return;
+      var title = String(v.TEN_BIEN_THE || v.MAU_SAC || '').trim() || 'Mặc định';
+      var img = variantImageUrl(v, productUpd);
+      var imageIndex = -1;
+      if (img) {
+        var vBase = imageFileName(img);
+        for (var i = 0; i < keys.length; i++) {
+          if (vBase && imageFileName(keys[i]) === vBase) {
+            imageIndex = i;
+            break;
+          }
+        }
+      }
+      out.push({
+        id: Number(v.ID || 0),
+        title: title,
+        price: Math.round(Number(v.GIA_BAN) || 0),
+        compare: Math.round(Number(v.GIA_GOC) || 0),
+        inStock: !!(v.CON_HANG === true || v.CON_HANG === 1 || v.CON_HANG === '1'),
+        image: img,
+        imageIndex: imageIndex,
+      });
+    });
+    return out;
+  }
+
+  function productHasVariants(variants) {
+    if (!variants || !variants.length) return false;
+    if (variants.length > 1) return true;
+    var t = String(variants[0].title || '').toLowerCase();
+    return t !== 'default title' && t !== 'mặc định' && t !== 'mac dinh';
+  }
+
+  function updatePriceUi(priceInt, compareInt, isContactPrice, displayText) {
+    var priceLabel = isContactPrice
+      ? 'Liên hệ'
+      : (displayText || (priceInt > 0 ? formatPriceShortVnd(priceInt) : 'Liên hệ'));
+    var priceEl = document.getElementById('ww-pd-price');
+    if (priceEl) priceEl.textContent = priceLabel;
+    var priceInput = document.getElementById('ww-pd-product-price');
+    if (priceInput) priceInput.value = String(priceInt > 0 ? priceInt : 0);
+    var compareEl = document.getElementById('ww-pd-compare');
+    var badge = document.getElementById('ww-pd-badge');
+    if (compareEl) {
+      compareEl.hidden = true;
+      compareEl.textContent = '';
+    }
+    if (badge) {
+      badge.hidden = true;
+      badge.textContent = '';
+    }
+    if (!isContactPrice && !displayText && priceInt > 0 && compareInt > priceInt) {
+      if (compareEl) {
+        compareEl.textContent = formatPriceShortVnd(compareInt);
+        compareEl.hidden = false;
+      }
+      if (badge) {
+        var pct = Math.min(99, Math.max(1, Math.round((1 - priceInt / compareInt) * 100)));
+        badge.textContent = '-' + pct + '%';
+        badge.hidden = false;
+      }
+    }
+  }
+
+  function setStockUi(inStock, productSold) {
+    var isSold = !!productSold || !inStock;
+    var stockLabel = document.getElementById('ww-pd-stock-label');
+    if (stockLabel) {
+      stockLabel.textContent = isSold ? 'Hết hàng' : 'Còn hàng';
+      stockLabel.classList.toggle('text-error', isSold);
+      stockLabel.classList.toggle('text-success', !isSold);
+    }
+    var soldOutBtn = document.getElementById('ww-pd-soldout');
+    var cartForm = document.getElementById('add-to-cart-form');
+    if (soldOutBtn) soldOutBtn.classList.toggle('hidden', !isSold);
+    if (cartForm) cartForm.classList.toggle('hidden', isSold);
+  }
+
+  function clearVariantError() {
+    var box = document.getElementById('ww-pd-variants');
+    var err = document.getElementById('ww-pd-variant-error');
+    if (box) box.classList.remove('is-error');
+    if (err) err.hidden = true;
+  }
+
+  function showVariantError() {
+    var box = document.getElementById('ww-pd-variants');
+    var err = document.getElementById('ww-pd-variant-error');
+    if (box) {
+      box.classList.add('is-error');
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (err) err.hidden = false;
+  }
+
+  function imageFileName(url) {
+    var k = normalizeImgKey(url);
+    return (k.split('/').pop() || '').split('?')[0];
+  }
+
+  function findPdGalleryImageIndex(imageUrl, preferredIndex) {
+    var slides = document.querySelectorAll('#ww-pd-gallery-main .embla__slide');
+    if (!slides.length) return -1;
+
+    var want = imageFileName(imageUrl);
+    if (want) {
+      for (var i = 0; i < slides.length; i++) {
+        var slide = slides[i];
+        var img = slide.querySelector('img');
+        var candidates = [
+          slide.getAttribute('data-display-src'),
+          slide.getAttribute('data-original-src'),
+          slide.getAttribute('data-src'),
+          img && img.getAttribute('src'),
+        ];
+        for (var c = 0; c < candidates.length; c++) {
+          if (imageFileName(candidates[c] || '') === want) return i;
+        }
+      }
+    }
+
+    var pref = parseInt(preferredIndex, 10);
+    if (!isNaN(pref) && pref >= 0 && pref < slides.length) return pref;
+    return -1;
+  }
+
+  function scrollPdGalleryTo(index, imageUrl) {
+    var gallery = document.querySelector('#ww-pd-product-form media-gallery');
+    var slides = document.querySelectorAll('#ww-pd-gallery-main .embla__slide');
+    var thumbs = document.querySelectorAll('#ww-pd-gallery-thumbs .embla__slide');
+    if (!slides.length) return;
+
+    if (index >= 0 && index < slides.length) {
+      if (gallery && gallery.mainGallery && typeof gallery.mainGallery.scrollTo === 'function') {
+        gallery.mainGallery.scrollTo(index);
+      } else if (gallery && typeof gallery.slideTo === 'function') {
+        gallery.slideTo(index);
+      }
+      if (gallery && gallery.thumbGallery && typeof gallery.thumbGallery.scrollTo === 'function') {
+        gallery.thumbGallery.scrollTo(index);
+      }
+      if (thumbs[index]) {
+        thumbs[index].click();
+      }
+      thumbs.forEach(function (slide, i) {
+        slide.classList.toggle('embla-thumbs__slide--selected', i === index);
+      });
+      return;
+    }
+
+    if (!imageUrl) return;
+    var currentIdx =
+      gallery && gallery.mainGallery && typeof gallery.mainGallery.selectedScrollSnap === 'function'
+        ? gallery.mainGallery.selectedScrollSnap()
+        : 0;
+    var slide = slides[currentIdx] || slides[0];
+    var mainImg = slide.querySelector('img.gallery-main-img') || slide.querySelector('img');
+    if (mainImg) mainImg.src = imageUrl;
+    slide.setAttribute('data-src', imageUrl);
+    slide.setAttribute('data-original-src', imageUrl);
+    slide.setAttribute('data-display-src', imageUrl);
+  }
+
+  function selectPdVariant(btn, opts) {
+    opts = opts || {};
+    var box = document.getElementById('ww-pd-variants');
+    if (!box || !btn) return;
+    box.querySelectorAll('.ww-pd-variant-btn').forEach(function (el) {
+      el.classList.toggle('is-active', el === btn);
+    });
+    clearVariantError();
+
+    var title = btn.getAttribute('data-title') || '';
+    var price = Math.round(Number(btn.getAttribute('data-price')) || 0);
+    var compare = Math.round(Number(btn.getAttribute('data-compare')) || 0);
+    var inStock = btn.getAttribute('data-in-stock') === '1';
+    var variantId = btn.getAttribute('data-variant-id') || '';
+    var imageRel = btn.getAttribute('data-image-rel') || '';
+    var imageUrl = btn.getAttribute('data-image') || '';
+    var imageIndexAttr = btn.getAttribute('data-image-index');
+
+    var label = document.getElementById('ww-pd-variant-label');
+    if (label) label.textContent = title || 'Đã chọn';
+
+    var variantInput = document.getElementById('ww-pd-variant-id');
+    if (variantInput) variantInput.value = String(variantId);
+    var titleInput = document.getElementById('ww-pd-variant-title');
+    if (titleInput) titleInput.value = title;
+
+    updatePriceUi(price, compare, price <= 0, '');
+    setStockUi(inStock, false);
+
+    var imgInput = document.getElementById('ww-pd-product-image');
+    if (imgInput && (imageRel || imageUrl)) imgInput.value = imageRel || imageUrl;
+
+    if (!opts.skipGallery) {
+      var idx = findPdGalleryImageIndex(imageUrl, imageIndexAttr);
+      scrollPdGalleryTo(idx, imageUrl);
+    }
+  }
+
+  function bindPdVariants() {
+    var box = document.getElementById('ww-pd-variants');
+    if (!box || box.dataset.bound === '1') return;
+    box.dataset.bound = '1';
+    box.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('.ww-pd-variant-btn') : null;
+      if (!btn || btn.classList.contains('is-soldout')) return;
+      selectPdVariant(btn);
+    });
+
+    window.__wwBeforeAddToCart = function (btn, form) {
+      var inDetail = !!(form && form.id === 'add-to-cart-form') || !!(btn && btn.closest && btn.closest('#ww-pd-product-form'));
+      if (!inDetail) return true;
+      var list = document.getElementById('ww-pd-variants');
+      if (!list || list.hidden || list.getAttribute('data-requires-variant') !== '1') return true;
+      var active = list.querySelector('.ww-pd-variant-btn.is-active');
+      if (active) {
+        clearVariantError();
+        return true;
+      }
+      showVariantError();
+      return false;
+    };
+  }
+
+  function renderVariants(p, imgs) {
+    var box = document.getElementById('ww-pd-variants');
+    var list = document.getElementById('ww-pd-variant-list');
+    if (!box || !list) return { hasVariants: false, variants: [] };
+
+    var variants = parseVariants(p, imgs.urls || []);
+    var hasVariants = productHasVariants(variants);
+    var groupLabel = String(p.TEN_NHOM_BIEN_THE || 'Phân loại').trim() || 'Phân loại';
+
+    var groupLabelEl = document.getElementById('ww-pd-variant-group-label');
+    if (groupLabelEl) groupLabelEl.textContent = groupLabel;
+    var err = document.getElementById('ww-pd-variant-error');
+    if (err) {
+      err.textContent =
+        'Vui lòng chọn ' + (groupLabel.toLowerCase() === 'phân loại' ? 'Phân loại hàng' : groupLabel);
+    }
+    if (list) list.setAttribute('aria-label', groupLabel);
+
+    ['ww-pd-addtocart', 'ww-pd-buynow'].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.setAttribute('data-requires-variant', hasVariants ? '1' : '0');
+    });
+    box.setAttribute('data-requires-variant', hasVariants ? '1' : '0');
+
+    if (!hasVariants) {
+      box.hidden = true;
+      list.innerHTML = '';
+      return { hasVariants: false, variants: variants };
+    }
+
+    var html = '';
+    variants.forEach(function (v) {
+      var thumb = v.image || (imgs.urls && imgs.urls[0]) || '';
+      html +=
+        '<button type="button" class="ww-pd-variant-btn' +
+        (v.inStock ? '' : ' is-soldout') +
+        (thumb ? ' has-thumb' : '') +
+        '" role="option" data-variant-id="' +
+        escapeAttr(String(v.id)) +
+        '" data-title="' +
+        escapeAttr(v.title) +
+        '" data-price="' +
+        escapeAttr(String(v.price)) +
+        '" data-compare="' +
+        escapeAttr(String(v.compare)) +
+        '" data-in-stock="' +
+        (v.inStock ? '1' : '0') +
+        '" data-image="' +
+        escapeAttr(v.image) +
+        '" data-image-rel="' +
+        escapeAttr(v.imageIndex >= 0 && imgs.rels ? imgs.rels[v.imageIndex] || '' : '') +
+        '" data-image-index="' +
+        escapeAttr(String(v.imageIndex)) +
+        '" title="' +
+        escapeAttr(v.title) +
+        '">' +
+        (thumb
+          ? '<span class="ww-pd-variant-thumb" aria-hidden="true"><img src="' +
+            escapeAttr(thumb) +
+            '" alt="" width="28" height="28" loading="lazy" decoding="async"></span>'
+          : '') +
+        '<span class="ww-pd-variant-text">' +
+        escapeAttr(v.title) +
+        '</span></button>';
+    });
+    list.innerHTML = html;
+    box.hidden = false;
+    bindPdVariants();
+    clearVariantError();
+
+    var label = document.getElementById('ww-pd-variant-label');
+    if (label) label.textContent = 'Vui lòng chọn';
+
+    return { hasVariants: true, variants: variants };
+  }
+
   function renderAttachments(files) {
     var wrap = document.getElementById('ww-pd-attachments');
     var list = document.getElementById('ww-pd-attachments-list');
@@ -322,16 +673,15 @@
   function renderProduct(p) {
     var title = p.TEN_SAN_PHAM || 'Sản phẩm';
     var priceInt = Math.round(Number(p.GIA_CA) || 0);
+    var compareInt = Math.round(Number(p.GIA_GOC) || 0);
     var displayText = p.GIA_HIEN_THI != null ? String(p.GIA_HIEN_THI).trim() : '';
     var isContactPrice =
       p.IS_GIA_CA_LIEN_HE === true ||
       p.IS_GIA_CA_LIEN_HE === 1 ||
       p.IS_GIA_CA_LIEN_HE === '1';
-    var priceLabel = isContactPrice
-      ? 'Liên hệ'
-      : displayText || (priceInt > 0 ? formatPriceShortVnd(priceInt) : 'Liên hệ');
     var slug = (p.TEN_SAN_PHAM_SLUG && String(p.TEN_SAN_PHAM_SLUG).trim()) || 'sp';
     var imgs = collectImages(p);
+    var productSold = String(p.TRANG_THAI || '').toUpperCase() === 'SOLD';
 
     document.title = title + ' — Win Win';
     var metaDesc = document.getElementById('ww-meta-description');
@@ -344,62 +694,58 @@
     setText('ww-page-title', title + ' — Win Win');
     setText('ww-pd-breadcrumb-title', title);
     setText('ww-pd-title', title);
-    setText('ww-pd-price', priceLabel);
 
-    var isSold = String(p.TRANG_THAI || '').toUpperCase() === 'SOLD';
     var metaWrap = document.getElementById('ww-pd-meta');
     var skuEl = document.getElementById('ww-pd-sku');
-    var stockWrap = document.getElementById('ww-pd-stock');
-    var stockLabel = document.getElementById('ww-pd-stock-label');
     if (skuEl) {
       skuEl.textContent = String(p.MA_SAN_PHAM || p.ID || productId || '—');
     }
-    if (stockWrap && stockLabel) {
-      stockLabel.textContent = isSold ? 'Hết hàng' : 'Còn hàng';
-      stockLabel.classList.toggle('text-error', isSold);
-      stockLabel.classList.toggle('text-success', !isSold);
-    }
     if (metaWrap) metaWrap.hidden = false;
-    var soldOutBtn = document.getElementById('ww-pd-soldout');
-    var cartForm = document.getElementById('add-to-cart-form');
-    if (soldOutBtn) soldOutBtn.classList.toggle('hidden', !isSold);
-    if (cartForm) cartForm.classList.toggle('hidden', isSold);
 
     var handleEl = document.getElementById('ww-pd-product-handle');
     if (handleEl) handleEl.value = slug;
     var titleInput = document.getElementById('ww-pd-product-title');
     if (titleInput) titleInput.value = title;
-    var priceInput = document.getElementById('ww-pd-product-price');
-    if (priceInput) priceInput.value = String(priceInt);
     var imgInput = document.getElementById('ww-pd-product-image');
     if (imgInput) imgInput.value = imgs.rels[0] || '';
+
+    var defaultVariantId = String(p.ATTR1 || p.ID || productId || '');
     var variantInput = document.getElementById('ww-pd-variant-id');
-    if (variantInput) variantInput.value = String(p.ID || productId);
+    if (variantInput) variantInput.value = defaultVariantId;
+    var variantTitleInput = document.getElementById('ww-pd-variant-title');
+    if (variantTitleInput) variantTitleInput.value = 'Mặc định';
 
-    var compareEl = document.getElementById('ww-pd-compare');
-    var badge = document.getElementById('ww-pd-badge');
-    if (compareEl) {
-      compareEl.hidden = true;
-      compareEl.textContent = '';
-    }
-    if (badge) {
-      badge.hidden = true;
-      badge.textContent = '';
-    }
-
-    var compareInt = Math.round(Number(p.GIA_GOC) || 0);
-    if (!isContactPrice && !displayText && priceInt > 0 && compareInt > priceInt) {
-      if (compareEl) {
-        compareEl.textContent = formatPriceShortVnd(compareInt);
-        compareEl.hidden = false;
+    var variantState = renderVariants(p, imgs);
+    if (variantState.hasVariants) {
+      // Shopee-style: hiện giá thấp nhất, chưa chọn biến thể
+      var minPrice = 0;
+      var minCompare = 0;
+      var anyInStock = false;
+      variantState.variants.forEach(function (v) {
+        if (v.inStock) anyInStock = true;
+        if (v.price <= 0) return;
+        if (minPrice <= 0 || v.price < minPrice) {
+          minPrice = v.price;
+          minCompare = v.compare || 0;
+        }
+      });
+      if (minPrice > 0) {
+        priceInt = minPrice;
+        compareInt = minCompare;
+        isContactPrice = false;
+        displayText = '';
       }
-      if (badge) {
-        var pct = Math.min(99, Math.max(1, Math.round((1 - priceInt / compareInt) * 100)));
-        badge.textContent = '-' + pct + '%';
-        badge.hidden = false;
+      if (variantInput) variantInput.value = '';
+      if (variantTitleInput) variantTitleInput.value = '';
+      setStockUi(anyInStock, productSold);
+    } else {
+      setStockUi(!productSold, productSold);
+      if (!defaultVariantId && variantState.variants.length === 1 && variantState.variants[0].id) {
+        if (variantInput) variantInput.value = String(variantState.variants[0].id);
       }
     }
 
+    updatePriceUi(priceInt, compareInt, isContactPrice, displayText);
     renderGallery(imgs.items, title);
 
     var desc = p.MO_TA_CHI_TIET || p.MO_TA_NGAN || '';
@@ -418,11 +764,12 @@
         name: title,
         alias: slug,
         price: priceInt,
-        available: !isSold,
+        available: !productSold,
         status: p.TRANG_THAI || 'USING',
         images: imgs.items.map(function (it) {
           return { src: it.display, original: it.original };
         }),
+        variants: variantState.variants,
       });
     }
 
