@@ -8,6 +8,9 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Seed the application's database.
+     *
+     * Deploy chỉ cần đăng nhập admin:
+     *   php artisan db:seed --class=DeployAuthSeeder
      */
     public function run(): void
     {
