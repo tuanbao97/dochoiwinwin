@@ -18,7 +18,7 @@
           <span class="ww-topics__thumb">
             <img src="{{ $topic['icon'] }}" alt="{{ $topic['name'] }}" width="72" height="72" loading="lazy">
           </span>
-          <span class="ww-topics__label">{{ $topic['name'] }}</span>
+          <span class="ww-topics__label">{{ storefrontMenuLabel($topic['name']) }}</span>
         </a>
       @endforeach
     </div>

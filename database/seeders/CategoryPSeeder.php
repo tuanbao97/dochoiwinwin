@@ -29,6 +29,11 @@ class CategoryPSeeder extends Seeder
             $this->row(2009, 'Xe điều khiển', 1, 1, 2001, sapoCollectionId: '4346833'),
             $this->row(2008, 'Máy bay điều khiển', 2, 1, 2001, sapoCollectionId: '4346832'),
             $this->row(2010, 'Đồ chơi điều khiển khác', 3, 1, 2001, sapoCollectionId: '4346834'),
+
+            $this->row(2012, 'Lắp ghép siêu xe, robot', 1, 1, 2002, sapoCollectionId: '4346861'),
+            $this->row(2013, 'Lắp ghép siêu anh hùng', 2, 1, 2002, sapoCollectionId: '4346862'),
+            $this->row(2014, 'Lắp ghép con vật', 3, 1, 2002, sapoCollectionId: '4346863'),
+            $this->row(2015, 'Lắp ghép, xếp hình tổng hợp', 4, 1, 2002, sapoCollectionId: '4346864'),
         ];
 
         foreach ($arrCategoryP as $categoryP) {

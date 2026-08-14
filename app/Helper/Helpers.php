@@ -485,6 +485,10 @@ use Illuminate\Support\Facades\DB;
                 str_contains($n, 'vận động') || str_contains($n, 'van dong') => 'do-choi-van-dong.svg',
                 str_contains($n, 'máy bay') || str_contains($n, 'may bay') => 'may-bay-dieu-khien.svg',
                 str_starts_with($n, 'xe ') => 'xe-dieu-khien.svg',
+                str_contains($n, 'siêu xe') || str_contains($n, 'sieu xe') => 'lap-ghep-xe-dua.svg',
+                str_contains($n, 'siêu anh hùng') || str_contains($n, 'sieu anh hung') => 'lap-ghep-sieu-anh-hung.svg',
+                str_contains($n, 'con vật') || str_contains($n, 'con vat') => 'lap-ghep-con-vat.svg',
+                str_contains($n, 'tổng hợp') || str_contains($n, 'tong hop') => 'lap-ghep-tong-hop.svg',
                 str_contains($n, 'vui nhộn') || str_contains($n, 'vui nhon') => 'do-choi-vui-nhon.svg',
                 str_contains($n, 'lắp ghép') || str_contains($n, 'lap ghep') || str_contains($n, 'lego') => 'do-choi-lap-ghep.svg',
                 str_contains($n, 'mô hình') || str_contains($n, 'mo hinh') => 'do-choi-mo-hinh.svg',
@@ -494,6 +498,41 @@ use Illuminate\Support\Facades\DB;
             };
 
             return asset('UI-FRONTEND/assets/ww-menu-icons/' . $file);
+        }
+    }
+
+    if (!function_exists('storefrontMenuLabel')) {
+        /**
+         * Nối các cụm từ khoá bằng non-breaking space để menu không ngắt dòng giữa cụm,
+         * ví dụ "siêu xe" hoặc "điều khiển" luôn nằm trọn trên một dòng.
+         */
+        function storefrontMenuLabel(?string $name): string
+        {
+            $text = trim((string) $name);
+            if ($text === '') {
+                return '';
+            }
+
+            $phrases = [
+                'siêu anh hùng', 'siêu nhân', 'siêu xe', 'xe đua', 'máy bay', 'điều khiển',
+                'lắp ghép', 'xếp hình', 'tổng hợp', 'con vật', 'đồ chơi', 'bé gái',
+                'vui nhộn', 'vận động', 'giáo dục', 'mô hình', 'trẻ em',
+            ];
+
+            foreach ($phrases as $phrase) {
+                $pattern = '/'.implode('[\s\x{00A0}]+', array_map(
+                    static fn ($word) => preg_quote($word, '/'),
+                    explode(' ', $phrase)
+                )).'/iu';
+
+                $text = preg_replace_callback(
+                    $pattern,
+                    static fn (array $m) => preg_replace('/[\s\x{00A0}]+/u', "\u{00A0}", $m[0]),
+                    $text
+                ) ?? $text;
+            }
+
+            return $text;
         }
     }
 

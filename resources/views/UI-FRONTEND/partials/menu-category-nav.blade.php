@@ -35,7 +35,7 @@
         data-prefetch="{{ parse_url($catUrl, PHP_URL_PATH) ?: $catUrl }}"
       >
         <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ $icon }}" alt="{{ $catName }}">
-        <span class="min-w-0 flex-1 leading-snug whitespace-normal break-words">{{ $catName }}</span>
+        <span class="min-w-0 flex-1 leading-snug whitespace-normal break-words">{{ storefrontMenuLabel($catName) }}</span>
         @if ($hasChildren)
           <span class="ml-auto shrink-0 text-neutral-200 flex items-center" data-toggle-submenu="">
             <i class="icon icon-carret-right"></i>
@@ -64,7 +64,7 @@
                 @endphp
                 <li class="submenu__item submenu__item--main font-semibold">
                   <a class="link" title="{{ $childName }}" href="{{ $childUrl }}" data-prefetch="{{ parse_url($childUrl, PHP_URL_PATH) ?: $childUrl }}">
-                    {{ $childName }}
+                    {{ storefrontMenuLabel($childName) }}
                   </a>
                 </li>
               @endforeach
