@@ -17,6 +17,7 @@ enum SettingEnum : string
     case SETTING_MO_TA_CUA_HANG = 'SETTING_MO_TA_CUA_HANG';
     case SETTING_DIA_CHI_CUA_HANG = 'SETTING_DIA_CHI_CUA_HANG';
     case SETTING_DUONG_DAN_GG_MAP_CUA_HANG = 'SETTING_DUONG_DAN_GG_MAP_CUA_HANG';
+    case SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG = 'SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG';
     case SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG = 'SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG';
     case SETTING_DUONG_DAN_SO_ZALO_CUA_HANG = 'SETTING_DUONG_DAN_SO_ZALO_CUA_HANG';
     case SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG = 'SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG';
@@ -57,6 +58,7 @@ enum SettingEnum : string
             self::SETTING_MO_TA_CUA_HANG => 'Setting mô tả cửa hàng',
             self::SETTING_DIA_CHI_CUA_HANG => 'Setting địa chỉ cửa hàng',
             self::SETTING_DUONG_DAN_GG_MAP_CUA_HANG => 'Setting đường dẫn Google map cửa hàng',
+            self::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG => 'Setting đường dẫn chia sẻ Google Maps cửa hàng',
             self::SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG => 'Setting đường dẫn Trang Zalo cửa hàng',
             self::SETTING_DUONG_DAN_SO_ZALO_CUA_HANG => 'Setting đường dẫn Số Zalo cửa hàng',
             self::SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG => 'Setting đường dẫn Trang Facebook cửa hàng',
@@ -98,6 +100,7 @@ enum SettingEnum : string
             self::SETTING_MO_TA_CUA_HANG => null,
             self::SETTING_DIA_CHI_CUA_HANG => null,
             self::SETTING_DUONG_DAN_GG_MAP_CUA_HANG => null,
+            self::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG => null,
             self::SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG => null,
             self::SETTING_DUONG_DAN_SO_ZALO_CUA_HANG => null,
             self::SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG => null,
@@ -139,6 +142,7 @@ enum SettingEnum : string
             self::SETTING_MO_TA_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DIA_CHI_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_GG_MAP_CUA_HANG => 'SETTING_WEB',
+            self::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_SO_ZALO_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG => 'SETTING_WEB',

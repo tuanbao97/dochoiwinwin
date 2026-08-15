@@ -128,6 +128,7 @@
       description: settingValue(settings, 'SETTING_MO_TA_CUA_HANG'),
       address: settingValue(settings, 'SETTING_DIA_CHI_CUA_HANG'),
       mapUrl: settingValue(settings, 'SETTING_DUONG_DAN_GG_MAP_CUA_HANG'),
+      mapShareUrl: settingValue(settings, 'SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG'),
       zaloPageUrl: settingValue(settings, 'SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG'),
       zaloUrl: settingValue(settings, 'SETTING_DUONG_DAN_SO_ZALO_CUA_HANG'),
       messengerUrl: settingValue(settings, 'SETTING_DUONG_DAN_FACEBOOK_MESSENGER_CUA_HANG'),
@@ -210,9 +211,10 @@
       fillText: (contact.websiteUrl || '').replace(/^https?:\/\//i, '').replace(/\/$/, ''),
     });
     setLinkGroup('map', contact.mapUrl);
-    setLinkGroup('map-link', contact.mapUrl && contact.mapUrl.indexOf('embed') !== -1
-      ? 'https://maps.google.com/?q=' + encodeURIComponent(contact.address || contact.storeName || 'Win Win')
-      : contact.mapUrl);
+    setLinkGroup('map-link', contact.mapShareUrl
+      || (contact.mapUrl && contact.mapUrl.indexOf('embed') !== -1
+        ? 'https://maps.google.com/?q=' + encodeURIComponent(contact.address || contact.storeName || 'Win Win')
+        : contact.mapUrl));
 
     if (contact.workingHours) {
       document.querySelectorAll('[data-ww-contact-slot="hotline-hours"]').forEach(function (el) {

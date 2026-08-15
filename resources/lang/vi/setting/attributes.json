@@ -15,6 +15,7 @@
     , "SETTING_CHINH_SACH_KHACH_HANG_THAN_THIET" : "Chính sách khách hàng thân thiết"
     , "SETTING_CHINH_SACH_THANH_TOAN" : "Chính sách thanh toán"
     , "SETTING_DUONG_DAN_GG_MAP_CUA_HANG" : "Đường dẫn Google maps của cửa hàng"
+    , "SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG" : "Link chia sẻ Google Maps của cửa hàng"
     , "SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG" : "Đường dẫn Trang Zalo của cửa hàng"
     , "SETTING_DUONG_DAN_SO_ZALO_CUA_HANG" : "Đường dẫn số Zalo của cửa hàng"
     , "SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG" : "Đường dẫn Trang Facebook của cửa hàng"
