@@ -459,7 +459,7 @@
 					 		<div class="social-media flex gap-2">
   
   <div class="social-media__image  relative z-[1] aspect-square">
-    <img src="{{ asset('UI-FRONTEND/images/logo-win-win-tron.png') }}" alt="Win Win Trái Cây Nhập Khẩu" loading="lazy" width="50" height="50" class="object-cover rounded-full ">
+    <img src="{{ storefrontLogoUrl() }}" alt="Đồ Chơi Win Win" loading="lazy" width="50" height="50" class="object-cover rounded-full ">
   </div>
    
 	<div class="flex flex-col gap-1 relative z-[1] items-start">

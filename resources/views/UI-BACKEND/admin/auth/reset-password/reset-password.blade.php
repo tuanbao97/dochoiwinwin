@@ -22,7 +22,7 @@
 	href="{{ asset('css/UI-BACKEND/vertical-layout-light/style.css') }}">
 <!-- endinject -->
 <link rel="shortcut icon"
-	href="{{ asset('UI-FRONTEND/images/thiet ke logo win win ngang 4.png') }}" />
+	href="{{ storefrontFaviconUrl() }}" />
 
 <link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/jquery-toast-plugin/jquery.toast.min.css') }}">
 </head>
@@ -75,7 +75,7 @@
 
 							<a href="{{ url('/') }}">
 							<div class="brand-logo" style="text-align: center;">
-								<img src="{{ asset('UI-FRONTEND/images/thiet ke logo win win ngang 4.png') }}" alt="Win Win" style="max-width: 260px; width: 100%; height: auto;">
+								<img src="{{ storefrontLogoUrl() }}" alt="Đồ Chơi Win Win" style="max-width: 180px; width: 100%; height: auto;">
 							</div>
 							</a>
 

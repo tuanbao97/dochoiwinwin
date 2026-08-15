@@ -34,8 +34,17 @@ class ProductSaveRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
+        // Tương thích payload cũ chỉ gửi một DANH_MUC_SAN_PHAM.
+        $categories = $this->input('DANH_MUC_SAN_PHAMS');
+        $legacyCategory = $this->input('DANH_MUC_SAN_PHAM');
+
+        if (!is_array($categories) && is_array($legacyCategory) && !empty($legacyCategory['ID'])) {
+            $categories = [$legacyCategory];
+        }
+
         // Merge các query param từ query param vào input array
         $this->merge([
+            'DANH_MUC_SAN_PHAMS' => $categories,
         ]);
     }
 
@@ -94,10 +103,17 @@ class ProductSaveRequest extends FormRequest
                 , 'integer'
             ]
 
-            , 'DANH_MUC_SAN_PHAM.ID' => [
+            , 'DANH_MUC_SAN_PHAMS' => [
+                'bail'
+                , 'required'
+                , 'array'
+                , 'min:1'
+            ]
+            , 'DANH_MUC_SAN_PHAMS.*.ID' => [
                 'bail'
                 , 'required'
                 , 'integer'
+                , 'distinct'
             ]
             , 'TEN_SAN_PHAM' => [
                 'bail'
@@ -228,8 +244,16 @@ class ProductSaveRequest extends FormRequest
         }
 
         // Check tồn tại danh mục sản phẩm
-        $danhMucSanPhamId = $this->input('DANH_MUC_SAN_PHAM.ID', null);
-        $rules['DANH_MUC_SAN_PHAM.ID'][] = new CheckNotExistsFieldRule('category_p', 'ID', $danhMucSanPhamId, 'USING');
+        $danhMucSanPhams = $this->input('DANH_MUC_SAN_PHAMS', []);
+        if (is_array($danhMucSanPhams)) {
+            foreach ($danhMucSanPhams as $index => $danhMucSanPham) {
+                $danhMucSanPhamId = is_array($danhMucSanPham) ? ($danhMucSanPham['ID'] ?? null) : null;
+                if ($danhMucSanPhamId !== null) {
+                    $rules["DANH_MUC_SAN_PHAMS.{$index}.ID"][] =
+                        new CheckNotExistsFieldRule('category_p', 'ID', $danhMucSanPhamId, 'USING');
+                }
+            }
+        }
 
 
 

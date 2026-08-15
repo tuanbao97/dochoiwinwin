@@ -150,13 +150,18 @@ class ProductServiceImpl implements ProductService
         }
 
         // Xử lý lưu thể loại danh mục sản phẩm
-        $arrDanhMucSanPham = [
-            [
-                'PRODUCT_ID' => $product->ID
-                , 'CATEGORY_ID' => $request->input('DANH_MUC_SAN_PHAM.ID')
-                , 'IS_ACTIVE' => true
-            ]
-        ];
+        $arrDanhMucSanPham = collect($request->input('DANH_MUC_SAN_PHAMS', []))
+            ->pluck('ID')
+            ->filter(fn ($categoryId) => is_numeric($categoryId))
+            ->map(fn ($categoryId) => (int) $categoryId)
+            ->unique()
+            ->values()
+            ->map(fn ($categoryId) => [
+                'PRODUCT_ID' => $product->ID,
+                'CATEGORY_ID' => $categoryId,
+                'IS_ACTIVE' => true,
+            ])
+            ->all();
         // Lưu danh mục sản phẩm
         self::handleSaveDanhMucSanPhams($product->ID, $arrDanhMucSanPham);
 

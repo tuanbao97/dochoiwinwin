@@ -521,7 +521,10 @@ class ThemeStorefrontController extends Controller
             'productVip' => $productVip,
             'pageBasePath' => $pageBasePath,
             'listingMode' => $mode,
-            'listingTopics' => $this->productListingTopics($categoryId),
+            'listingTopics' => $this->productListingTopics(
+                $categoryId,
+                $listAll && $query === '' && $categoryId <= 0 && ! $productHot && ! $productVip
+            ),
         ];
 
         if ($listAll && $query === '' && $categoryId <= 0 && ! $productHot && ! $productVip) {
@@ -537,7 +540,7 @@ class ThemeStorefrontController extends Controller
      *
      * @return array<int, array{id: int, name: string, url: string, icon: string, active: bool}>
      */
-    private function productListingTopics(int $categoryId): array
+    private function productListingTopics(int $categoryId, bool $isGlobalAll = false): array
     {
         try {
             $categories = DB::table('category_p')
@@ -555,12 +558,32 @@ class ThemeStorefrontController extends Controller
             : null;
 
         $parentId = null;
+        $scopeParent = null;
         if ($current !== null) {
             $hasChildren = $categories->contains(fn ($c) => (int) ($c->PARENT_ID ?? 0) === (int) $current->ID);
             $parentId = $hasChildren ? (int) $current->ID : ($current->PARENT_ID !== null ? (int) $current->PARENT_ID : null);
+
+            if ($hasChildren) {
+                $scopeParent = $current;
+            } elseif ($current->PARENT_ID !== null) {
+                $scopeParent = $categories->firstWhere('ID', (int) $current->PARENT_ID);
+            }
         }
 
-        $topics = [];
+        // Trong nhóm cha–con, "Tất cả" là danh mục cha.
+        // Ở cấp root, "Tất cả" là toàn bộ catalog.
+        $topics = [[
+            'id' => $scopeParent !== null ? (int) $scopeParent->ID : 0,
+            'name' => 'Tất cả',
+            'url' => $scopeParent !== null
+                ? storefrontProductCategoryUrl((int) $scopeParent->ID, (string) $scopeParent->NAME)
+                : url('/tat-ca-san-pham'),
+            'icon' => asset('UI-FRONTEND/assets/ww-menu-icons/chu-de-tat-ca.svg'),
+            'active' => $scopeParent !== null
+                ? $categoryId === (int) $scopeParent->ID
+                : $isGlobalAll,
+        ]];
+
         foreach ($categories as $category) {
             $itemParent = $category->PARENT_ID !== null ? (int) $category->PARENT_ID : null;
             if ($itemParent !== $parentId) {

@@ -601,40 +601,6 @@
       });
   }
 
-  /** Tab riêng "Mẫu giỏ trái cây đẹp" bị ẩn — sản phẩm vẫn nằm trong tab Tất cả (parent) */
-  function isGioTraiCayDepChild(child) {
-    if (!child) return false;
-    if (Number(child.ID) === 1041) return true;
-    var name = String(child.TEN_DANH_MUC_SAN_PHAM || '').toLowerCase();
-    return (
-      name.indexOf('mẫu giỏ trái cây đẹp') !== -1 ||
-      name.indexOf('giỏ trái cây đẹp') !== -1
-    );
-  }
-
-  function getGioQuaVisibleChildren(cat) {
-    return getCategoryChildren(cat).filter(function (c) {
-      return !isGioTraiCayDepChild(c);
-    });
-  }
-
-  function hasChildCategoryTabs(cat) {
-    // Chỉ section Giỏ quà trái cây dùng tab = menu con (+ hardcode mức giá)
-    var name = ((cat && cat.TEN_DANH_MUC_SAN_PHAM) || '').toLowerCase();
-    return Number(cat && cat.ID) === 1004 || name.indexOf('giỏ quà trái cây') !== -1;
-  }
-
-  /** Khoảng giá Giỏ trái cây — dưới: <500k | giữa: >=500k & <=700k | trên: >700k */
-  var gioQuaPriceRanges = @json(storefrontGioQuaPriceRanges());
-
-  function buildGioQuaPriceSearchUrl(range) {
-    var chipId = range && range.id ? String(range.id) : '';
-    var path = chipId
-      ? '/danh-muc/gio-qua-trai-cay-1004/muc-gia/' + encodeURIComponent(chipId)
-      : '/danh-muc/gio-qua-trai-cay-1004';
-    return cfg.appUrl + path;
-  }
-
   function buildCategoryListUrl(cat, opts) {
     opts = opts || {};
     var cid = opts.categoryId != null ? opts.categoryId : cat && cat.ID;
@@ -651,84 +617,77 @@
   }
 
   function buildFilterTabsHtml(cat, tabPrefix) {
+    var children = getCategoryChildren(cat);
+    // Tab "Tất cả" luôn đầu tiên; menu con nằm ngay sau; rồi mới tới các tab sắp xếp.
     var defs = [
-      { label: 'Tất cả', boLoc: 'default' },
-      { label: 'Giá tăng dần', boLoc: 'gia-tang' },
-      { label: 'Giá giảm dần', boLoc: 'gia-giam' },
-      { label: 'Tên từ A-Z', boLoc: 'a-z' },
-      { label: 'Tên từ Z-A', boLoc: 'z-a' },
+      { label: 'Tất cả', boLoc: 'default', kind: 'all' },
+      { label: 'Giá tăng dần', boLoc: 'gia-tang', kind: 'sort' },
+      { label: 'Giá giảm dần', boLoc: 'gia-giam', kind: 'sort' },
+      { label: 'Tên từ A-Z', boLoc: 'a-z', kind: 'sort' },
+      { label: 'Tên từ Z-A', boLoc: 'z-a', kind: 'sort' },
     ];
     var html =
       '<ul class="heading-tabs heading-tabs--scroll mb-4 md:mb-6 w-full max-w-full overflow-x-auto list-none flex md:gap-3 gap-2 font-semibold whitespace-nowrap">';
+
+    var tabIndex = 1;
     for (var i = 0; i < defs.length; i++) {
       var def = defs[i];
+      if (def.kind === 'all') {
+        var allHref = buildCategoryListUrl(cat, { boLoc: def.boLoc });
+        html +=
+          '<li aria-controls="' +
+          tabPrefix +
+          '-tab' +
+          tabIndex +
+          '" data-ww-href="' +
+          escapeHtml(allHref) +
+          '" class="tab-btn cursor-pointer heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground active inline-flex items-center md:gap-3 gap-2">' +
+          escapeHtml(def.label) +
+          '</li>';
+        tabIndex += 1;
+
+        for (var c = 0; c < children.length; c++) {
+          var child = children[c];
+          var childHref = buildCategoryListUrl(child, { boLoc: 'default' });
+          html +=
+            '<li aria-controls="' +
+            tabPrefix +
+            '-tab' +
+            tabIndex +
+            '" data-ww-href="' +
+            escapeHtml(childHref) +
+            '" class="tab-btn cursor-pointer heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground inline-flex items-center md:gap-3 gap-2">' +
+            escapeHtml(child.TEN_DANH_MUC_SAN_PHAM || 'Danh mục') +
+            '</li>';
+          tabIndex += 1;
+        }
+        continue;
+      }
+
       var href = buildCategoryListUrl(cat, { boLoc: def.boLoc });
       html +=
         '<li aria-controls="' +
         tabPrefix +
         '-tab' +
-        (i + 1) +
+        tabIndex +
         '" data-ww-href="' +
         escapeHtml(href) +
-        '" class="tab-btn cursor-pointer heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground' +
-        (i === 0 ? ' active' : '') +
-        ' inline-flex items-center md:gap-3 gap-2">' +
+        '" class="tab-btn cursor-pointer heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground inline-flex items-center md:gap-3 gap-2">' +
         escapeHtml(def.label) +
         '</li>';
+      tabIndex += 1;
     }
     html += '</ul>';
     return html;
   }
 
-  function buildChildTabsHtml(cat, tabPrefix) {
-    var children = getGioQuaVisibleChildren(cat);
-    var allHref = buildCategoryListUrl(cat, { boLoc: 'default' });
-    var html =
-      '<ul class="heading-tabs heading-tabs--scroll mb-4 md:mb-6 w-full max-w-full overflow-x-auto list-none flex md:gap-3 gap-2 font-semibold whitespace-nowrap">' +
-      '<li aria-controls="' +
-      tabPrefix +
-      '-tab1" data-ww-href="' +
-      escapeHtml(allHref) +
-      '" class="tab-btn cursor-pointer heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground active inline-flex items-center md:gap-3 gap-2">Tất cả</li>';
-    for (var i = 0; i < children.length; i++) {
-      var child = children[i];
-      var childTitle = child.TEN_DANH_MUC_SAN_PHAM || 'Danh mục';
-      var childHref = buildCategoryListUrl(child, { boLoc: 'default' });
-      html +=
-        '<li aria-controls="' +
-        tabPrefix +
-        '-tab' +
-        (i + 2) +
-        '" data-ww-href="' +
-        escapeHtml(childHref) +
-        '" class="tab-btn cursor-pointer heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground inline-flex items-center md:gap-3 gap-2">' +
-        escapeHtml(childTitle) +
-        '</li>';
-    }
-    // Hardcode mức giá → trang tìm kiếm (khoảng giá liên tục)
-    for (var p = 0; p < gioQuaPriceRanges.length; p++) {
-      var range = gioQuaPriceRanges[p];
-      var href = buildGioQuaPriceSearchUrl(range);
-      html +=
-        '<li class="heading-tab px-5 py-2 bg-white rounded-pill text-secondary font-semibold hover:text-foreground inline-flex items-center md:gap-3 gap-2">' +
-        '<a class="link" href="' +
-        escapeHtml(href) +
-        '" title="' +
-        escapeHtml(range.label) +
-        '">' +
-        escapeHtml(range.label) +
-        '</a></li>';
-    }
-    html += '</ul>';
-    return html;
-  }
-
-  function buildTabPanelsHtml(tabPrefix, baseGrid, tabCount, skHtml) {
+  function buildTabPanelsHtml(tabPrefix, baseGrid, tabCount, skHtml, activeIndex) {
+    activeIndex = activeIndex || 1;
     var html = '';
     for (var i = 1; i <= tabCount; i++) {
       html +=
         '<div class="tab-content' +
-        (i === 1 ? '' : ' hidden') +
+        (i === activeIndex ? '' : ' hidden') +
         '" id="' +
         tabPrefix +
         '-tab' +
@@ -749,19 +708,19 @@
     var sk = skeletonCount == null ? 10 : skeletonCount;
     var cid = cat && cat.ID ? String(cat.ID) : '0';
     var title = (cat && cat.TEN_DANH_MUC_SAN_PHAM) || 'Danh mục';
-    var useChildTabs = hasChildCategoryTabs(cat);
-    var children = useChildTabs ? getGioQuaVisibleChildren(cat) : [];
+    var children = getCategoryChildren(cat);
     var defaultViewmoreHref = buildCategoryListUrl(cat, { boLoc: 'default' });
     var titleHref = buildCategoryListUrl(cat);
     var baseGrid = 'home-category-products-' + cid;
     var tabPrefix = 'home-cat-' + cid;
     var skHtml = buildProductGridSkeletonHtml(sk, false);
-    var tabsHtml = useChildTabs ? buildChildTabsHtml(cat, tabPrefix) : buildFilterTabsHtml(cat, tabPrefix);
+    var tabsHtml = buildFilterTabsHtml(cat, tabPrefix);
     var panelsHtml = buildTabPanelsHtml(
       tabPrefix,
       baseGrid,
-      useChildTabs ? Math.max(children.length + 1, 1) : 5,
-      skHtml
+      children.length + 5,
+      skHtml,
+      1
     );
 
     return (
@@ -808,38 +767,10 @@
     if (!catId) return;
     var p = '#home-category-products-' + catId;
     var n = perPage == null ? 10 : perPage;
-
-    if (hasChildCategoryTabs(cat)) {
-      var children = getGioQuaVisibleChildren(cat);
-      beginCategoryLoads(catId, children.length + 1);
-      // Tab 1 = Tất cả (parent + mọi danh mục con, kể cả giỏ đẹp)
-      loadProducts('category', p + '-t1', {
-        categoryId: catId,
-        perPage: n,
-        boLoc: 'default',
-        trackCategoryId: catId,
-      });
-      for (var i = 0; i < children.length; i++) {
-        loadProducts('category', p + '-t' + (i + 2), {
-          categoryId: children[i].ID,
-          perPage: n,
-          boLoc: 'default',
-          trackCategoryId: catId,
-        });
-      }
-      return;
-    }
-
-    // Section thường:
-    // - Tab "Tất cả": sort + limit giống Giỏ trái cây (API BO_LOC=default, PER_PAGE=n)
-    // - Tab giá/tên: get ALL → sort theo giá bán/tên → limit n
-    var sortTabs = [
-      { idx: 2, boLoc: 'gia-tang' },
-      { idx: 3, boLoc: 'gia-giam' },
-      { idx: 4, boLoc: 'a-z' },
-      { idx: 5, boLoc: 'z-a' },
-    ];
-    beginCategoryLoads(catId, 2);
+    var children = getCategoryChildren(cat);
+    // Panel 1 = Tất cả; panel 2.. = menu con; sau đó mới tới tab sắp xếp.
+    var sortStartIndex = children.length + 2;
+    beginCategoryLoads(catId, children.length + 2);
 
     loadProducts('category', p + '-t1', {
       categoryId: catId,
@@ -847,6 +778,22 @@
       boLoc: 'default',
       trackCategoryId: catId,
     });
+
+    for (var i = 0; i < children.length; i++) {
+      loadProducts('category', p + '-t' + (i + 2), {
+        categoryId: children[i].ID,
+        perPage: n,
+        boLoc: 'default',
+        trackCategoryId: catId,
+      });
+    }
+
+    var sortTabs = [
+      { idx: sortStartIndex, boLoc: 'gia-tang' },
+      { idx: sortStartIndex + 1, boLoc: 'gia-giam' },
+      { idx: sortStartIndex + 2, boLoc: 'a-z' },
+      { idx: sortStartIndex + 3, boLoc: 'z-a' },
+    ];
 
     for (var s = 0; s < sortTabs.length; s++) {
       var skEl = document.querySelector(p + '-t' + sortTabs[s].idx);

@@ -134,9 +134,9 @@
               </div>
             </portal-opener>
           </div>
-          <a href="{{ url('/') }}" data-prefetch="" class="logo-wrapper mx-auto" title="Win Win Trái Cây Nhập Khẩu">
+          <a href="{{ url('/') }}" data-prefetch="" class="logo-wrapper mx-auto" title="Đồ Chơi Win Win">
 
-              <img src="{{ asset('UI-FRONTEND/images/thiet ke logo win win ngang 4.png') }}" alt="Win Win Trái Cây Nhập Khẩu" style="max-width: 160px;">
+              <img src="{{ storefrontLogoWideUrl() }}" alt="Đồ Chơi Win Win" style="max-height: var(--logo-height); width: auto; max-width: min(200px, 100%); object-fit: contain;">
 
           </a>
         </div>

@@ -54,7 +54,7 @@
 	href="{{ asset('css/UI-BACKEND/menu-highlighting.css') }}?v={{ $timeUpdate }}">
 <!-- endinject -->
 <link rel="shortcut icon"
-	href="{{ asset('UI-FRONTEND/images/thiet ke logo win win ngang 4.png') }}" />
+	href="{{ storefrontFaviconUrl() }}" />
 <style>
 	/* CSS để vô hiệu hóa tất cả các sự kiện bằng thuộc tính pointer-events: none;. 
 	Điều này sẽ khiến tất cả các sự kiện tương tác như click, hover không hoạt động. */
