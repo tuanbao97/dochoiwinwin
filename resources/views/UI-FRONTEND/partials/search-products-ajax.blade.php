@@ -464,7 +464,7 @@
       if (hasTu || hasDen) {
         var tu = hasTu ? Number(cfg.giaTu) : null;
         var den = hasDen ? Number(cfg.giaDen) : null;
-        // Map 3 mức Giỏ trái cây theo URL cũ
+        // Map 3 mức giá đồ chơi theo URL
         if (tu === 0 && den === 500000) {
           params.append('MUC_GIA[' + index + '][MAX_VALUE]', '500000');
           params.append('MUC_GIA[' + index + '][MAX_INCLUSIVE]', '0');

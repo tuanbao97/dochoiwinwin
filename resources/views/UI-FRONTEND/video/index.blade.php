@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Video — Win Win';
-  $seoDescription = 'Video giới thiệu sản phẩm, giỏ quà và hoạt động tại Win Win Trái Cây Nhập Khẩu & Quà tặng.';
+  $seoDescription = 'Video giới thiệu sản phẩm, giỏ quà và hoạt động tại Đồ Chơi Win Win.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 

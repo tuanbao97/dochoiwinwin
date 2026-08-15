@@ -83,7 +83,7 @@
             <p>Liên kết này sẽ hết hiệu lực sau 5 phút kể từ thời điểm yêu cầu.</p>
         </div>
         <div class="footer">
-            <p>Thân ái,<br>Win Win Trái Cây Nhập Khẩu</p>
+            <p>Thân ái,<br>Đồ Chơi Win Win</p>
         </div>
     </div>
 </body>

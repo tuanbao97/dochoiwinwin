@@ -29,7 +29,7 @@
   $seoTitle = $newsTitle . ' — Win Win';
   $seoDescription = $newsSummary !== ''
     ? $newsSummary
-    : 'Tin tức Win Win Trái Cây Nhập Khẩu & Quà tặng';
+    : 'Tin tức Đồ Chơi Win Win';
   $seoImage = $heroImg
     ? storefrontAbsoluteUrl($heroImg)
     : (is_array($avatars) && isset($avatars[0]) && is_array($avatars[0])

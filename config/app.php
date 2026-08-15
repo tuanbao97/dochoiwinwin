@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Win Win Trái Cây Nhập Khẩu'),
+    'name' => env('APP_NAME', 'Đồ Chơi Win Win'),
 
     /*
     |--------------------------------------------------------------------------

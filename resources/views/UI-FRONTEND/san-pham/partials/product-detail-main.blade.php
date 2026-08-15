@@ -431,7 +431,7 @@
 					  <i class="icon icon-like" aria-hidden="true"></i>
 					</div>
 					<div>
- 						Trái cây tươi ngon, tuyển chọn kỹ lưỡng
+ 						Đồ chơi an toàn, chất lượng tuyển chọn
 					</div>
 				  </li>
 				  <li class="item relative flex gap-2 items-center">
@@ -464,7 +464,7 @@
    
 	<div class="flex flex-col gap-1 relative z-[1] items-start">
 		
-		  <div class="social-media__title font-semibold text-h6">Win Win Trái Cây Nhập Khẩu</div>
+		  <div class="social-media__title font-semibold text-h6">Đồ Chơi Win Win</div>
 		   
 		  <div class="social-media__description text-body">
 			Kết nối với chúng tôi

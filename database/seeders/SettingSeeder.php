@@ -29,13 +29,26 @@ class SettingSeeder extends Seeder
         ];
 
         $gioiThieuHtml = <<<'HTML'
-<p><strong>Win Win Trái Cây Nhập Khẩu &amp; Quà tặng</strong> là điểm đến tin cậy cho trái cây nhập khẩu chọn lọc, giỏ quà và quà biếu chỉn chu. Chúng tôi mang đến trải nghiệm mua sắm tiện lợi, giao nhanh và đa dạng combo phù hợp tiệc tùng, biếu tặng hay sử dụng hằng ngày.</p>
-<p>Tại Win Win, sản phẩm được tuyển chọn kỹ lưỡng, bảo quản chuẩn và đóng gói cẩn thận. Đội ngũ tư vấn nhiệt tình, sẵn sàng hỗ trợ bạn chọn món ưng ý, gói quà theo yêu cầu và giao đúng hẹn.</p>
+<p>🎁 <strong>ĐỒ CHƠI WIN WIN</strong></p>
+<p>🚀 Chuyên đồ chơi chính hãng, chất lượng</p>
+<p>🧸 Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ</p>
+<p>📦 Hàng sẵn kho – Giao nhanh toàn quốc</p>
+<p>💬 Tư vấn tận tâm – Hỗ trợ nhiệt tình</p>
 HTML;
 
         $camKetHtml = <<<'HTML'
-<p>💎 Win Win — Chất lượng thật – Giá trị bền lâu. Cam kết trái cây tươi mỗi ngày, hàng nhập khẩu rõ nguồn gốc, đóng gói chỉn chu và giao đúng hẹn.</p>
+<p>❤️ Win Win–Chọn đúng đồ chơi</p>
 HTML;
+
+        // Mỗi ý một dòng: giao diện render với white-space: pre-line
+        $moTaCuaHang = <<<'TEXT'
+🎁 ĐỒ CHƠI WIN WIN
+
+🚀 Chuyên đồ chơi chính hãng, chất lượng
+🧸 Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ
+📦 Hàng sẵn kho – Giao nhanh toàn quốc
+💬 Tư vấn tận tâm – Hỗ trợ nhiệt tình
+TEXT;
 
         $arrSetting = [
             [
@@ -53,7 +66,7 @@ HTML;
                 'TYPE' => SettingEnum::SETTING_TEN_CUA_HANG->type(),
                 'DESCRIPTION' => SettingEnum::SETTING_TEN_CUA_HANG->description(),
                 'UNIT' => SettingEnum::SETTING_TEN_CUA_HANG->unit(),
-                'VALUE' => 'Win Win Trái Cây Nhập Khẩu',
+                'VALUE' => 'Đồ Chơi Win Win',
                 'ORDER' => 1,
             ],
             [
@@ -62,7 +75,7 @@ HTML;
                 'TYPE' => SettingEnum::SETTING_EMAIL->type(),
                 'DESCRIPTION' => SettingEnum::SETTING_EMAIL->description(),
                 'UNIT' => SettingEnum::SETTING_EMAIL->unit(),
-                'VALUE' => 'winwintraicaynhapkhau@gmail.com',
+                'VALUE' => 'dochoiwinwin@gmail.com',
                 'ORDER' => 2,
             ],
             [
@@ -89,7 +102,7 @@ HTML;
                 'TYPE' => SettingEnum::SETTING_MO_TA_CUA_HANG->type(),
                 'DESCRIPTION' => SettingEnum::SETTING_MO_TA_CUA_HANG->description(),
                 'UNIT' => SettingEnum::SETTING_MO_TA_CUA_HANG->unit(),
-                'VALUE' => 'Chuyên trái cây tươi mỗi ngày, hàng nhập khẩu chất lượng, giỏ quà – quà biếu chỉn chu. Giao nhanh, đa dạng combo, nhận tư vấn và gói quà theo nhu cầu',
+                'VALUE' => $moTaCuaHang,
                 'ORDER' => 4,
             ],
             [
@@ -107,7 +120,7 @@ HTML;
                 'TYPE' => SettingEnum::SETTING_DUONG_DAN_GG_MAP_CUA_HANG->type(),
                 'DESCRIPTION' => SettingEnum::SETTING_DUONG_DAN_GG_MAP_CUA_HANG->description(),
                 'UNIT' => SettingEnum::SETTING_DUONG_DAN_GG_MAP_CUA_HANG->unit(),
-                'VALUE' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3835.870347291476!2d108.17907917437337!3d15.968145742137606!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31421bec6fbbd191%3A0x6585d15bc5be1cd4!2zV2luIFdpbiBUcsOhaSBDw6J5IE5o4bqtcCBLaOG6qXU!5e0!3m2!1svi!2s!4v1774187451816!5m2!1svi!2s',
+                'VALUE' => 'https://www.google.com/maps?q=Đường+DT605,+Hòa+Tiến,+Đà+Nẵng&output=embed',
                 'ORDER' => 6,
             ],
             [
@@ -152,7 +165,7 @@ HTML;
                 'TYPE' => SettingEnum::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG->type(),
                 'DESCRIPTION' => SettingEnum::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG->description(),
                 'UNIT' => SettingEnum::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG->unit(),
-                'VALUE' => 'https://traicaywinwin.com',
+                'VALUE' => 'https://dochoiwinwin.com',
                 'ORDER' => 11,
             ],
             [
@@ -238,7 +251,8 @@ HTML;
                 continue;
             }
 
-            // Không ghi đè URL MXH nếu admin đã nhập giá trị cụ thể (tránh seed làm mất link thật)
+            // Không ghi đè URL MXH nếu admin đã nhập giá trị cụ thể (tránh seed làm mất link thật).
+            // Website là dữ liệu thương hiệu nên luôn đồng bộ theo Đồ Chơi Win Win.
             $socialCodes = [
                 SettingEnum::SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG->value,
                 SettingEnum::SETTING_DUONG_DAN_SO_ZALO_CUA_HANG->value,
@@ -246,7 +260,6 @@ HTML;
                 SettingEnum::SETTING_DUONG_DAN_FACEBOOK_MESSENGER_CUA_HANG->value,
                 SettingEnum::SETTING_DUONG_DAN_TIKTOK_CUA_HANG->value,
                 SettingEnum::SETTING_DUONG_DAN_YOUTUBE_CUA_HANG->value,
-                SettingEnum::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG->value,
             ];
             if (in_array($row['CODE'], $socialCodes, true)) {
                 $current = trim((string) DB::table('setting')->where('CODE', $row['CODE'])->value('VALUE'));

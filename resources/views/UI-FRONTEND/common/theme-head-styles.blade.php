@@ -36,8 +36,8 @@
     <link rel="stylesheet" href="100/531/894/themes/1018832/assets/icon.css?1768901692132" media="all">
     <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/global.css?ww-scroll-mid-1">
     <link rel="stylesheet" href="100/531/894/themes/1018832/assets/global.css?ww-scroll-mid-1" media="all">
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/custom.css?ww-listing-topics-3">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/custom.css?ww-listing-topics-3" media="all">
+    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/custom.css?ww-store-desc-1">
+    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/custom.css?ww-store-desc-1" media="all">
     <link
       rel="stylesheet"
       href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-variant-warn-1"
@@ -334,7 +334,7 @@
 </style>
 
     <!--
-      Giao diện: Win Win Trái Cây Nhập Khẩu (tùy biến từ theme Sapo)
+      Giao diện: Đồ Chơi Win Win (tùy biến từ theme Sapo)
     -->
     <link
       href="100/531/894/themes/1018832/assets/appcombo.css?1768901692132"

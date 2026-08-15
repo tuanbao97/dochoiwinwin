@@ -3246,3 +3246,10 @@ body.checkout .checkout-order-item {
 		font-size: 1.4rem;
 	}
 }
+
+/* Mo ta cua hang: giu nguyen xuong dong da nhap trong cai dat */
+.ww-store-description {
+	white-space: pre-line;
+	line-height: 1.6;
+	overflow-wrap: anywhere;
+}

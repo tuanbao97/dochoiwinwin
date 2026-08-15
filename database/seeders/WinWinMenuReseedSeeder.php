@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Xóa danh mục cũ (trái cây…) và seed lại menu Đồ chơi Win Win theo folder Drive.
+ * Xóa danh mục cũ và seed lại menu Đồ chơi Win Win theo folder Drive.
  */
 class WinWinMenuReseedSeeder extends Seeder
 {

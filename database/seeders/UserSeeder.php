@@ -56,7 +56,7 @@ class UserSeeder extends Seeder
             [
                 'ID' => 1,
                 'USER_ID' => 1,
-                'ADDRESS' => 'Win Win Trái Cây Nhập Khẩu, đường DT605, xã Hòa Tiến, thành phố Đà Nẵng',
+                'ADDRESS' => 'Đồ Chơi Win Win, đường DT605, xã Hòa Tiến, thành phố Đà Nẵng',
                 'MOBILE' => '0905135818',
                 'IS_DEFAULT' => true,
                 'CRT_DT' => now(),
@@ -77,6 +77,10 @@ class UserSeeder extends Seeder
 
             if (!$exists) {
                 DB::table('user_profile')->insert($userProfile);
+            } else {
+                DB::table('user_profile')
+                    ->where('ID', $userProfile['ID'])
+                    ->update($userProfile);
             }
         }
     }

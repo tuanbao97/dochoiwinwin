@@ -1129,7 +1129,7 @@ class ThemeStorefrontController extends Controller
 
     /**
      * Map URL gia/{tu}-{den} sang khoảng giá.
-     * Nhận diện 3 mức Giỏ trái cây để áp đúng toán tử; còn lại mặc định >= và <=.
+     * Nhận diện 3 mức giá đồ chơi để áp đúng toán tử; còn lại mặc định >= và <=.
      *
      * @return array{MIN_VALUE?: int, MAX_VALUE?: int, MIN_INCLUSIVE?: bool, MAX_INCLUSIVE?: bool}
      */

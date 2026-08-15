@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Chính sách bảo hành — Win Win';
-  $seoDescription = 'Chính sách bảo hành và hỗ trợ sau mua tại Win Win Trái Cây Nhập Khẩu & Quà tặng. Hotline 0905 454 775 - 0905 09 09 10.';
+  $seoDescription = 'Chính sách bảo hành và hỗ trợ sau mua tại Đồ Chơi Win Win. Hotline 0905 454 775 - 0905 09 09 10.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -29,12 +29,12 @@
           <div class="page-content ww-policy">
             <header class="ww-policy__header">
               <h1 class="text-h4 font-semibold mb-2">Chính sách bảo hành</h1>
-              <p class="text-base text-primary font-semibold mb-0">Win Win Trái Cây Nhập Khẩu &amp; Quà tặng</p>
+              <p class="text-base text-primary font-semibold mb-0">Đồ Chơi Win Win</p>
             </header>
 
             <div class="ww-policy__body prose text-base">
               <p>
-                Win Win Trái Cây Nhập Khẩu &amp; Quà tặng cam kết mang đến sản phẩm chất lượng và hỗ trợ
+                Đồ Chơi Win Win cam kết mang đến sản phẩm chất lượng và hỗ trợ
                 khách hàng sau khi mua hàng một cách rõ ràng, minh bạch. Chính sách bảo hành dưới đây
                 áp dụng cho các sản phẩm mua tại cửa hàng hoặc đặt hàng qua website / Zalo / Messenger / hotline.
               </p>
@@ -43,20 +43,18 @@
               <p>Tùy theo nhóm sản phẩm, Win Win áp dụng hình thức hỗ trợ như sau:</p>
               <ul>
                 <li>
-                  <strong>Trái cây tươi:</strong> đảm bảo chất lượng khi giao/nhận hàng. Nếu sản phẩm bị hư hỏng,
-                  dập nát bất thường, úng thối sớm hoặc sai loại / sai số lượng so với đơn đã xác nhận,
-                  quý khách vui lòng báo ngay trong vòng <strong>24 giờ</strong> kể từ khi nhận hàng để được
-                  kiểm tra và hỗ trợ đổi/bù phù hợp.
+                  <strong>Đồ chơi điện tử / điều khiển:</strong> được kiểm tra hoạt động trước khi giao. Nếu sản phẩm
+                  không khởi động, lỗi điều khiển hoặc thiếu phụ kiện so với mô tả, quý khách vui lòng báo trong vòng
+                  <strong>48 giờ</strong> kể từ khi nhận hàng để được kiểm tra và hỗ trợ.
                 </li>
                 <li>
-                  <strong>Giỏ quà / set quà:</strong> quý khách nên kiểm tra tình trạng bao bì, tem niêm phong
-                  và sản phẩm ngay khi nhận. Win Win hỗ trợ đổi/bù trong trường hợp lỗi từ phía cửa hàng
-                  (sai hàng, thiếu hàng) hoặc hư hỏng do quá trình vận chuyển.
+                  <strong>Đồ chơi lắp ghép / mô hình:</strong> quý khách nên kiểm tra số lượng chi tiết, bao bì và
+                  phụ kiện ngay khi nhận. Win Win hỗ trợ đổi hoặc bổ sung khi giao sai hàng, thiếu chi tiết do nhà
+                  sản xuất hoặc hư hỏng trong quá trình vận chuyển.
                 </li>
                 <li>
-                  <strong>Hàng đóng gói / đồ uống / sữa / thực phẩm khô:</strong> hỗ trợ theo hạn sử dụng và
-                  tình trạng niêm phong. Sản phẩm còn nguyên tem, chưa mở nắp/bao bì và còn hạn sử dụng
-                  sẽ được xem xét đổi/trả theo từng trường hợp cụ thể.
+                  <strong>Đồ chơi không dùng điện:</strong> được hỗ trợ khi có lỗi kỹ thuật, sai mẫu, sai màu hoặc
+                  không đúng thông tin đơn hàng. Sản phẩm cần còn nguyên tem, bao bì và chưa qua sử dụng.
                 </li>
                 <li>
                   <strong>Sản phẩm khác:</strong> điều kiện hỗ trợ sẽ được nhân viên tư vấn rõ khi bán hàng
@@ -66,8 +64,8 @@
 
               <h2>2. Thời hạn tiếp nhận yêu cầu</h2>
               <ul>
-                <li><strong>Trái cây tươi / hàng dễ hỏng:</strong> trong vòng <strong>24 giờ</strong> sau khi nhận hàng.</li>
-                <li><strong>Giỏ quà / hàng đóng gói:</strong> trong vòng <strong>48 giờ</strong> sau khi nhận hàng (trừ khi có thỏa thuận khác).</li>
+                <li><strong>Lỗi khi nhận hàng / thiếu phụ kiện:</strong> trong vòng <strong>48 giờ</strong> sau khi nhận hàng.</li>
+                <li><strong>Yêu cầu bảo hành kỹ thuật:</strong> theo thời hạn của từng sản phẩm hoặc nhà sản xuất.</li>
                 <li>Quá thời hạn trên, Win Win vẫn tiếp nhận phản ánh để hỗ trợ tư vấn, nhưng có thể không áp dụng đổi/bù.</li>
               </ul>
 
@@ -82,10 +80,7 @@
               <h2>4. Trường hợp từ chối bảo hành</h2>
               <p>Win Win xin phép <strong>từ chối bảo hành / đổi trả</strong> trong các trường hợp sau:</p>
               <ul>
-                <li>
-                  Sản phẩm đã đem ra ngoài <strong>chưng cúng</strong>
-                  (vì không đảm bảo điều kiện bảo quản).
-                </li>
+                <li>Sản phẩm bị rơi vỡ, ngấm nước, cháy chập hoặc biến dạng do sử dụng sai hướng dẫn.</li>
                 <li>Sản phẩm đã qua sử dụng, đã mở bao bì/niêm phong (đối với hàng đóng gói) mà không phải lỗi từ cửa hàng.</li>
                 <li>Hư hỏng do bảo quản sai (để ngoài nắng, nhiệt độ cao, ẩm ướt, gần nguồn nhiệt…).</li>
                 <li>Hư hỏng do vận chuyển lại bởi bên thứ ba sau khi khách đã nhận hàng.</li>
@@ -102,14 +97,14 @@
               </ul>
               <p>
                 Thời gian xử lý thông thường từ <strong>01 – 03 ngày làm việc</strong> sau khi tiếp nhận đủ thông tin.
-                Với trái cây tươi, cửa hàng ưu tiên xử lý nhanh trong ngày nếu quý khách liên hệ sớm.
+                Với lỗi phát hiện ngay khi mở hộp, cửa hàng ưu tiên kiểm tra và phản hồi trong ngày.
               </p>
 
               <h2>6. Hướng dẫn bảo quản (khuyến nghị)</h2>
               <ul>
-                <li>Trái cây tươi: bảo quản nơi khô ráo, thoáng mát hoặc ngăn mát tủ lạnh tùy loại; tránh ánh nắng trực tiếp.</li>
-                <li>Giỏ quà: để nơi sạch sẽ, tránh ẩm và va đập; sử dụng sớm đối với thành phần dễ hỏng.</li>
-                <li>Hàng đóng gói / đồ uống: bảo quản theo hướng dẫn trên bao bì, dùng trước hạn sử dụng.</li>
+                <li>Đồ chơi điện tử: để nơi khô ráo, tránh nước, nguồn nhiệt và tháo pin khi không sử dụng lâu ngày.</li>
+                <li>Đồ chơi lắp ghép: cất chi tiết nhỏ đúng hộp, tránh xa trẻ dưới độ tuổi khuyến nghị.</li>
+                <li>Luôn đọc hướng dẫn, cảnh báo độ tuổi và vệ sinh sản phẩm theo thông tin trên bao bì.</li>
               </ul>
 
               <h2>7. Cách liên hệ bảo hành / hỗ trợ</h2>

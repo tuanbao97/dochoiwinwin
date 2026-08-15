@@ -20,9 +20,7 @@
 
 
 		  @if($ww['description'] !== '')
-		  <div class="mb-3" data-ww-contact-slot="store-description">
-			  {{ $ww['description'] }}
-		  </div>
+		  <div class="mb-3 ww-store-description" data-ww-contact-slot="store-description">{{ $ww['description'] }}</div>
 		  @endif
 
 

@@ -46,7 +46,7 @@ class CategoryPSeeder extends Seeder
             }
         }
 
-        // Vô hiệu hóa danh mục cũ (trái cây / sữa / bất động sản…) không còn dùng
+        // Vô hiệu hóa danh mục cũ không còn sử dụng không còn dùng
         $keepIds = collect($arrCategoryP)->pluck('ID')->all();
         DB::table('category_p')
             ->whereNotIn('ID', $keepIds)

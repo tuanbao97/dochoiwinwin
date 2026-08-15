@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Thanh toán — Win Win';
-  $seoDescription = 'Thanh toán đơn hàng tại Win Win Trái Cây Nhập Khẩu.';
+  $seoDescription = 'Thanh toán đơn hàng tại Đồ Chơi Win Win.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 

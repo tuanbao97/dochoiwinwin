@@ -1,4 +1,4 @@
-﻿<related-products class="releated-products w-full hidden" data-skip-search="1" data-empty-content="Sản phẩm đang được cập nhật" data-limit="4" data-product-type="row">
+<related-products class="releated-products w-full hidden" data-skip-search="1" data-empty-content="Sản phẩm đang được cập nhật" data-limit="4" data-product-type="row">
 
   <div class="heading-bar">
     <h2 class=" heading w-auto font-semibold  ">

@@ -14,11 +14,11 @@ class CategoryNSeeder extends Seeder
         $arrCategoryN = [
             [
                 'ID' => 1,
-                'NAME' => 'Mẹo chọn & bảo quản trái cây',
+                'NAME' => 'Cẩm nang chọn đồ chơi',
                 'SORT_ORDER' => 1,
                 'TREE_LEVEL' => 0,
                 'PARENT_ID' => null,
-                'DESCRIPTION' => 'Hướng dẫn chọn trái tươi ngon và cách bảo quản tại nhà.',
+                'DESCRIPTION' => 'Hướng dẫn chọn đồ chơi an toàn, phù hợp độ tuổi và sở thích của bé.',
                 'CRT_DT' => now(),
                 'UPD_DT' => now(),
                 'CRT_ID' => AuthConstant::USER_SUPER_ADMIN_ID,
@@ -30,11 +30,11 @@ class CategoryNSeeder extends Seeder
             ],
             [
                 'ID' => 2,
-                'NAME' => 'Quà tặng & giỏ quà',
+                'NAME' => 'Ý tưởng quà tặng',
                 'SORT_ORDER' => 2,
                 'TREE_LEVEL' => 0,
                 'PARENT_ID' => null,
-                'DESCRIPTION' => 'Gợi ý combo quà tặng, giỏ quà trái cây cho dịp lễ và sự kiện.',
+                'DESCRIPTION' => 'Gợi ý đồ chơi và quà tặng cho sinh nhật, ngày lễ và các dịp đặc biệt.',
                 'CRT_DT' => now(),
                 'UPD_DT' => now(),
                 'CRT_ID' => AuthConstant::USER_SUPER_ADMIN_ID,
