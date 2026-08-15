@@ -12,10 +12,10 @@
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
     @php
       $wwHome = wwWebContact();
-      $seoTitle = $wwHome['storeName'] ?: 'Win Win Trái Cây Nhập Khẩu';
+      $seoTitle = $wwHome['storeName'] ?: 'Đồ Chơi Win Win';
       $seoDescription = $wwHome['description'] !== ''
         ? $wwHome['description']
-        : 'Win Win Trái Cây Nhập Khẩu — trái cây tươi, giỏ quà và quà tặng: giao nhanh, nhiều set combo, phù hợp biếu tặng và tiệc. Mua trực tuyến tiện lợi, chất lượng rõ nguồn gốc.';
+        : '🎁 ĐỒ CHƠI WIN WIN — 🚀 Chuyên đồ chơi chính hãng, chất lượng. 🧸 Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ. 📦 Hàng sẵn kho – Giao nhanh toàn quốc. 💬 Tư vấn tận tâm – Hỗ trợ nhiệt tình';
       $seoType = 'website';
       $seoUrl = url('/');
       $seoImage = storefrontDefaultShareImageUrl();
@@ -58,7 +58,7 @@
 
     <meta
       name="keywords"
-      content="trái cây tươi, giỏ quà, quà tặng, hoa quả nhập khẩu, nước giải khát, combo trái cây, Win Win"
+      content="đồ chơi chính hãng, xe điều khiển, máy bay RC, đồ chơi giáo dục, đồ chơi vỉ giá rẻ, Đồ Chơi Win Win"
     >
     <link rel="preconnect" href="https://bizweb.dktcdn.net">
     <link rel="preconnect" href="https://egany.com">
@@ -143,7 +143,7 @@
   <body class="ega-theme index ">@include('UI-FRONTEND.common.header')
 
 	 <main>
-    <h1 class="hidden">Cửa hàng trái cây tươi, giỏ quà và quà tặng: giao nhanh, nhiều combo, phù hợp biếu tặng và tiệc.</h1>
+    <h1 class="hidden">🎁 ĐỒ CHƠI WIN WIN — Chuyên đồ chơi chính hãng, chất lượng. Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ. Hàng sẵn kho – Giao nhanh toàn quốc.</h1>
 
 
 <div class="index-container  container py-6 px-0  xl:grid   xl:grid-cols-[300px_calc(100%-312px)] gap-3  ">
@@ -167,19 +167,19 @@
               >
                 <div class="embla__container flex">
                   <div class="embla__slide flex-[0_0_100%] overflow-hidden rounded">
-                    <a class="block" href="https://traicaywinwin.com/" title="Trái cây tươi — Giao nhanh">
+                    <a class="block" href="https://dochoiwinwin.com/" title="Đồ chơi an toàn — Giao nhanh">
                       <picture>
-                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner gio trai cay.png') }}">
-                        <img class="block mx-auto w-full object-contain" loading="eager" width="1920" height="624" src="{{ asset('UI-FRONTEND/images/Banner gio trai cay.png') }}" alt="Trái cây tươi — Giao nhanh" fetchpriority="high">
+                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}">
+                        <img class="block mx-auto w-full object-contain" loading="eager" width="1920" height="624" src="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}" alt="Đồ chơi an toàn — Giao nhanh" fetchpriority="high">
                       </picture>
                     </a>
                   </div>
                   {{-- Banner quà tặng thiếu nhi — tạm ẩn
                   <div class="embla__slide flex-[0_0_100%] overflow-hidden rounded">
-                    <a class="block" href="https://traicaywinwin.com/" title="Giỏ quà &amp; combo — Ưu đãi">
+                    <a class="block" href="https://dochoiwinwin.com/" title="Giỏ quà &amp; combo — Ưu đãi">
                       <picture>
-                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner qua tang thieu nhi.png') }}">
-                        <img class="block mx-auto w-full object-contain" loading="lazy" width="1920" height="624" src="{{ asset('UI-FRONTEND/images/Banner qua tang thieu nhi.png') }}" alt="Giỏ quà &amp; combo — Ưu đãi" fetchpriority="high">
+                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}">
+                        <img class="block mx-auto w-full object-contain" loading="lazy" width="1920" height="624" src="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}" alt="Đồ chơi và quà tặng cho bé — Ưu đãi" fetchpriority="high">
                       </picture>
                     </a>
                   </div>
@@ -479,9 +479,9 @@
 
 
                   <div class="embla__slide h-full w-[130px] md:w-1/5  grow-0 shrink-0 pl-2 ">
-                    <a href="collections/all.html" title="Trái cây mùa — ngon từng ngày" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
+                    <a href="collections/all.html" title="Đồ chơi mới — vui mỗi ngày" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
                       <div class="collection-item-thumb   flex items-center justify-center overflow-hidden">
-                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_1.png?1768901692132" alt="Trái cây mùa — ngon từng ngày" loading="lazy">
+                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_1.png?1768901692132" alt="Đồ chơi mới — vui mỗi ngày" loading="lazy">
                       </div>
 
                     </a>
@@ -519,9 +519,9 @@
 
 
                   <div class="embla__slide h-full w-[130px] md:w-1/5  grow-0 shrink-0 pl-2 ">
-                    <a href="collections/all.html" title="Trái nhập khẩu" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
+                    <a href="collections/all.html" title="Đồ chơi chính hãng" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
                       <div class="collection-item-thumb   flex items-center justify-center overflow-hidden">
-                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_5.png?1768901692132" alt="Trái nhập khẩu" loading="lazy">
+                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_5.png?1768901692132" alt="Đồ chơi chính hãng" loading="lazy">
                       </div>
 
                     </a>
@@ -529,9 +529,9 @@
 
 
                   <div class="embla__slide h-full w-[130px] md:w-1/5  grow-0 shrink-0 pl-2 ">
-                    <a href="collections/all.html" title="Nước ép tươi" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
+                    <a href="collections/all.html" title="Đồ chơi vận động" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
                       <div class="collection-item-thumb   flex items-center justify-center overflow-hidden">
-                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_6.png?1768901692132" alt="Nước ép tươi" loading="lazy">
+                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_6.png?1768901692132" alt="Đồ chơi vận động" loading="lazy">
                       </div>
 
                     </a>
@@ -539,9 +539,9 @@
 
 
                   <div class="embla__slide h-full w-[130px] md:w-1/5  grow-0 shrink-0 pl-2 ">
-                    <a href="collections/all.html" title="Giỏ trái premium" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
+                    <a href="collections/all.html" title="Đồ chơi cao cấp" class="collection-item  text-center flex flex-col items-center gap-1 lg:gap-3 group hover:brightness-[0.98] ">
                       <div class="collection-item-thumb   flex items-center justify-center overflow-hidden">
-                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_7.png?1768901692132" alt="Giỏ trái premium" loading="lazy">
+                        <img class="object-contain transition-transform relative z-10  duration-200" width="180" height="215" src="thumb/large/100/531/894/themes/1018832/assets/coll_7.png?1768901692132" alt="Đồ chơi cao cấp" loading="lazy">
                       </div>
 
                     </a>
@@ -826,7 +826,7 @@
 {{-- Banner ngang (block 1) — tạm ẩn
             <div class=" position-relative" style="background: transparent">
 	<div class="text-center  container">
-				<a class="position-relative block " href="https://traicaywinwin.com/" title="banner ngang">
+				<a class="position-relative block " href="https://dochoiwinwin.com/" title="banner ngang">
 			<picture>
 				<source media="(max-width: 480px)" srcset="thumb/large/100/531/894/themes/1018832/assets/banner_image.jpg?1768901692132">
 				<img class='img-fluid position-absolute mx-auto' src="100/531/894/themes/1018832/assets/banner_image.jpg?1768901692132" style="left:0" alt="banner ngang" width="984" height="164" loading="lazy">
@@ -851,7 +851,7 @@
 
 
                 <div class="embla__slide">
-                  <a href="https://traicaywinwin.com/" title="GIẢM GIÁ NHẬP HỌC 30%" class="block">
+                  <a href="https://dochoiwinwin.com/" title="GIẢM GIÁ NHẬP HỌC 30%" class="block">
                     <picture>
                       <source media="(max-width: 480px)" srcset="thumb/large/100/531/894/themes/1018832/assets/banner_group_1.jpg?1768901692132">
 
@@ -862,22 +862,22 @@
 
 
                 <div class="embla__slide">
-                  <a href="https://traicaywinwin.com/" title="ƯU ĐÃI MÙA HÈ ĐẾN 60%" class="block">
+                  <a href="https://dochoiwinwin.com/" title="ƯU ĐÃI MÙA HÈ ĐẾN 60%" class="block">
                     <picture>
                       <source media="(max-width: 480px)" srcset="thumb/large/100/531/894/themes/1018832/assets/banner_group_2.jpg?1768901692132">
 
-                      <img src="100/531/894/themes/1018832/assets/banner_group_2.jpg?1768901692132" alt="Trái cây mùa này — Giá tốt đến 60%" loading="lazy" width="408" height="232" class="object-cover  rounded-lg transition-transform duration-300 group-hover:scale-105 mx-auto ">
+                      <img src="100/531/894/themes/1018832/assets/banner_group_2.jpg?1768901692132" alt="Đồ chơi mùa hè — Giá tốt đến 60%" loading="lazy" width="408" height="232" class="object-cover  rounded-lg transition-transform duration-300 group-hover:scale-105 mx-auto ">
                     </picture>
                   </a>
                 </div>
 
 
                 <div class="embla__slide">
-                  <a href="https://traicaywinwin.com/" title="GIẢM 500.000 ₫ cho đơn 2tr" class="block">
+                  <a href="https://dochoiwinwin.com/" title="GIẢM 500.000 ₫ cho đơn 2tr" class="block">
                     <picture>
                       <source media="(max-width: 480px)" srcset="thumb/large/100/531/894/themes/1018832/assets/banner_group_3.jpg?1768901692132">
 
-                      <img src="100/531/894/themes/1018832/assets/banner_group_3.jpg?1768901692132" alt="Combo quà &amp; trái cây — Giảm đến 500.000 ₫" loading="lazy" width="408" height="232" class="object-cover  rounded-lg transition-transform duration-300 group-hover:scale-105 mx-auto ">
+                      <img src="100/531/894/themes/1018832/assets/banner_group_3.jpg?1768901692132" alt="Combo đồ chơi — Giảm đến 500.000 ₫" loading="lazy" width="408" height="232" class="object-cover  rounded-lg transition-transform duration-300 group-hover:scale-105 mx-auto ">
                     </picture>
                   </a>
                 </div>
@@ -991,588 +991,8 @@
         </button>
       </div>
       <nav class="navigation-vertical overflow-y-auto no-scrollbar ">
-
-   <ul class=" ">
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Trái cây nhập khẩu" href="sua.html" data-prefetch="/sua">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/trai-nhap-khau.svg') }}" alt="Trái cây nhập khẩu">
-                <span>Trái cây nhập khẩu</span>
-
-      </a>
-                </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Trái cây sấy" href="collections/all.html" data-prefetch="/collections/all">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/trai-nhap-khau.svg') }}" alt="Trái cây sấy">
-                <span>Trái cây sấy</span>
-
-      </a>
-                </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Yến sào Cao Cấp" href="collections/all.html" data-prefetch="/collections/all">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/yen-sao.svg') }}" alt="Yến sào Cao Cấp">
-                <span>Yến sào Cao Cấp</span>
-
-      </a>
-                </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Trái cây Việt Nam" href="sua.html" data-prefetch="/sua">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/trai-trong-nuoc.svg') }}" alt="Trái cây Việt Nam">
-                <span>Trái cây Việt Nam</span>
-
-      </a>
-                </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Bánh kẹo nhập khẩu" href="collections/all.html" data-prefetch="/collections/all">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/banh-keo-nhap-khau.svg') }}" alt="Bánh kẹo nhập khẩu">
-                <span>Bánh kẹo nhập khẩu</span>
-
-      </a>
-                </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Giỏ quà trái cây" href="bim.html" data-prefetch="/bim">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/gio-qua.svg') }}" alt="Giỏ quà trái cây">
-                <span>Giỏ quà trái cây</span>
-
-          <span class="ml-auto text-neutral-200 flex items-center" data-toggle-submenu="">
-            <i class="icon icon-carret-right "></i>
-          </span>
-
-      </a>
-
-        <div class="
-            submenu  absolute lg:group-hover:grid p-4 overflow-auto   default
-
-          ">
-          <div data-toggle-submenu="" class="relative toggle-submenu -mt-4 -mx-4 p-3 mb-4 bg-neutral-50 font-semibold flex justify-between  lg:hidden">
-            <span class="">
-              <i class="icon icon-carret-left mr-auto text-neutral-200"></i>
-            </span>
-            <span class="mx-auto">Giỏ quà trái cây </span>
-          </div>
-          <div class="mega-menu__inner flex-wrap gap-3 flex items-start">
-           <ul class="submenu__list flex flex-col gap-4 w-full ">
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Mẫu giỏ trái cây đẹp" href="collections/all.html" data-prefetch="/collections/all">
-Mẫu giỏ trái cây đẹp                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Giỏ trái cây đám tang" href="collections/all.html" data-prefetch="/collections/all">
-Giỏ trái cây đám tang                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Giỏ trái cây dưới 500k" href="collections/all.html" data-prefetch="/collections/all">
-Giỏ trái cây dưới 500k                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Giỏ trái cây từ 500k đến 700k" href="collections/all.html" data-prefetch="/collections/all">
-Giỏ trái cây từ 500k đến 700k                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Giỏ trái cây trên 700k" href="collections/all.html" data-prefetch="/collections/all">
-Giỏ trái cây trên 700k                    </a>
-                  </li>
-
-
-          </ul>
-        </div>
-
-
-        </div>
-          </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Hộp quà trái cây" href="collections/all.html" data-prefetch="/collections/all">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/hop-qua-trai-cay.svg') }}" alt="Hộp quà trái cây">
-                <span>Hộp quà trái cây</span>
-
-      </a>
-                </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Quà tặng" href="collections/all.html" data-prefetch="/collections/all">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/qua-tang-tre-em.svg') }}" alt="Quà tặng">
-                <span>Quà tặng</span>
-
-          <span class="ml-auto text-neutral-200 flex items-center" data-toggle-submenu="">
-            <i class="icon icon-carret-right "></i>
-          </span>
-
-      </a>
-
-        <div class="
-            submenu  absolute lg:group-hover:grid p-4 overflow-auto   default
-
-          ">
-          <div data-toggle-submenu="" class="relative toggle-submenu -mt-4 -mx-4 p-3 mb-4 bg-neutral-50 font-semibold flex justify-between  lg:hidden">
-            <span class="">
-              <i class="icon icon-carret-left mr-auto text-neutral-200"></i>
-            </span>
-            <span class="mx-auto">Quà tặng </span>
-          </div>
-          <div class="mega-menu__inner flex-wrap gap-3 flex items-start">
-           <ul class="submenu__list flex flex-col gap-4 w-full ">
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng trẻ em, sinh nhật..." href="dinh-duong-cho-be.html" data-prefetch="/dinh-duong-cho-be">
-Quà tặng trẻ em, sinh nhật                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng người lớn tuổi" href="collections/all.html" data-prefetch="/collections/all">
-Quà tặng người lớn tuổi                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng ngày lễ" href="collections/all.html" data-prefetch="/collections/all">
-Quà tặng ngày lễ                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng người yêu" href="collections/all.html" data-prefetch="/collections/all">
-Quà tặng người yêu                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng phụ huynh" href="collections/all.html" data-prefetch="/collections/all">
-Quà tặng phụ huynh                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tết" href="collections/all.html" data-prefetch="/collections/all">
-Quà tết                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng sếp" href="collections/all.html" data-prefetch="/collections/all">
-Quà tặng sếp                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Quà tặng khai trương" href="collections/all.html" data-prefetch="/collections/all">
-Quà tặng khai trương                    </a>
-                  </li>
-
-
-          </ul>
-        </div>
-
-
-        </div>
-          </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link min-w-0 flex items-center gap-3 py-2 font-semibold" title="Thế giới sữa & Sữa chua" href="collections/all.html" data-prefetch="/collections/all">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/the-gioi-sua.svg') }}" alt="Thế giới sữa & Sữa chua">
-                <span class="min-w-0 leading-snug"><span class="whitespace-nowrap">Thế giới sữa</span> <span class="whitespace-nowrap">&amp; Sữa chua</span></span>
-
-          <span class="ml-auto text-neutral-200 flex items-center" data-toggle-submenu="">
-            <i class="icon icon-carret-right "></i>
-          </span>
-
-      </a>
-
-        <div class="
-            submenu  absolute lg:group-hover:grid p-4 overflow-auto   mega-menu mega-menu--products bg-white
-
-          ">
-          <div data-toggle-submenu="" class="relative toggle-submenu -mt-4 -mx-4 p-3 mb-4 bg-neutral-50 font-semibold flex justify-between  lg:hidden">
-            <span class="">
-              <i class="icon icon-carret-left mr-auto text-neutral-200"></i>
-            </span>
-            <span class="mx-auto text-center leading-snug"><span class="whitespace-nowrap">Thế giới sữa</span> <span class="whitespace-nowrap">&amp; Sữa chua</span></span>
-          </div>
-          <div class="mega-menu__inner flex-wrap gap-3 flex items-start">
-           <ul class="submenu__list flex flex-col gap-4 w-full ">
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="TH true MILK" href="collections/all.html" data-prefetch="/collections/all">
-TH true MILK                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa tươi tiệt trùng" href="collections/all.html" data-prefetch="/collections/all">
-Sữa tươi tiệt trùng                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa tươi ít đường" href="collections/all.html" data-prefetch="/collections/all">
-Sữa tươi ít đường                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa tươi có đường" href="collections/all.html" data-prefetch="/collections/all">
-Sữa tươi có đường                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa hạt dinh dưỡng" href="collections/all.html" data-prefetch="/collections/all">
-Sữa hạt dinh dưỡng                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa bịch, hộp giấy" href="collections/all.html" data-prefetch="/collections/all">
-Sữa bịch, hộp giấy                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Vinamilk" href="collections/all.html" data-prefetch="/collections/all">
-Vinamilk                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa tươi Vinamilk" href="collections/all.html" data-prefetch="/collections/all">
-Sữa tươi                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa chua Vinamilk" href="collections/all.html" data-prefetch="/collections/all">
-Sữa chua                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa đặc, kem" href="collections/all.html" data-prefetch="/collections/all">
-Sữa đặc, kem                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Yourmost" href="collections/all.html" data-prefetch="/collections/all">
-Yourmost                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa tươi Yourmost" href="collections/all.html" data-prefetch="/collections/all">
-Sữa tươi                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa hạt Yourmost" href="collections/all.html" data-prefetch="/collections/all">
-Sữa hạt                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Milo" href="collections/all.html" data-prefetch="/collections/all">
-Milo                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa Milo A2" href="collections/all.html" data-prefetch="/collections/all">
-Sữa Milo A2                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Milo ca cao" href="collections/all.html" data-prefetch="/collections/all">
-Milo ca cao                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Kun" href="collections/all.html" data-prefetch="/collections/all">
-Kun                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Kun hương dâu" href="collections/all.html" data-prefetch="/collections/all">
-Kun hương dâu                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Kun socola" href="collections/all.html" data-prefetch="/collections/all">
-Kun socola                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Fristi" href="collections/all.html" data-prefetch="/collections/all">
-Fristi                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Fristi cam" href="collections/all.html" data-prefetch="/collections/all">
-Fristi cam                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Fristi nhiệt đới" href="collections/all.html" data-prefetch="/collections/all">
-Fristi nhiệt đới                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Abbort" href="collections/all.html" data-prefetch="/collections/all">
-Abbort                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Abbort Grow" href="collections/all.html" data-prefetch="/collections/all">
-Abbort Grow                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Similac" href="collections/all.html" data-prefetch="/collections/all">
-Similac                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Nutifood" href="collections/all.html" data-prefetch="/collections/all">
-Nutifood                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Nuti IQ" href="collections/all.html" data-prefetch="/collections/all">
-Nuti IQ                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="GrowPlus+" href="collections/all.html" data-prefetch="/collections/all">
-GrowPlus+                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Nuticare" href="collections/all.html" data-prefetch="/collections/all">
-Nuticare                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa bột Nuticare" href="collections/all.html" data-prefetch="/collections/all">
-Sữa bột                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa pha sẵn Nuticare" href="collections/all.html" data-prefetch="/collections/all">
-Sữa pha sẵn                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Hipp" href="collections/all.html" data-prefetch="/collections/all">
-Hipp                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa organic Hipp" href="collections/all.html" data-prefetch="/collections/all">
-Sữa organic                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Bột, ngũ cốc Hipp" href="collections/all.html" data-prefetch="/collections/all">
-Bột, ngũ cốc                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Meiji" href="collections/all.html" data-prefetch="/collections/all">
-Meiji                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa Meiji Step" href="collections/all.html" data-prefetch="/collections/all">
-Sữa Meiji Step                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa thanh Meiji" href="collections/all.html" data-prefetch="/collections/all">
-Sữa thanh                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-                  <li class="submenu__col">
-                    <span class="submenu__item submenu__item--main mb-4 font-semibold">
-                      <a class="link font-semibold" title="Sữa chua" href="collections/all.html" data-prefetch="/collections/all">
-Sữa chua                      </a>
-                    </span>
-                    <ul class="list-disc pl-4 flex-col flex">
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa chua tươi ngon" href="collections/all.html" data-prefetch="/collections/all">
-Sữa chua tươi ngon                          </a>
-                        </li>
-                        <li class="submenu__item ">
-                          <a class="link" title="Sữa chua uống" href="collections/all.html" data-prefetch="/collections/all">
-Sữa chua uống                          </a>
-                        </li>
-                    </ul>
-                  </li>
-
-          </ul>
-
-@include('UI-FRONTEND.partials.menu-san-pham-moi-related')
-        </div>
-
-
-        </div>
-          </li>
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Nước giải khát" href="dinh-duong-cho-be.html" data-prefetch="/dinh-duong-cho-be">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/nuoc-giai-khat.svg') }}" alt="Nước giải khát">
-                <span>Nước giải khát</span>
-
-          <span class="ml-auto text-neutral-200 flex items-center" data-toggle-submenu="">
-            <i class="icon icon-carret-right "></i>
-          </span>
-
-      </a>
-
-        <div class="
-            submenu  absolute lg:group-hover:grid p-4 overflow-auto   default
-
-          ">
-          <div data-toggle-submenu="" class="relative toggle-submenu -mt-4 -mx-4 p-3 mb-4 bg-neutral-50 font-semibold flex justify-between  lg:hidden">
-            <span class="">
-              <i class="icon icon-carret-left mr-auto text-neutral-200"></i>
-            </span>
-            <span class="mx-auto">Nước giải khát </span>
-          </div>
-          <div class="mega-menu__inner flex-wrap gap-3 flex items-start">
-           <ul class="submenu__list flex flex-col gap-4 w-full ">
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Trà bí đao &amp; nước ép" href="collections/all.html" data-prefetch="/collections/all">
-Trà bí đao &amp; nước ép                    </a>
-                  </li>
-
-
-                  <li class="submenu__item submenu__item--main font-semibold ">
-                    <a class="link" title="Nước giải khát lon, chai" href="collections/all.html" data-prefetch="/collections/all">
-Nước giải khát lon, chai                    </a>
-                  </li>
-
-
-          </ul>
-        </div>
-
-
-        </div>
-          </li>
-
-            <!-- Gói quà theo yêu cầu (tạm ẩn)
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]  ">
-      <a class="menu-item__link  flex items-center gap-3 py-2 font-semibold" title="Gói quà theo yêu cầu" href="index.htm" data-prefetch="/">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/goi-qua-yeu-cau.svg') }}" alt="Gói quà theo yêu cầu">
-                <span>Gói quà theo yêu cầu</span>
-
-      </a>
-                </li>
-            -->
-
-            <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-      <a class="menu-item__link flex items-center gap-3 py-2 font-semibold" title="Đồ chơi trẻ em" href="https://dochoiwinwin.com" target="_blank" rel="noopener noreferrer">
-                  <img loading="lazy" width="36" height="36" class="w-9 h-9 shrink-0" src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/do-choi-tre-em.svg') }}" alt="Đồ chơi trẻ em">
-                <span>Đồ chơi trẻ em</span>
-      </a>
-                </li>
-
-</ul>
-
-    <ul class="">
-
-
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="{{ url('/') }}" data-prefetch="/" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="TRANG CHỦ">
-              <span>
-                TRANG CHỦ              </span>
-
-            </a>
-
-                                  </li>
-
-
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="{{ url('/tat-ca-san-pham') }}" data-prefetch="/tat-ca-san-pham" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="TẤT CẢ SẢN PHẨM">
-              <span>
-                TẤT CẢ SẢN PHẨM              </span>
-
-            </a>
-
-                                  </li>
-
-
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="{{ url('/gioi-thieu') }}" data-prefetch="/gioi-thieu" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="GIỚI THIỆU">
-              <span>
-                GIỚI THIỆU              </span>
-
-            </a>
-
-                                  </li>
-
-
-          {{-- Menu KHUYẾN MÃI (tạm ẩn)
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="flash-sale-1-khung-gio.html" data-prefetch="" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="KHUYẾN MÃI">
-              <span>KHUYẾN MÃI</span>
-            </a>
-          </li>
-          --}}
-
-
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="{{ url('tin-tuc') }}" data-prefetch="" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="TIN TỨC">
-              <span>
-                TIN TỨC              </span>
-
-            </a>
-
-                                  </li>
-
-
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="{{ url('/lien-he') }}" data-prefetch="/lien-he" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="LIÊN HỆ">
-              <span>
-                LIÊN HỆ              </span>
-
-            </a>
-
-                                  </li>
-
-
-          <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
-            <a href="{{ url('/chinh-sach-bao-hanh') }}" data-prefetch="/chinh-sach-bao-hanh" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="BẢO HÀNH">
-              <span>
-                BẢO HÀNH              </span>
-
-            </a>
-
-                                  </li>
-
-          </ul>
-        </nav>
+        @include('UI-FRONTEND.partials.menu-category-nav')
+      </nav>
       <div class="navigation-footer 4 border-t border-neutral-50 flex">
 
           <div class="w-1/2">
@@ -1909,7 +1329,7 @@ Nước giải khát lon, chai                    </a>
 <div class="addThis_listSharing">
 			{{--
 			<div class="floating_banner relative">
-			<a class="block p-2 hover:scale-105 transition-all" href="https://traicaywinwin.com/" title="sticky banner">
+			<a class="block p-2 hover:scale-105 transition-all" href="https://dochoiwinwin.com/" title="sticky banner">
 				<img src="100/531/894/themes/1018832/assets/floating-banner.png?1768901692132" alt="sticky banner" width="100" height="100">
 			</a>
 			<button class="btn p-0  absolute -top-3 right-1 link">

@@ -1,4 +1,4 @@
-﻿@php
+@php
   $defaultImg = asset('image/UI-BACKEND/default-image.png');
   $resolveImg = function (array $product) use ($defaultImg): string {
     $imgs = $product['DANH_SACH_HINH_ANH_DAI_DIEN'] ?? [];

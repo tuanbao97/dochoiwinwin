@@ -14,9 +14,9 @@
 <!-- /Added by HTTrack -->
 <meta name="viewport"
 	content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
-<title>Win Win Trái Cây Nhập Khẩu - Quản trị hệ thống</title>
-<meta name="description" content="Trang quản trị Win Win Trái Cây Nhập Khẩu giúp quản lý sản phẩm trái cây nhập khẩu và nội dung website một cách thuận tiện, hiệu quả.">
-<meta name="keywords" content="Win Win Trái Cây Nhập Khẩu, quản trị cửa hàng, quản lý sản phẩm, trái cây nhập khẩu">
+<title>Đồ Chơi Win Win - Quản trị hệ thống</title>
+<meta name="description" content="Trang quản trị Đồ Chơi Win Win giúp quản lý sản phẩm đồ chơi và nội dung website một cách thuận tiện, hiệu quả.">
+<meta name="keywords" content="Đồ Chơi Win Win, quản trị cửa hàng, quản lý sản phẩm, đồ chơi trẻ em">
 <!-- base:css -->
 <link rel="stylesheet"
 	href="{{ asset('css/UI-BACKEND/vendors/typicons/typicons.css') }}?v={{ $timeUpdate }}">

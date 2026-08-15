@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Đăng nhập tài khoản — Win Win';
-  $seoDescription = 'Đăng nhập tài khoản Win Win Trái Cây Nhập Khẩu.';
+  $seoDescription = 'Đăng nhập tài khoản Đồ Chơi Win Win.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 

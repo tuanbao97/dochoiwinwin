@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Giới thiệu — Win Win';
-  $seoDescription = 'Win Win Trái Cây Nhập Khẩu & Quà tặng — trái cây nhập khẩu chất lượng, giỏ quà và quà biếu. Hotline 0905 454 775 - 0905 09 09 10.';
+  $seoDescription = '🎁 ĐỒ CHƠI WIN WIN — Chuyên đồ chơi chính hãng, chất lượng. Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ. Hotline 0905 454 775 - 0905 09 09 10.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -33,7 +33,7 @@
                   <div class="prose text-base w-full max-w-full content">
                     <header class="ww-about__header">
                       <h1 class="text-h4 font-semibold mb-2">Giới thiệu</h1>
-                      <p class="text-base text-primary font-semibold mb-0" data-ww-contact-slot="store-name">Win Win Trái Cây Nhập Khẩu &amp; Quà tặng</p>
+                      <p class="text-base text-primary font-semibold mb-0" data-ww-contact-slot="store-name">Đồ Chơi Win Win</p>
                     </header>
 
                     <div class="ww-about__grid">
@@ -41,7 +41,7 @@
                         <div class="ww-about__img-wrap">
                           <img
                             src="{{ asset('UI-FRONTEND/images/win-win-cua-hang.png') }}"
-                            alt="Cửa hàng Win Win Trái Cây Nhập Khẩu — Đường DT605, xã Hòa Tiến, Đà Nẵng"
+                            alt="Đồ Chơi Win Win — chuyên đồ chơi chính hãng, chất lượng"
                             loading="lazy"
                             width="1200"
                             height="1600"
@@ -54,15 +54,11 @@
 
                       <div class="ww-about__body">
                         <div class="ww-about__intro" data-ww-contact-slot="about-html">
-                          <p>
-                            <strong>Win Win Trái Cây Nhập Khẩu &amp; Quà tặng</strong> là điểm đến tin cậy cho trái cây nhập khẩu chọn lọc,
-                            giỏ quà và quà biếu chỉn chu. Chúng tôi mang đến trải nghiệm mua sắm tiện lợi, giao nhanh và đa dạng combo
-                            phù hợp tiệc tùng, biếu tặng hay sử dụng hằng ngày.
-                          </p>
-                          <p>
-                            Tại Win Win, sản phẩm được tuyển chọn kỹ lưỡng, bảo quản chuẩn và đóng gói cẩn thận. Đội ngũ tư vấn nhiệt tình,
-                            sẵn sàng hỗ trợ bạn chọn món ưng ý, gói quà theo yêu cầu và giao đúng hẹn.
-                          </p>
+                          <p>🎁 <strong>ĐỒ CHƠI WIN WIN</strong></p>
+                          <p>🚀 Chuyên đồ chơi chính hãng, chất lượng</p>
+                          <p>🧸 Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ</p>
+                          <p>📦 Hàng sẵn kho – Giao nhanh toàn quốc</p>
+                          <p>💬 Tư vấn tận tâm – Hỗ trợ nhiệt tình</p>
                         </div>
 
                         <div class="ww-about__contact">
@@ -84,21 +80,20 @@
                             <li>
                               <span class="ww-about__label">Email</span>
                               <span class="ww-about__value">
-                                <a class="link text-primary font-semibold" href="mailto:winwintraicaynhapkhau@gmail.com" data-ww-contact="email" data-ww-contact-fill-text title="winwintraicaynhapkhau@gmail.com">winwintraicaynhapkhau@gmail.com</a>
+                                <a class="link text-primary font-semibold" href="mailto:dochoiwinwin@gmail.com" data-ww-contact="email" data-ww-contact-fill-text title="dochoiwinwin@gmail.com">dochoiwinwin@gmail.com</a>
                               </span>
                             </li>
                             <li>
                               <span class="ww-about__label">Website</span>
                               <span class="ww-about__value">
-                                <a class="link text-primary font-semibold" href="https://traicaywinwin.com" data-ww-contact="website" data-ww-contact-fill-text target="_blank" rel="noopener noreferrer" title="traicaywinwin.com">traicaywinwin.com</a>
+                                <a class="link text-primary font-semibold" href="https://dochoiwinwin.com" data-ww-contact="website" data-ww-contact-fill-text target="_blank" rel="noopener noreferrer" title="dochoiwinwin.com">dochoiwinwin.com</a>
                               </span>
                             </li>
                           </ul>
                         </div>
 
                         <p class="ww-about__cta">
-                          Hãy ghé Win Win hoặc đặt hàng online để trải nghiệm trái cây tươi ngon và giỏ quà tinh tế,
-                          phù hợp cho gia đình, đối tác và những dịp đặc biệt.
+                          ❤️ Win Win–Chọn đúng đồ chơi
                         </p>
                       </div>
                     </div>

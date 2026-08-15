@@ -9,7 +9,7 @@
     </div>
 
         <div class="mt-6">
-      <a href="https://traicaywinwin.com/" title="Win Win Trái Cây">
+      <a href="https://dochoiwinwin.com/" title="Đồ Chơi Win Win">
         <img class="rounded w-full h-auto" loading="lazy" src="{{ asset('UI-FRONTEND/100/531/894/themes/1018832/assets/main_menu_banner.png') }}?ww-menu-banner-3" alt="Đồ chơi Win Win - Shop quà tặng cho sức khỏe & yêu thương">
       </a>
     </div>

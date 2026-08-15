@@ -1,10 +1,10 @@
 @php
   $seoTitle = ($categoryName !== '' ? $categoryName : ($query !== '' ? 'Tìm kiếm: ' . $query : 'Tìm kiếm')) . ' — Win Win';
   $seoDescription = $categoryName !== ''
-    ? ('Sản phẩm ' . $categoryName . ' tại Win Win Trái Cây Nhập Khẩu.')
+    ? ('Sản phẩm ' . $categoryName . ' tại Đồ Chơi Win Win.')
     : ($query !== ''
-      ? ('Kết quả tìm kiếm “' . $query . '” tại Win Win Trái Cây Nhập Khẩu.')
-      : 'Tìm kiếm sản phẩm tại Win Win Trái Cây Nhập Khẩu.');
+      ? ('Kết quả tìm kiếm “' . $query . '” tại Đồ Chơi Win Win.')
+      : 'Tìm kiếm sản phẩm tại Đồ Chơi Win Win.');
   $seoImage = storefrontDefaultShareImageUrl();
   $seoImageWidth = 1024;
   $seoImageHeight = 618;

@@ -503,7 +503,7 @@
 <div class="addThis_listSharing">
 			{{--
 			<div class="floating_banner relative">
-			<a class="block p-2 hover:scale-105 transition-all" href="https://traicaywinwin.com/" title="sticky banner">
+			<a class="block p-2 hover:scale-105 transition-all" href="https://dochoiwinwin.com/" title="sticky banner">
 				<img src="100/531/894/themes/1018832/assets/floating-banner.png?1768901692132" alt="sticky banner" width="100" height="100">
 			</a>
 			<button class="btn p-0  absolute -top-3 right-1 link">

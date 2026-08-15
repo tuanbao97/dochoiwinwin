@@ -538,7 +538,7 @@ use Illuminate\Support\Facades\DB;
 
     if (!function_exists('storefrontGioQuaPriceRanges')) {
         /**
-         * Khoảng giá Giỏ trái cây:
+         * Khoảng giá đồ chơi:
          * - dưới 500k: PRICE < 500000
          * - từ 500k đến 700k: PRICE >= 500000 và PRICE <= 700000
          * - trên 700k: PRICE > 700000
@@ -550,7 +550,7 @@ use Illuminate\Support\Facades\DB;
             return [
                 [
                     'id' => 'duoi-500k',
-                    'label' => 'Giỏ trái cây dưới 500k',
+                    'label' => 'Đồ chơi dưới 500k',
                     'min' => null,
                     'max' => 500000,
                     'minInclusive' => true,
@@ -558,7 +558,7 @@ use Illuminate\Support\Facades\DB;
                 ],
                 [
                     'id' => '500-700k',
-                    'label' => 'Giỏ trái cây từ 500k đến 700k',
+                    'label' => 'Đồ chơi từ 500k đến 700k',
                     'min' => 500000,
                     'max' => 700000,
                     'minInclusive' => true,
@@ -566,7 +566,7 @@ use Illuminate\Support\Facades\DB;
                 ],
                 [
                     'id' => 'tren-700k',
-                    'label' => 'Giỏ trái cây trên 700k',
+                    'label' => 'Đồ chơi trên 700k',
                     'min' => 700000,
                     'max' => null,
                     'minInclusive' => false,
@@ -580,8 +580,7 @@ use Illuminate\Support\Facades\DB;
         function storefrontGioQuaPriceSearchUrl(string $chipId): string
         {
             return storefrontListingUrl([
-                'mode' => 'category',
-                'categoryKey' => 'gio-qua-trai-cay-1004',
+                'mode' => 'all',
                 'giaChips' => [$chipId],
             ]);
         }
@@ -770,7 +769,7 @@ use Illuminate\Support\Facades\DB;
                 ->all();
 
             $cached = [
-                'storeName' => $val('SETTING_TEN_CUA_HANG') ?: 'Win Win Trái Cây Nhập Khẩu',
+                'storeName' => $val('SETTING_TEN_CUA_HANG') ?: 'Đồ Chơi Win Win',
                 'email' => $val('SETTING_EMAIL'),
                 'taxCode' => $val('SETTING_MA_SO_THUE'),
                 'workingHours' => $val('SETTING_THOI_GIAN_LAM_VIEC'),
@@ -817,13 +816,13 @@ use Illuminate\Support\Facades\DB;
 
     /**
      * Ảnh mặc định khi share Facebook / Zalo / OG.
-     * Ảnh lưới sản phẩm (giỏ trái cây) — dùng cho trang chủ & danh sách.
+     * Ảnh thương hiệu Đồ Chơi Win Win — dùng cho trang chủ & danh sách.
      */
     if (!function_exists('storefrontDefaultShareImageUrl')) {
         function storefrontDefaultShareImageUrl(): string
         {
-            $url = storefrontAbsoluteUrl(asset('UI-FRONTEND/images/og-share-listing.png'));
-            $version = '20260718d';
+            $url = storefrontAbsoluteUrl(asset('UI-FRONTEND/images/logo-win-win-ngang.png'));
+            $version = WW_LOGO_VERSION;
 
             return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . $version;
         }
@@ -924,10 +923,10 @@ use Illuminate\Support\Facades\DB;
         function storefrontSeo(array $overrides = []): array
         {
             $ww = wwWebContact();
-            $siteName = $ww['storeName'] !== '' ? $ww['storeName'] : 'Win Win Trái Cây Nhập Khẩu';
+            $siteName = $ww['storeName'] !== '' ? $ww['storeName'] : 'Đồ Chơi Win Win';
             $defaultDesc = $ww['description'] !== ''
                 ? $ww['description']
-                : 'Win Win Trái Cây Nhập Khẩu — trái cây tươi, giỏ quà và quà tặng: giao nhanh, nhiều set combo, phù hợp biếu tặng và tiệc.';
+                : '🎁 ĐỒ CHƠI WIN WIN — 🚀 Chuyên đồ chơi chính hãng, chất lượng. 🧸 Xe điều khiển • Máy bay RC • Đồ chơi giáo dục • Đồ chơi Búp bê • Đồ chơi vỉ giá rẻ. 📦 Hàng sẵn kho – Giao nhanh toàn quốc. 💬 Tư vấn tận tâm – Hỗ trợ nhiệt tình';
 
             $title = trim((string) ($overrides['title'] ?? ''));
             $description = trim((string) ($overrides['description'] ?? ''));
@@ -939,6 +938,9 @@ use Illuminate\Support\Facades\DB;
                 $description = preg_replace('/\s+/u', ' ', strip_tags($description)) ?? $description;
                 $description = mb_substr($description, 0, 300);
             }
+
+            // Mô tả cửa hàng lưu nhiều dòng, thẻ meta phải gộp về một dòng
+            $defaultDesc = trim(preg_replace('/\s+/u', ' ', $defaultDesc) ?? $defaultDesc);
 
             return [
                 'title' => $title !== '' ? $title : $siteName,

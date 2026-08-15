@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Chính sách thanh toán — Win Win';
-  $seoDescription = 'Chính sách thanh toán tại Win Win Trái Cây Nhập Khẩu & Quà tặng. Hotline 0905 454 775 - 0905 09 09 10.';
+  $seoDescription = 'Chính sách thanh toán tại Đồ Chơi Win Win. Hotline 0905 454 775 - 0905 09 09 10.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -29,7 +29,7 @@
           <div class="page-content ww-policy">
             <header class="ww-policy__header">
               <h1 class="text-h4 font-semibold mb-2">Chính sách thanh toán</h1>
-              <p class="text-base text-primary font-semibold mb-0">Win Win Trái Cây Nhập Khẩu &amp; Quà tặng</p>
+              <p class="text-base text-primary font-semibold mb-0">Đồ Chơi Win Win</p>
             </header>
 
             <div class="ww-policy__body prose text-base">

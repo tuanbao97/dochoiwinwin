@@ -6,7 +6,6 @@ use App\Enum\AppConstant;
 use App\Enum\AuthConstant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
@@ -48,10 +47,8 @@ class WinWinNewsSampleSeeder extends Seeder
 
         foreach ($articles as $index => $article) {
             $imageMeta = $this->storeImage($article['image'], $article['image_label']);
-            $docId = $imageMeta['id'];
-            $imageExt = $imageMeta['extension'];
-
             $newsId = $this->nextNewsId++;
+
             DB::table('news')->insert([
                 'ID' => $newsId,
                 'TITLE' => $article['title'],
@@ -61,8 +58,8 @@ class WinWinNewsSampleSeeder extends Seeder
                 'META_SEO_KEYWORDS' => $article['keywords'],
                 'META_SEO_DESCRIPTION' => Str::limit($article['summary'], 1000, ''),
                 'APPROVED_DATE' => $now,
-                'PUBLISHED_DATE' => $now->copy()->subDays(15 - $index),
-                'IS_HOT_NEWS' => $article['hot'] ?? false,
+                'PUBLISHED_DATE' => $now->copy()->subDays(count($articles) - $index),
+                'IS_HOT_NEWS' => $article['hot'],
                 'COUNT_VIEWS' => random_int(50, 800),
                 'IS_APPROVED' => true,
                 'USER_POST_NEWS_ID' => $adminId,
@@ -94,11 +91,11 @@ class WinWinNewsSampleSeeder extends Seeder
 
             DB::table('news_document_storage')->insert([
                 'NEWS_ID' => $newsId,
-                'DOCUMENT_STORAGE_ID' => $docId,
+                'DOCUMENT_STORAGE_ID' => $imageMeta['id'],
                 'SORT_ORDER' => 0,
                 'IS_THUMNAIL' => true,
                 'TYPE' => 'image',
-                'EXTENSION' => $imageExt,
+                'EXTENSION' => $imageMeta['extension'],
                 'CRT_DT' => $now,
                 'UPD_DT' => $now,
                 'CRT_ID' => $adminId,
@@ -112,36 +109,24 @@ class WinWinNewsSampleSeeder extends Seeder
             ]);
         }
 
-        $this->command?->info('Đã seed ' . count($articles) . ' bài tin tức Win Win kèm hình ảnh.');
+        $this->command?->info('Đã seed ' . count($articles) . ' bài tin tức Đồ Chơi Win Win kèm hình ảnh.');
     }
 
     private function storeImage(string $source, string $label): array
     {
-        $publicDir = public_path($this->uploadDir);
-        $extension = 'jpg';
-        if (! str_starts_with($source, 'http')) {
-            $extension = strtolower(pathinfo($source, PATHINFO_EXTENSION)) ?: 'jpg';
+        if (! is_file($source)) {
+            throw new \RuntimeException('Thiếu ảnh seed: ' . $source);
         }
+
+        $extension = strtolower(pathinfo($source, PATHINFO_EXTENSION)) ?: 'png';
         $hashName = Str::lower(Str::random(40)) . '.' . $extension;
-        $target = $publicDir . DIRECTORY_SEPARATOR . $hashName;
-
-        if (str_starts_with($source, 'http')) {
-            $response = Http::timeout(90)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; WinWinSeeder/1.0)'])
-                ->get($source);
-            if (! $response->successful()) {
-                throw new \RuntimeException('Không tải được ảnh: ' . $label . ' (HTTP ' . $response->status() . ')');
-            }
-            file_put_contents($target, $response->body());
-        } else {
-            if (! copy($source, $target)) {
-                throw new \RuntimeException('Không copy được ảnh: ' . $label);
-            }
+        $targetDir = public_path($this->uploadDir);
+        $target = $targetDir . DIRECTORY_SEPARATOR . $hashName;
+        if (! copy($source, $target)) {
+            throw new \RuntimeException('Không copy được ảnh: ' . $label);
         }
+        copy($target, $targetDir . DIRECTORY_SEPARATOR . '1x1_' . $hashName);
 
-        copy($target, $publicDir . DIRECTORY_SEPARATOR . '1x1_' . $hashName);
-
-        $relativePath = $this->uploadDir . '/' . $hashName;
         $id = $this->nextDocId++;
         $now = now();
         $adminId = AuthConstant::USER_SUPER_ADMIN_ID;
@@ -150,9 +135,9 @@ class WinWinNewsSampleSeeder extends Seeder
         DB::table('document_storage')->insert([
             'ID' => $id,
             'NAME' => $hashName,
-            'ORIGINAL_NAME' => Str::slug($label) . '.jpg',
+            'ORIGINAL_NAME' => Str::slug($label) . '.' . $extension,
             'EXTENSION' => $extension,
-            'PATH' => $relativePath,
+            'PATH' => $this->uploadDir . '/' . $hashName,
             'DIRECTORY' => $this->uploadDir,
             'SIZE' => filesize($target) ?: 0,
             'MD5' => md5_file($target),
@@ -171,169 +156,95 @@ class WinWinNewsSampleSeeder extends Seeder
         return ['id' => $id, 'extension' => $extension];
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function seedImage(string $filename): string
-    {
-        $path = database_path('seeders/assets/news-images/' . $filename);
-        if (! is_file($path)) {
-            throw new \RuntimeException('Thiếu ảnh seed: ' . $filename);
-        }
-
-        return $path;
-    }
-
     private function articles(): array
     {
-        $storeImg = public_path('UI-FRONTEND/images/win-win-cua-hang.png');
-
-        return array_merge(
-            $this->categoryArticles(1, [
-                ['Cách chọn cherry Mỹ nhập khẩu ngọt, căng vỏ', $this->seedImage('01-cherry.jpg'), 'cherry-my'],
-                ['Bảo quản nho xanh trong tủ lạnh 7–10 ngày', $this->seedImage('02-grapes.jpg'), 'nho-xanh'],
-                ['Phân biệt táo Fuji và Envy nhập khẩu chuẩn', $this->seedImage('03-apple.jpg'), 'tao-fuji-envy'],
-                ['Kiwi xanh New Zealand: chọn quả chín vừa ăn', $this->seedImage('04-kiwi.jpg'), 'kiwi-xanh'],
-                ['Dâu tây nhập khẩu — rửa và bảo quản đúng cách', $this->seedImage('05-strawberry.jpg'), 'dau-tay'],
-            ], 'mẹo chọn và bảo quản trái cây nhập khẩu'),
-            $this->categoryArticles(2, [
-                ['Giỏ trái cây biếu Tết cho gia đình và người thân', $this->seedImage('06-fruits.jpg'), 'gio-qua-tet'],
-                ['Combo quà trái cây nhập khẩu tặng đối tác doanh nghiệp', $this->seedImage('07-basket.jpg'), 'qua-doi-tac'],
-                ['Giỏ quà trái cây tặng thầy cô dịp 20/11', $this->seedImage('08-basket2.jpg'), 'qua-thay-co'],
-                ['Quà tặng trái cây khai trương — lời chúc tươi mới', $this->seedImage('09-orange.jpg'), 'qua-khai-truong'],
-                ['Set giỏ quà trái cây cao cấp: cherry, nho, berry', $this->seedImage('10-berries.jpg'), 'gio-qua-cao-cap'],
-            ], 'quà tặng và giỏ quà trái cây'),
-            $this->categoryArticles(3, [
-                ['Win Win — cửa hàng trái cây nhập khẩu tại Hòa Tiến', $storeImg, 'win-win-cua-hang'],
-                ['Nguồn trái cây nhập khẩu chính ngạch tại Win Win', $this->seedImage('11-market.jpg'), 'nguon-trai-cay'],
-                ['Giao trái cây nội thành Đà Nẵng — giờ nhận đơn', $this->seedImage('12-delivery.jpg'), 'giao-hang'],
-                ['Cam kết đổi trả khi trái không đạt chất lượng', $this->seedImage('13-shop.jpg'), 'chat-luong'],
-                ['Đặt giỏ quà theo yêu cầu — hotline Win Win', $this->seedImage('14-market2.jpg'), 'dat-gio-qua'],
-            ], 'tin cửa hàng Win Win'),
-        );
-    }
-
-    /**
-     * @param  array<int, array{0: string, 1: string, 2: string}>  $items
-     * @return array<int, array<string, mixed>>
-     */
-    private function categoryArticles(int $categoryId, array $items, string $topic): array
-    {
-        $out = [];
-        foreach ($items as $i => [$title, $image, $slug]) {
-            $body = $this->bodyFor($slug, $title);
-            $out[] = [
-                'category_id' => $categoryId,
-                'title' => $title,
-                'summary' => $body['summary'],
-                'html' => $body['html'],
-                'text' => $body['text'],
-                'keywords' => $body['keywords'],
-                'image' => $image,
-                'image_label' => $slug,
-                'hot' => $i < 2,
-            ];
-        }
-
-        return $out;
-    }
-
-    /**
-     * @return array{summary: string, html: string, text: string, keywords: string}
-     */
-    private function bodyFor(string $slug, string $title): array
-    {
-        $blocks = [
-            'cherry-my' => [
-                'summary' => 'Cherry Mỹ nhập khẩu nên chọn quả căng, cuống xanh, vỏ bóng và không có vết nứt. Bảo quản lạnh 0–4°C giúp giữ độ giòn 5–7 ngày.',
-                'html' => '<p>Cherry Mỹ (đặc biệt các vùng Washington, California) được ưa chuộng nhờ vị ngọt cân bằng, thịt giòn. Khi mua tại cửa hàng hoặc siêu thị, hãy ưu tiên quả <strong>căng tròn, vỏ bóng, không nhăn</strong> và cuống còn xanh tươi.</p><p>Tránh chọn quả có vết nứt, mốc hoặc mùi lên men. Sau khi mua, để cherry trong túi thoáng hoặc hộp nhựa có lỗ thoát khí, bảo quản ngăn mát tủ lạnh <strong>0–4°C</strong>. Rửa cherry ngay trước khi ăn để hạn chế thấm nước làm mềm vỏ.</p><p>Tại Win Win, cherry được nhập theo mùa vụ và bảo quản chuỗi lạnh ngắn, giúp quả giữ độ tươi khi đến tay khách hàng.</p>',
-                'keywords' => 'cherry Mỹ, chọn cherry, trái cây nhập khẩu, Win Win',
-            ],
-            'nho-xanh' => [
-                'summary' => 'Nho xanh không hạt nên chọn chùm dày, quả căng, không rụng. Bảo quản tủ lạnh 2–4°C, không rửa trước khi cất giữ được 7–10 ngày.',
-                'html' => '<p>Nho xanh không hạt (thường từ Chile, Úc, Mỹ) có vị ngọt thanh, vỏ giòn. Quả ngon có <strong>chùm dày, trái căng tròn</strong>, màu xanh vàng đồng đều, không có quả rụng rời trong hộp.</p><p>Khi bảo quản, để nguyên chùm trong túi có lỗ thoát khí, đặt ngăn mát <strong>2–4°C</strong>. Không rửa nho trước khi bảo quản vì độ ẩm dễ làm mốc. Chỉ rửa nhẹ dưới vòi nước lạnh trước khi ăn.</p><p>Nếu thấy quả mềm hoặc có mùi chua lên men, nên loại bỏ ngay để không ảnh hưởng cả chùm.</p>',
-                'keywords' => 'nho xanh, bảo quản nho, trái cây nhập khẩu',
-            ],
-            'tao-fuji-envy' => [
-                'summary' => 'Táo Fuji có vị ngọt đậm, giòn; táo Envy vỏ đỏ đậm, thịt chắc. Chọn quả nặng tay, vỏ căng, không lõm hoặc đốm thâm.',
-                'html' => '<p><strong>Táo Fuji</strong> Nhật/Mỹ nổi bật với vị ngọt đậm, hương thơm dịu và độ giòn cao. <strong>Táo Envy</strong> (New Zealand/Mỹ) có vỏ đỏ sẫm, thịt trắng ngà, ít tanh khi cắt lâu nhờ hàm lượng polyphenol cao.</p><p>Dấu hiệu táo nhập khẩu chất lượng: quả <strong>nặng tay so với kích thước</strong>, vỏ căng mịn, không lõm, không vết bầm. Tránh táo có vết thâm lan rộng hoặc mùi rượu.</p><p>Bảo quản ở ngăn mát tủ lạnh, có thể bọc giấy hoặc túi thoáng. Táo Fuji và Envy đều phù hợp ăn trực tiếp hoặc làm salad trái cây.</p>',
-                'keywords' => 'táo Fuji, táo Envy, chọn táo nhập khẩu',
-            ],
-            'kiwi-xanh' => [
-                'summary' => 'Kiwi xanh chín khi ấn nhẹ hơi mềm, không quá nhũn. Ủ với táo/chuối 1–2 ngày nếu cần chín nhanh; bảo quản lạnh sau khi chín.',
-                'html' => '<p>Kiwi xanh (hay vàng) nhập từ New Zealand, Ý thường được thu hoạch khi còn cứng để vận chuyển an toàn. Quả <strong>chín vừa ăn</strong> khi ấn nhẹ hơi lõm, không quá mềm hoặc nhũn.</p><p>Nếu mua kiwi còn cứng, có thể ủ cùng táo hoặc chuối trong túi giấy 1–2 ngày ở nhiệt độ phòng để tăng tốc chín. Sau khi chín, chuyển vào ngăn mát tủ lạnh và dùng trong 5–7 ngày.</p><p>Cắt đôi và dùng thìa múc là cách phổ biến; vỏ kiwi xanh ăn được nếu rửa sạch lông bên ngoài.</p>',
-                'keywords' => 'kiwi xanh, chọn kiwi, bảo quản kiwi',
-            ],
-            'dau-tay' => [
-                'summary' => 'Dâu tây nhập khẩu nên chọn quả đỏ đều, lá xanh, không dập. Rửa nhẹ, để ráo và dùng trong 2–3 ngày; bảo quản lạnh sau khi rửa.',
-                'html' => '<p>Dâu tây nhập khẩu (Mỹ, Hàn, Nhật) thường có kích thước đồng đều, màu đỏ tươi và hương thơm rõ. Chọn quả <strong>lá xanh tươi, không héo</strong>, thân quả chắc, không dập hoặc có vết mốc trắng.</p><p>Không ngâm dâu lâu trong nước; rửa nhẹ dưới vòi, để ráo trên giấy thấm. Bảo quản ngăn mát, dùng trong <strong>2–3 ngày</strong> để giữ độ giòn và vị ngọt.</p><p>Dâu tây phù hợp ăn trực tiếp, làm sinh tố hoặc trang trí bánh — nên chuẩn bị ngay trước khi phục vụ.</p>',
-                'keywords' => 'dâu tây, bảo quản dâu, trái cây nhập khẩu',
-            ],
-            'gio-qua-tet' => [
-                'summary' => 'Giỏ trái cây Tết nên cân bằng màu sắc: cam, táo đỏ, nho, cherry. Đóng gói chắc, thêm lá trang trí và thiệp chúc mang ý nghĩa sung túc.',
-                'html' => '<p>Giỏ quà Tết trái cây nhập khẩu là món biếu phổ biến thể hiện lời chúc <strong>đủ đầy, sung túc</strong>. Nên kết hợp trái có màu đỏ, vàng, xanh: táo, cam, cherry, nho, kiwi.</p><p>Ưu tiên trái tươi, căng vỏ, đóng gói riêng từng loại trong túi thoáng trước khi xếp giỏ. Thêm lá cọ hoặc ruy băng đỏ tạo điểm nhấn. Nên đặt trước 3–5 ngày để shop chuẩn bị và giao đúng dịp.</p><p>Win Win nhận đóng giỏ quà theo ngân sách, có hóa đơn và giao tận nơi tại Đà Nẵng.</p>',
-                'keywords' => 'giỏ quà Tết, quà trái cây, Win Win',
-            ],
-            'qua-doi-tac' => [
-                'summary' => 'Quà trái cây doanh nghiệp nên gọn gàng, đồng bộ thương hiệu. Combo 3–5 loại trái nhập khẩu cao cấp phù hợp tặng đối tác, ký kết hợp đồng.',
-                'html' => '<p>Combo quà trái cây cho đối tác cần thể hiện sự trang trọng nhưng gọn nhẹ. Thường chọn <strong>hộp cứng, giỏ có nắp</strong>, kèm thiệp in logo doanh nghiệp.</p><p>Gợi ý nội dung: cherry, nho xanh, táo Envy, kiwi vàng — các loại dễ bảo quản 3–5 ngày trong điều kiện văn phòng có điều hòa. Tránh trái mềm dễ dập nếu giao xa.</p><p>Win Win hỗ trợ in thiệp, giao hàng loạt theo danh sách và xuất hóa đơn VAT cho doanh nghiệp.</p>',
-                'keywords' => 'quà doanh nghiệp, giỏ trái cây, quà đối tác',
-            ],
-            'qua-thay-co' => [
-                'summary' => 'Giỏ quà 20/11 nên tươi, thanh nhã: táo, lê, nho, cam. Mức giá 300.000–800.000đ phù hợp tặng thầy cô, kèm thiệp tri ân.',
-                'html' => '<p>Quà tặng ngày Nhà giáo Việt Nam (20/11) nên mang ý nghĩa tri ân, không cần quá cầu kỳ. <strong>Giỏ trái cây tươi</strong> với táo, lê, nho, cam hoặc dưa lưới là lựa chọn an toàn, phù hợp mọi lứa tuổi.</p><p>Nên đặt trước để chọn trái đẹp, đóng gói gọn. Kèm thiệp viết tay lời cảm ơn sẽ tạo ấn tượng tốt hơn quà giá trị cao nhưng thiếu ý nghĩa.</p><p>Win Win có sẵn mẫu giỏ quà 20/11 và nhận thiết kế theo yêu cầu trường/lớp.</p>',
-                'keywords' => 'quà 20/11, giỏ quà thầy cô, trái cây quà tặng',
-            ],
-            'qua-khai-truong' => [
-                'summary' => 'Quà khai trương trái cây tượng trưng thịnh vượng: cam, táo đỏ, lê vàng. Giỏ to, màu sắc rực rỡ, kèm băng chúc mừng khai trương.',
-                'html' => '<p>Trái cây khai trương thường chọn loại có màu <strong>đỏ, vàng, cam</strong> — tượng trưng may mắn, phát đạt. Cam sành, táo đỏ, lê vàng, nho đỏ là các lựa chọn phổ biến.</p><p>Giỏ quà khai trương thường lớn hơn giỏ biếu thông thường, có băng rôn “Chúc mừng khai trương”. Nên giao sáng sớm ngày khai trương để trưng tại quầy lễ.</p><p>Liên hệ Win Win để đặt giỏ theo mức ngân sách và thời gian giao cố định.</p>',
-                'keywords' => 'quà khai trương, giỏ trái cây, Win Win',
-            ],
-            'gio-qua-cao-cap' => [
-                'summary' => 'Giỏ quà cao cấp kết hợp cherry, berry, nho đen, táo Envy trong hộp lạnh hoặc giỏ có nắp. Phù hợp biếu sếp, khách VIP.',
-                'html' => '<p>Set giỏ quà cao cấp tập trung vào <strong>trái nhập khẩu thượng hạng</strong>: cherry Mỹ, việt quất, mâm xôi, nho đen không hạt, táo Envy hoặc Rockit.</p><p>Đóng gói thường dùng hộp carton cứng, lót lạnh hoặc túi giữ nhiệt nếu giao xa. Mỗi loại trái bọc riêng, xếp layer để tránh dập.</p><p>Win Win tư vấn combo theo mùa vụ và ngân sách từ 500.000đ đến vài triệu đồng, có giao nội thành Đà Nẵng.</p>',
-                'keywords' => 'giỏ quà cao cấp, cherry, quà VIP',
-            ],
-            'win-win-cua-hang' => [
-                'summary' => 'Win Win Trái Cây Nhập Khẩu & Quà tặng tại Đường DT605, xã Hòa Tiến, Đà Nẵng. Trái tươi chọn lọc, giỏ quà và giao hàng nhanh.',
-                'html' => '<p><strong>Win Win Trái Cây Nhập Khẩu &amp; Quà tặng</strong> là điểm đến tin cậy tại Đà Nẵng, chuyên trái cây nhập khẩu chọn lọc, giỏ quà và quà biếu.</p><p><strong>Địa chỉ:</strong> Đường DT605, xã Hòa Tiến, Đà Nẵng (đối diện Trường Tiểu học số 2 Hòa Tiến).</p><p><strong>Hotline:</strong> 0905 454 775 · 0905 09 09 10<br><strong>Email:</strong> winwintraicaynhapkhau@gmail.com</p><p>Chúng tôi cam kết nguồn hàng rõ ràng, bảo quản chuẩn lạnh và tư vấn tận tình cho từng nhu cầu mua lẻ hoặc đặt giỏ quà.</p>',
-                'keywords' => 'Win Win, cửa hàng trái cây, Hòa Tiến Đà Nẵng',
-            ],
-            'nguon-trai-cay' => [
-                'summary' => 'Win Win nhập trái cây chính ngạch có chứng từ, kiểm dịch đầy đủ. Chuỗi lạnh ngắn giúp trái giữ độ tươi từ kho đến quầy.',
-                'html' => '<p>Trái cây nhập khẩu tại Win Win đều có <strong>giấy tờ nguồn gốc, kiểm dịch thực vật</strong> theo quy định. Hàng về kho được kiểm tra độ tươi, loại trái dập hoặc quá chín trước khi lên kệ.</p><p>Chúng tôi ưu tiên nhà cung cấp uy tín từ Mỹ, Úc, New Zealand, Chile, Hàn Quốc, Nhật Bản tùy mùa vụ. Mỗi lô hàng ghi nhận ngày nhập để quản lý hạn sử dụng và luân chuyển FIFO.</p><p>Khách hàng có thể yêu cầu xem thông tin lô hàng khi mua số lượng lớn hoặc đặt giỏ quà doanh nghiệp.</p>',
-                'keywords' => 'trái cây chính ngạch, nguồn hàng Win Win, nhập khẩu',
-            ],
-            'giao-hang' => [
-                'summary' => 'Win Win giao trái cây và giỏ quà nội thành Đà Nẵng. Đặt trước qua hotline; giờ giao linh hoạt sáng–chiều các ngày trong tuần.',
-                'html' => '<p>Win Win hỗ trợ <strong>giao hàng nội thành Đà Nẵng</strong> cho đơn trái cây lẻ và giỏ quà. Khách đặt qua hotline <strong>0905 454 775</strong> hoặc <strong>0905 09 09 10</strong>, cung cấp địa chỉ và khung giờ nhận.</p><p>Giỏ quà được đóng chắc, cố định trái bằng lưới hoặc giấy lót để hạn chế dập trong vận chuyển. Đơn gấp nên đặt trước ít nhất 2–3 giờ; giỏ quà lớn nên đặt trước 1 ngày.</p><p>Phí giao tùy khu vực và kích thước đơn — nhân viên sẽ báo khi xác nhận đơn.</p>',
-                'keywords' => 'giao trái cây Đà Nẵng, giao giỏ quà, Win Win',
-            ],
-            'chat-luong' => [
-                'summary' => 'Win Win đổi trả trái không đạt chất lượng trong 24 giờ nếu còn hóa đơn và trái chưa qua xử lý. Cam kết minh bạch, tư vấn bảo quản sau mua.',
-                'html' => '<p>Chúng tôi cam kết <strong>đổi trả hoặc hỗ trợ</strong> khi trái cây không đạt chất lượng cam kết (dập, hỏng, không đúng loại) trong vòng 24 giờ kể từ khi nhận hàng, với điều kiện còn hóa đơn và sản phẩm chưa qua chế biến.</p><p>Nhân viên Win Win luôn tư vấn cách bảo quản sau mua để trái giữ tươi lâu nhất. Nếu cần, chụp ảnh sản phẩm và liên hệ hotline để được xử lý nhanh.</p><p>Sự hài lòng của khách hàng là ưu tiên hàng đầu của chúng tôi.</p>',
-                'keywords' => 'đổi trả trái cây, cam kết chất lượng, Win Win',
-            ],
-            'dat-gio-qua' => [
-                'summary' => 'Đặt giỏ quà theo ngân sách và dịp: Tết, khai trương, sinh nhật. Hotline 0905 454 775 — Win Win tư vấn và giao tận nơi.',
-                'html' => '<p>Bạn cần giỏ quà theo <strong>ngân sách, số lượng và dịp cụ thể</strong>? Win Win nhận đặt trước với đầy đủ lựa chọn trái nhập khẩu và đóng gói theo yêu cầu.</p><p>Gọi <strong>0905 454 775</strong> hoặc <strong>0905 09 09 10</strong> để được tư vấn mẫu giỏ, thời gian giao và in thiệp. Có hỗ trợ giao nhiều điểm cho doanh nghiệp.</p><p><strong>Địa chỉ cửa hàng:</strong> Đường DT605, xã Hòa Tiến, Đà Nẵng.<br><strong>Website:</strong> traicaywinwin.com</p>',
-                'keywords' => 'đặt giỏ quà, hotline Win Win, quà tặng trái cây',
-            ],
-        ];
-
-        $data = $blocks[$slug] ?? [
-            'summary' => $title,
-            'html' => '<p>' . e($title) . '</p>',
-            'keywords' => 'Win Win, trái cây nhập khẩu',
-        ];
-
-        $text = trim(preg_replace('/\s+/', ' ', strip_tags($data['html'])));
+        $icons = public_path('UI-FRONTEND/assets/ww-menu-icons');
+        $images = public_path('UI-FRONTEND/images');
 
         return [
-            'summary' => $data['summary'],
-            'html' => $data['html'],
-            'text' => $text,
-            'keywords' => $data['keywords'],
+            $this->article(1, 'Chọn đồ chơi phù hợp theo độ tuổi của bé', $icons . '/do-choi-giao-duc.svg',
+                'Mỗi giai đoạn phát triển cần loại đồ chơi có kích thước, độ khó và kỹ năng phù hợp.',
+                '<p>Khi chọn đồ chơi, phụ huynh nên ưu tiên <strong>độ tuổi khuyến nghị, kích thước chi tiết và kỹ năng mà sản phẩm hỗ trợ</strong>.</p><p>Trẻ nhỏ phù hợp với đồ chơi màu sắc rõ, thao tác đơn giản và không có chi tiết dễ nuốt. Trẻ lớn hơn có thể làm quen với lắp ghép, mô hình, điều khiển hoặc trò chơi tư duy có thử thách.</p><p>Đồ Chơi Win Win luôn sẵn sàng tư vấn sản phẩm phù hợp với độ tuổi và sở thích của bé.</p>',
+                'chọn đồ chơi theo độ tuổi, đồ chơi an toàn, Đồ Chơi Win Win'),
+            $this->article(1, 'Đồ chơi lắp ghép giúp bé phát triển tư duy như thế nào?', $icons . '/do-choi-lap-ghep.svg',
+                'Lắp ghép giúp rèn khả năng quan sát, phối hợp tay mắt, tư duy không gian và tính kiên trì.',
+                '<p>Đồ chơi lắp ghép khuyến khích bé quan sát, thử nghiệm và tự sửa khi mô hình chưa đúng. Quá trình này giúp phát triển <strong>tư duy không gian, khả năng giải quyết vấn đề và sự kiên trì</strong>.</p><p>Phụ huynh nên bắt đầu bằng bộ ít chi tiết, sau đó tăng dần độ khó theo kỹ năng của bé. Luôn kiểm tra cảnh báo về chi tiết nhỏ trước khi sử dụng.</p>',
+                'đồ chơi lắp ghép, phát triển tư duy, đồ chơi giáo dục'),
+            $this->article(1, 'Hướng dẫn chơi xe điều khiển an toàn', $icons . '/xe-dieu-khien.svg',
+                'Chọn khu vực rộng, kiểm tra pin và hướng dẫn bé điều khiển đúng cách trước khi chơi.',
+                '<p>Trước khi chơi xe điều khiển, hãy kiểm tra pin, bánh xe và bộ điều khiển. Nên chọn khu vực bằng phẳng, tránh đường giao thông, cầu thang và nơi có nước.</p><p>Không sạc pin qua đêm hoặc dùng bộ sạc không đúng thông số. Với trẻ nhỏ, người lớn nên hướng dẫn và giám sát trong những lần chơi đầu tiên.</p>',
+                'xe điều khiển, đồ chơi điều khiển, an toàn cho bé'),
+            $this->article(1, 'Đồ chơi vận động và lợi ích cho sức khỏe của bé', $icons . '/do-choi-van-dong.svg',
+                'Đồ chơi vận động giúp bé tăng phối hợp cơ thể, phản xạ và hứng thú hoạt động ngoài trời.',
+                '<p>Bóng, bộ ném vòng, cầu trượt mini và các trò chơi vận động giúp bé rèn <strong>thăng bằng, phản xạ và khả năng phối hợp</strong>.</p><p>Hãy chọn sản phẩm đúng độ tuổi, không gian sử dụng và luôn kiểm tra độ chắc chắn trước khi cho bé chơi.</p>',
+                'đồ chơi vận động, sức khỏe trẻ em, hoạt động ngoài trời'),
+            $this->article(1, 'Cách vệ sinh và bảo quản đồ chơi đúng cách', $images . '/logo-win-win-tron.png',
+                'Vệ sinh theo chất liệu giúp đồ chơi bền hơn và bảo đảm an toàn trong quá trình sử dụng.',
+                '<p>Đồ chơi nhựa có thể lau bằng khăn ẩm và dung dịch dịu nhẹ; đồ chơi điện tử chỉ nên lau bề mặt, tránh để nước vào mạch. Thú bông cần làm theo hướng dẫn giặt trên nhãn.</p><p>Tháo pin khi không sử dụng lâu ngày, cất chi tiết nhỏ vào hộp và kiểm tra định kỳ các cạnh sắc hoặc bộ phận lỏng.</p>',
+                'vệ sinh đồ chơi, bảo quản đồ chơi, an toàn trẻ em'),
+
+            $this->article(2, 'Gợi ý quà sinh nhật theo sở thích của bé', $icons . '/do-choi-be-gai.svg',
+                'Chọn quà theo sở thích giúp bé hào hứng và sử dụng món đồ chơi lâu dài hơn.',
+                '<p>Với bé thích phương tiện, có thể chọn xe điều khiển hoặc mô hình. Bé yêu sáng tạo thường phù hợp với bộ lắp ghép, xếp hình hoặc đồ chơi nhập vai.</p><p>Ngoài sở thích, hãy lưu ý độ tuổi, không gian chơi và mức độ hỗ trợ cần thiết từ người lớn.</p>',
+                'quà sinh nhật cho bé, quà tặng đồ chơi, Đồ Chơi Win Win'),
+            $this->article(2, 'Quà Quốc tế Thiếu nhi 1/6 vui nhộn và ý nghĩa', $icons . '/do-choi-vui-nhon.svg',
+                'Một món đồ chơi phù hợp vừa mang lại niềm vui vừa khuyến khích bé khám phá kỹ năng mới.',
+                '<p>Dịp 1/6 là cơ hội để gia đình dành thời gian chơi cùng bé. Những bộ trò chơi tương tác, lắp ghép hoặc vận động phù hợp để cả nhà cùng tham gia.</p><p>Win Win hỗ trợ tư vấn và đóng gói quà theo độ tuổi, sở thích và ngân sách.</p>',
+                'quà 1/6, quà Quốc tế Thiếu nhi, đồ chơi vui nhộn'),
+            $this->article(2, 'Quà cho bé mê ô tô, máy bay và phương tiện', $icons . '/may-bay-dieu-khien.svg',
+                'Xe mô hình, xe điều khiển và máy bay là những lựa chọn hấp dẫn cho bé yêu phương tiện.',
+                '<p>Có thể bắt đầu với mô hình kéo thả cho bé nhỏ, sau đó chuyển sang xe điều khiển hoặc bộ lắp ghép phương tiện khi bé lớn hơn.</p><p>Kiểm tra phạm vi điều khiển, loại pin và không gian chơi để chọn sản phẩm phù hợp.</p>',
+                'quà cho bé mê xe, máy bay điều khiển, xe mô hình'),
+            $this->article(2, 'Quà tặng khơi gợi sáng tạo cho bé', $icons . '/lap-ghep-tong-hop.svg',
+                'Bộ lắp ghép, xếp hình và nhập vai giúp bé tạo ra câu chuyện và sản phẩm của riêng mình.',
+                '<p>Quà tặng sáng tạo không giới hạn bé vào một cách chơi duy nhất. Các bộ lắp ghép mở, xếp hình và đồ chơi nhập vai giúp bé tưởng tượng, kể chuyện và hợp tác với bạn bè.</p>',
+                'quà tặng sáng tạo, đồ chơi lắp ghép, đồ chơi nhập vai'),
+            $this->article(2, 'Chọn combo đồ chơi cho anh chị em cùng chơi', $icons . '/do-choi-mo-hinh.svg',
+                'Combo phù hợp giúp các bé chia sẻ, phối hợp và học cách chơi cùng nhau.',
+                '<p>Hãy chọn bộ có nhiều vai trò hoặc đủ chi tiết để các bé cùng tham gia, chẳng hạn đường đua, bộ lắp ghép lớn hoặc trò chơi vận động theo nhóm.</p><p>Ưu tiên sản phẩm phù hợp với độ tuổi của bé nhỏ nhất trong nhóm.</p>',
+                'combo đồ chơi, đồ chơi nhóm, quà cho anh chị em'),
+
+            $this->article(3, 'Đồ Chơi Win Win — cửa hàng đồ chơi tại Hòa Tiến', $images . '/logo-win-win-ngang.png',
+                'Đồ Chơi Win Win cung cấp sản phẩm an toàn, chính hãng và đa dạng tại Hòa Tiến, Đà Nẵng.',
+                '<p><strong>Đồ Chơi Win Win</strong> chuyên đồ chơi điều khiển, lắp ghép, giáo dục, vận động, mô hình, đồ chơi bé gái và nhiều sản phẩm quà tặng.</p><p><strong>Địa chỉ:</strong> Đường DT605, xã Hòa Tiến, Đà Nẵng.<br><strong>Hotline:</strong> 0905 454 775 · 0905 09 09 10<br><strong>Email:</strong> dochoiwinwin@gmail.com</p>',
+                'Đồ Chơi Win Win, cửa hàng đồ chơi Đà Nẵng, Hòa Tiến'),
+            $this->article(3, 'Cam kết nguồn gốc và chất lượng sản phẩm tại Win Win', $images . '/logo-win-win-tron.png',
+                'Win Win ưu tiên sản phẩm có thông tin nguồn gốc, cảnh báo độ tuổi và hướng dẫn sử dụng rõ ràng.',
+                '<p>Sản phẩm được kiểm tra bao bì, phụ kiện và tình trạng hoạt động trước khi giao. Thông tin độ tuổi, chất liệu và hướng dẫn sử dụng được tư vấn rõ để phụ huynh lựa chọn phù hợp.</p>',
+                'đồ chơi chính hãng, nguồn gốc đồ chơi, chất lượng Win Win'),
+            $this->article(3, 'Giao đồ chơi tại Đà Nẵng — cách đặt hàng', $images . '/logo-win-win-ngang.png',
+                'Win Win hỗ trợ giao hàng tại Đà Nẵng với thời gian linh hoạt và xác nhận rõ trước khi gửi.',
+                '<p>Khách hàng có thể đặt qua website, Facebook hoặc hotline <strong>0905 454 775</strong> và <strong>0905 09 09 10</strong>. Nhân viên sẽ xác nhận sản phẩm, địa chỉ, khung giờ và phí giao trước khi gửi hàng.</p>',
+                'giao đồ chơi Đà Nẵng, đặt đồ chơi online, Win Win'),
+            $this->article(3, 'Chính sách kiểm tra và hỗ trợ sau mua', $images . '/logo-win-win-tron.png',
+                'Khách hàng được kiểm tra sản phẩm và liên hệ Win Win khi phát hiện lỗi hoặc thiếu phụ kiện.',
+                '<p>Nếu sản phẩm giao sai, thiếu phụ kiện hoặc có lỗi khi mở hộp, quý khách vui lòng chụp ảnh/video và liên hệ sớm để được kiểm tra. Chính sách bảo hành cụ thể áp dụng theo từng sản phẩm và nhà sản xuất.</p>',
+                'bảo hành đồ chơi, đổi trả đồ chơi, hỗ trợ sau mua'),
+            $this->article(3, 'Liên hệ Win Win để chọn đồ chơi phù hợp', $images . '/logo-win-win-ngang.png',
+                'Đội ngũ Win Win tư vấn theo độ tuổi, sở thích, ngân sách và dịp tặng quà.',
+                '<p>Gọi <strong>0905 454 775</strong> hoặc <strong>0905 09 09 10</strong> để được tư vấn sản phẩm, đóng gói quà và thời gian giao.</p><p><strong>Địa chỉ:</strong> Đường DT605, xã Hòa Tiến, Đà Nẵng.<br><strong>Website:</strong> dochoiwinwin.com</p>',
+                'tư vấn đồ chơi, hotline Win Win, quà tặng cho bé'),
+        ];
+    }
+
+    private function article(
+        int $categoryId,
+        string $title,
+        string $image,
+        string $summary,
+        string $html,
+        string $keywords
+    ): array {
+        return [
+            'category_id' => $categoryId,
+            'title' => $title,
+            'summary' => $summary,
+            'html' => $html,
+            'text' => trim(preg_replace('/\s+/', ' ', strip_tags($html))),
+            'keywords' => $keywords,
+            'image' => $image,
+            'image_label' => Str::slug($title),
+            'hot' => true,
         ];
     }
 }

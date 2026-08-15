@@ -51,7 +51,7 @@
 
     <meta
       name="keywords"
-      content="trái cây tươi, giỏ quà, quà tặng, Win Win, sản phẩm"
+      content="đồ chơi trẻ em, đồ chơi an toàn, quà tặng cho bé, Win Win, sản phẩm"
     >
     <link rel="preconnect" href="https://bizweb.dktcdn.net">
     <link rel="preconnect" href="https://egany.com" crossorigin="">

@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Tất cả sản phẩm — Win Win';
-  $seoDescription = 'Danh sách sản phẩm trái cây, giỏ quà và quà tặng tại Win Win Trái Cây Nhập Khẩu.';
+  $seoDescription = 'Danh sách đồ chơi an toàn, chính hãng và đa dạng cho bé tại Đồ Chơi Win Win.';
   $seoImage = storefrontDefaultShareImageUrl();
   $seoImageWidth = 1024;
   $seoImageHeight = 618;

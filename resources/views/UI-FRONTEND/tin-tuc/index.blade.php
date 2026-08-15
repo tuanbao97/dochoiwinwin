@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Tin tức — Win Win';
-  $seoDescription = 'Tin tức, mẹo hay và chia sẻ về trái cây nhập khẩu, giỏ quà và quà tặng từ Win Win.';
+  $seoDescription = 'Tin tức, mẹo hay và chia sẻ về cách chọn đồ chơi an toàn, quà tặng cho bé từ Win Win.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 

@@ -8,7 +8,7 @@
 <!-- /Added by HTTrack -->
 <meta name="viewport"
 	content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Win Win Trái Cây Nhập Khẩu - Đăng nhập quản trị</title>
+<title>Đồ Chơi Win Win - Đăng nhập quản trị</title>
 <!-- base:css -->
 <link rel="stylesheet"
 	href="{{ asset('css/UI-BACKEND/vendors/typicons/typicons.css') }}">

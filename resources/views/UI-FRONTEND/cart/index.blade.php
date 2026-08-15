@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Giỏ hàng — Win Win';
-  $seoDescription = 'Giỏ hàng mua sắm tại Win Win Trái Cây Nhập Khẩu.';
+  $seoDescription = 'Giỏ hàng mua sắm tại Đồ Chơi Win Win.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 

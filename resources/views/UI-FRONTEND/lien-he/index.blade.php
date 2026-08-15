@@ -41,9 +41,7 @@
               <h1 class="text-h4 font-semibold mb-2">Liên hệ</h1>
               <p class="text-base text-primary font-semibold mb-0" data-ww-contact-slot="store-name">{{ $ww['storeName'] }}</p>
               @if($ww['description'] !== '')
-              <p class="ww-contact__lead text-neutral-200 mt-2 mb-0" data-ww-contact-slot="store-description">
-                {{ $ww['description'] }}
-              </p>
+              <p class="ww-contact__lead ww-store-description text-neutral-200 mt-2 mb-0" data-ww-contact-slot="store-description">{{ $ww['description'] }}</p>
               @endif
             </header>
 

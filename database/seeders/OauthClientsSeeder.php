@@ -14,8 +14,12 @@ class OauthClientsSeeder extends Seeder
     public function run(): void
     {
         /* START - Tạo Password Grant Client */
-        $clientName = 'WinWinTraiCayPasswordGrantClient';
+        $clientName = 'DoChoiWinWinPasswordGrantClient';
         $clientRepository = new ClientRepository();
+
+        DB::table('oauth_clients')
+            ->where('name', 'WinWinTraiCayPasswordGrantClient')
+            ->update(['name' => $clientName]);
 
         // Kiểm tra client đã tồn tại chưa theo tên
         $existingClient = DB::table('oauth_clients')->where('name', $clientName)->first();
@@ -36,7 +40,10 @@ class OauthClientsSeeder extends Seeder
 
 
         /* START - Tạo Personal Access Client */
-        $personalClientName = 'WinWinTraiCayPersonalAccessClient';
+        $personalClientName = 'DoChoiWinWinPersonalAccessClient';
+        DB::table('oauth_clients')
+            ->where('name', 'WinWinTraiCayPersonalAccessClient')
+            ->update(['name' => $personalClientName]);
         $existingPersonalClient = DB::table('oauth_clients')
             ->where('name', $personalClientName)
             ->where('personal_access_client', true)
