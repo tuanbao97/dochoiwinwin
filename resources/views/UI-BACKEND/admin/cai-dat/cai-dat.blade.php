@@ -225,9 +225,15 @@
 
 
 							<div class="form-group col-md-12 col-sm-12">
-								<label for="EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG">Đường dẫn Google Maps cửa hàng<code>*</code></label>
-								<input class="form-control" id="EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG" placeholder="">
+								<label for="EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG">Đường dẫn nhúng Google Maps<code>*</code></label>
+								<input class="form-control" id="EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG" placeholder="https://www.google.com/maps?...&output=embed">
 								<span class="error-message" id="MSG_EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG"></span>
+							</div>
+
+							<div class="form-group col-md-12 col-sm-12">
+								<label for="EDIT_SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG">Link chia sẻ Google Maps<code>*</code></label>
+								<input class="form-control" id="EDIT_SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG" placeholder="https://maps.app.goo.gl/...">
+								<span class="error-message" id="MSG_EDIT_SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG"></span>
 							</div>
 
 							<div class="form-group col-md-6 col-sm-12">
@@ -827,6 +833,7 @@ $(document).ready(function () {
 			SETTING_MO_TA_CUA_HANG: !isEmpty($('#EDIT_SETTING_MO_TA_CUA_HANG').val()) ? $('#EDIT_SETTING_MO_TA_CUA_HANG').val() : null,
 			SETTING_DIA_CHI_CUA_HANG: !isEmpty($('#EDIT_SETTING_DIA_CHI_CUA_HANG').val()) ? $('#EDIT_SETTING_DIA_CHI_CUA_HANG').val() : null,
 			SETTING_DUONG_DAN_GG_MAP_CUA_HANG: !isEmpty($('#EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG').val()) ? $('#EDIT_SETTING_DUONG_DAN_GG_MAP_CUA_HANG').val() : null,
+			SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG: !isEmpty($('#EDIT_SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG').val()) ? $('#EDIT_SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG').val() : null,
 			SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG: !isEmpty($('#EDIT_SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG').val()) ? $('#EDIT_SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG').val() : null,
 			SETTING_DUONG_DAN_SO_ZALO_CUA_HANG: !isEmpty($('#EDIT_SETTING_DUONG_DAN_SO_ZALO_CUA_HANG').val()) ? $('#EDIT_SETTING_DUONG_DAN_SO_ZALO_CUA_HANG').val() : null,
 			SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG: !isEmpty($('#EDIT_SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG').val()) ? $('#EDIT_SETTING_DUONG_DAN_PAGE_FACEBOOK_CUA_HANG').val() : null,

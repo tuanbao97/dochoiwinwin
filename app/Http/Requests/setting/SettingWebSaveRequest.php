@@ -74,6 +74,13 @@ class SettingWebSaveRequest extends FormRequest
                 'bail',
                 'required',
                 'string',
+                'url',
+            ],
+            'SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG' => [
+                'bail',
+                'required',
+                'string',
+                'url',
             ],
             'SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG' => [
                 'bail',

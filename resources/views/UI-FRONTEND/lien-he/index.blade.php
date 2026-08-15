@@ -2,9 +2,10 @@
   $ww = wwWebContact();
   $wwZalo = $ww['zaloUrl'] ?: $ww['zaloPageUrl'];
   $wwFacebookMsg = $ww['messengerUrl'] ?: $ww['facebookUrl'];
-  $wwMapLink = $ww['address'] !== ''
-    ? 'https://maps.google.com/?q=' . rawurlencode($ww['address'])
-    : ($ww['mapUrl'] ?: '#');
+  $wwMapLink = $ww['mapShareUrl']
+    ?: ($ww['address'] !== ''
+      ? 'https://maps.google.com/?q=' . rawurlencode($ww['address'])
+      : ($ww['mapUrl'] ?: '#'));
   $wwHotlineMeta = collect($ww['hotlines'])->pluck('display')->implode(' - ');
   $seoTitle = 'Liên hệ — ' . ($ww['storeName'] ?: 'Win Win');
   $seoDescription = 'Liên hệ ' . ($ww['storeName'] ?: 'Win Win')

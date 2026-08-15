@@ -120,8 +120,17 @@ TEXT;
                 'TYPE' => SettingEnum::SETTING_DUONG_DAN_GG_MAP_CUA_HANG->type(),
                 'DESCRIPTION' => SettingEnum::SETTING_DUONG_DAN_GG_MAP_CUA_HANG->description(),
                 'UNIT' => SettingEnum::SETTING_DUONG_DAN_GG_MAP_CUA_HANG->unit(),
-                'VALUE' => 'https://www.google.com/maps?q=Đường+DT605,+Hòa+Tiến,+Đà+Nẵng&output=embed',
+                'VALUE' => 'https://www.google.com/maps?q=' . rawurlencode('Đồ chơi Win Win, Hòa Tiến, Đà Nẵng') . '&output=embed',
                 'ORDER' => 6,
+            ],
+            [
+                'CODE' => SettingEnum::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG->value,
+                'NAME' => SettingEnum::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG->description(),
+                'TYPE' => SettingEnum::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG->type(),
+                'DESCRIPTION' => SettingEnum::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG->description(),
+                'UNIT' => SettingEnum::SETTING_DUONG_DAN_CHIA_SE_GG_MAP_CUA_HANG->unit(),
+                'VALUE' => 'https://maps.app.goo.gl/PRFUA3ZNHR4f6jRT6',
+                'ORDER' => 7,
             ],
             [
                 'CODE' => SettingEnum::SETTING_DUONG_DAN_PAGE_ZALO_CUA_HANG->value,
