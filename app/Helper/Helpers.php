@@ -840,12 +840,39 @@ use Illuminate\Support\Facades\DB;
     }
 
     /**
+     * Version logo — đổi khi thay file logo để trình duyệt tải lại.
+     */
+    if (!defined('WW_LOGO_VERSION')) {
+        define('WW_LOGO_VERSION', '20260815f');
+    }
+
+    /**
+     * Logo chính (tròn) dùng cho header, footer, backend.
+     */
+    if (!function_exists('storefrontLogoUrl')) {
+        function storefrontLogoUrl(): string
+        {
+            return asset('UI-FRONTEND/images/logo-win-win-tron.png') . '?v=' . WW_LOGO_VERSION;
+        }
+    }
+
+    /**
+     * Logo ngang — dùng cho header (chiều cao bị giới hạn nên bản tròn quá nhỏ).
+     */
+    if (!function_exists('storefrontLogoWideUrl')) {
+        function storefrontLogoWideUrl(): string
+        {
+            return asset('UI-FRONTEND/images/logo-win-win-ngang.png') . '?v=' . WW_LOGO_VERSION;
+        }
+    }
+
+    /**
      * Favicon / icon site (logo Win Win).
      */
     if (!function_exists('storefrontFaviconUrl')) {
         function storefrontFaviconUrl(): string
         {
-            return storefrontAbsoluteUrl(asset('UI-FRONTEND/images/logo-win-win-tron.png'));
+            return storefrontAbsoluteUrl(asset('UI-FRONTEND/images/favicon-win-win.png')) . '?v=' . WW_LOGO_VERSION;
         }
     }
 

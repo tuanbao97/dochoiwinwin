@@ -352,11 +352,9 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
             switch ($boLoc) {
                 case 'default':
                     if ($isApiPublic === true) {
-                        // UI mặc định: giá tăng dần (giá liên hệ / không giá cuối), rồi nổi bật, rồi cập nhật mới nhất
-                        $query->orderByRaw('CASE WHEN p.PRICE IS NULL OR p.PRICE <= 0 THEN 1 ELSE 0 END ASC');
-                        $query->orderByRaw('COALESCE(NULLIF(p.PRICE, 0), 999999999999999) ASC');
+                        // UI "Tất cả": ưu tiên sản phẩm nổi bật, rồi tạo gần nhất
                         $query->orderByRaw('CASE WHEN p.PRODUCT_HOT = ? THEN 0 ELSE 1 END', [true]);
-                        $query->orderBy('p.UPD_DT', 'desc');
+                        $query->orderBy('p.CRT_DT', 'desc');
                     } else {
                         // Admin/BE: giữ sort cũ theo ngày tạo
                         $query->orderBy('p.CRT_DT', 'desc');
@@ -429,13 +427,11 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                     break;
             } 
         } else {
-            // Không có BO_LOC: SOLD cuối; frontend = giá tăng (liên hệ cuối) → nổi bật → UPD_DT
+            // Không có BO_LOC: SOLD cuối; frontend = nổi bật → tạo gần nhất
             $query->orderByRaw('CASE WHEN p.STATUS = ? THEN 1 ELSE 0 END', [AppConstant::STATUS_SOLD]);
             if ($isApiPublic === true) {
-                $query->orderByRaw('CASE WHEN p.PRICE IS NULL OR p.PRICE <= 0 THEN 1 ELSE 0 END ASC');
-                $query->orderByRaw('COALESCE(NULLIF(p.PRICE, 0), 999999999999999) ASC');
                 $query->orderByRaw('CASE WHEN p.PRODUCT_HOT = ? THEN 0 ELSE 1 END', [true]);
-                $query->orderBy('p.UPD_DT', 'desc');
+                $query->orderBy('p.CRT_DT', 'desc');
             } else {
                 $query->orderBy('p.CRT_DT', 'desc');
             }

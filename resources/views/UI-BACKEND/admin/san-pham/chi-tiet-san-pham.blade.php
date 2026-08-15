@@ -5,6 +5,19 @@
 	$uuid3 = 'section' . Str::random(6);
 	$uuid4 = 'section' . Str::random(6);
 	$uuid5 = 'section' . Str::random(6);
+	$categoryRoots = \App\Models\CategoryP::query()
+		->whereNull('PARENT_ID')
+		->where('STATUS', \App\Enum\AppConstant::STATUS_USING)
+		->where('IS_ACTIVE', true)
+		->with(['childrens' => function ($query) {
+			$query->where('STATUS', \App\Enum\AppConstant::STATUS_USING)
+				->where('IS_ACTIVE', true)
+				->orderBy('SORT_ORDER')
+				->orderBy('NAME');
+		}])
+		->orderBy('SORT_ORDER')
+		->orderBy('NAME')
+		->get();
 ?>
 
 @extends('UI-BACKEND.admin.common.layout.master')
@@ -116,15 +129,6 @@
 @stop @section('content')
 <div class="row section-main">
 
-	<div class="col-lg-12">
-		@include('UI-BACKEND.admin.common.component.popup.danh-muc-san-pham.popup-list-card-danh-muc-san-pham',
-			[
-				'sectionId' => 'section_' . $uuid1
-				, 'aspectRatio' => '1x1'
-			]
-		)
-	</div>
-
 	<div class="col-lg-12 grid-margin stretch-card div-chi-tiet-san-pham" id="CHI_TIET_SAN_PHAM">
 		<div class="card">
 			<div class="card-body">
@@ -182,12 +186,15 @@
 								<div class="form-group">
 									<label for="NAME">Danh mục sản phẩm<code>*</code></label>
 
-									<div class="dropdown">
-										<input id="EDIT_DANH_MUC_SAN_PHAM_ID" type="hidden">
-                                    	<button class="btn btn-combobox dropdown-toggle" type="button" id="EDIT_DANH_MUC_SAN_PHAM" aria-haspopup="true" aria-expanded="true">
-											<span id="EDIT_DANH_MUC_SAN_PHAM_LBL" title=""></span>
-										</button>
-                                    </div>
+									<select id="EDIT_DANH_MUC_SAN_PHAM_IDS" class="form-control w-100" multiple="multiple">
+										@foreach ($categoryRoots as $categoryRoot)
+											<option value="{{ $categoryRoot->ID }}">{{ $categoryRoot->NAME }}</option>
+											@foreach ($categoryRoot->childrens as $categoryChild)
+												<option value="{{ $categoryChild->ID }}">↳ {{ $categoryChild->NAME }}</option>
+											@endforeach
+										@endforeach
+									</select>
+									<small class="form-text text-muted">Có thể chọn nhiều danh mục.</small>
 
 									<span class="error-message" id="MSG_EDIT_DANH_MUC_SAN_PHAM"></span>
 								</div>
@@ -242,8 +249,13 @@
 @section('custom-js-for-this-page')
 <script>
 $(document).ready(function () {
-	var currDanhMucSanPhamId = null; // Id danh mục sản phẩm hiện tại
 	var isFirstDanhMucSanPhamSelected = false;
+
+	$('#EDIT_DANH_MUC_SAN_PHAM_IDS').select2({
+		placeholder: 'Chọn một hoặc nhiều danh mục',
+		width: '100%',
+		closeOnSelect: false
+	});
 	
 	@if (isset($productId))
 		isFirstDanhMucSanPhamSelected = true;
@@ -407,13 +419,14 @@ $(document).ready(function () {
 				}
 
 				// Danh mục sản phẩm
-				let objDanhMucSanPham = data['DANH_MUC_SAN_PHAM'];
-				if (!isEmpty(objDanhMucSanPham)) {
-					$('#EDIT_DANH_MUC_SAN_PHAM_LBL').text(!isEmpty(objDanhMucSanPham.TEN_DANH_MUC_SAN_PHAM) ? objDanhMucSanPham.TEN_DANH_MUC_SAN_PHAM : null);
-					$('#EDIT_DANH_MUC_SAN_PHAM_ID').val(objDanhMucSanPham?.ID);
-
-					currDanhMucSanPhamId = objDanhMucSanPham.ID;
+				let danhMucSanPhams = data['DANH_MUC_SAN_PHAMS'] || [];
+				if (danhMucSanPhams.length === 0 && !isEmpty(data['DANH_MUC_SAN_PHAM'])) {
+					danhMucSanPhams = [data['DANH_MUC_SAN_PHAM']];
 				}
+				let categoryIds = danhMucSanPhams
+					.map(item => item && item.ID ? String(item.ID) : null)
+					.filter(Boolean);
+				$('#EDIT_DANH_MUC_SAN_PHAM_IDS').val(categoryIds).trigger('change.select2');
 				
 				// Load view loại sản phẩm
 				let pathView = data['PATH_VIEW'];
@@ -461,33 +474,18 @@ $(document).ready(function () {
 		$('#SECTION_VUI_LONG_CHON_DMSP').show();
 	@endif
 	
-	/* START Xử lý event click combobox danh mục sản phẩm */
-	$('#EDIT_DANH_MUC_SAN_PHAM').on('click', function() {
-		// Xử lý open popup
-		{{"section_" . $uuid1 }}_handleOpenPopupSanPham();
-		
-		// Hiển thị modal popup
-		$('#{{"section_" . $uuid1 }}_MODAL-LIST-DANH-MUC-SAN-PHAM').modal('show');
-	});
-	/* END Xử lý event click combobox danh mục sản phẩm */
-	
-	/* Callback chọn danh mục sản phẩm */
-	{{"section_" . $uuid1 }}_callBack_danhMucSanPham = function(dataLabel, dataId, pathView) {
-		// Luôn cập nhật label, id
-		$('#EDIT_DANH_MUC_SAN_PHAM_LBL').text(dataLabel);
-		$('#EDIT_DANH_MUC_SAN_PHAM_LBL').attr('title', dataLabel);
-		$('#EDIT_DANH_MUC_SAN_PHAM_ID').val(dataId);
-		currDanhMucSanPhamId = dataId;
+	$('#EDIT_DANH_MUC_SAN_PHAM_IDS').on('change', function() {
+		const selectedIds = $(this).val() || [];
 		// Chỉ gọi API reset bên dưới đúng 1 lần đầu khi thêm mới
-		if (!isFirstDanhMucSanPhamSelected) {
+		if (selectedIds.length > 0 && !isFirstDanhMucSanPhamSelected) {
 			@if (!isset($productId))
 				let productId = null;
-				pathView = 'UI-BACKEND/admin/san-pham/common/san-pham';
+				let pathView = 'UI-BACKEND/admin/san-pham/common/san-pham';
 				loadViewLoaiSanPham(null, productId, pathView);
 			@endif
 			isFirstDanhMucSanPhamSelected = true;
 		}
-	}
+	});
 	
 	/* Reset all messages sản phẩm */
 	resetAllMsgSanPham = function() {
@@ -512,9 +510,7 @@ $(document).ready(function () {
 	}
 
 	resetDanhMucSanPham = function() {
-		currDanhMucSanPhamId = null;
-		$('#EDIT_DANH_MUC_SAN_PHAM_ID').val(null);
-		$('#EDIT_DANH_MUC_SAN_PHAM_LBL').text(null);
+		$('#EDIT_DANH_MUC_SAN_PHAM_IDS').val(null).trigger('change');
 		$('#DIV_CHI_TIET_SAN_PHAM').html(null);
 		$('#SECTION_VUI_LONG_CHON_DMSP').show();
 	}

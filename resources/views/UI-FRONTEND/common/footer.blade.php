@@ -10,7 +10,7 @@
 
 
           <a class="footer-logo mb-3 block" href="{{ url('/') }}" title="{{ $ww['storeName'] }}">
-            <img class="object-contain" loading="lazy" src="{{ asset('UI-FRONTEND/images/logo-win-win-tron.png') }}" alt="{{ $ww['storeName'] }}" width="120" height="120" style="max-width: 120px;">
+            <img class="object-contain" loading="lazy" src="{{ storefrontLogoUrl() }}" alt="{{ $ww['storeName'] }}" width="120" height="120" style="max-width: 120px;">
           </a>
 
 

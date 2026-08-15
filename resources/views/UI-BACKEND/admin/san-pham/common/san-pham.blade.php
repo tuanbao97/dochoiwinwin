@@ -609,15 +609,14 @@ $(document).ready(function () {
       // Reset all msg
       resetAllMsgSanPham();
       
-      // Danh mục sản phẩm
-      let objDanhMucSanPham = {
-        ID: !isEmpty($('#EDIT_DANH_MUC_SAN_PHAM_ID').val()) ? $('#EDIT_DANH_MUC_SAN_PHAM_ID').val() : null
-      };
+      // Danh mục sản phẩm (multiple)
+      let danhMucSanPhams = ($('#EDIT_DANH_MUC_SAN_PHAM_IDS').val() || [])
+        .map(categoryId => ({ ID: Number(categoryId) }));
 
       // Create object data
       var data = {
           ID :  !isEmpty($('#EDIT_ID').val()) ? $('#EDIT_ID').val() : null
-        , DANH_MUC_SAN_PHAM: objDanhMucSanPham
+        , DANH_MUC_SAN_PHAMS: danhMucSanPhams
         , TEN_SAN_PHAM: $("#{{ $uuid1 }}_EDIT_TEN_SAN_PHAM").val()
         , MA_SAN_PHAM: (function() {
             let v = $("#{{ $uuid1 }}_EDIT_MA_SAN_PHAM").val();
@@ -736,7 +735,7 @@ $(document).ready(function () {
             // Map key thường -> selector
             const keyToSelector = {
               'DANH_SACH_HINH_ANH_DAI_DIEN': '#MSG_ANH_DAI_DIEN',
-              'DANH_MUC_SAN_PHAM': '#MSG_EDIT_DANH_MUC_SAN_PHAM',
+              'DANH_MUC_SAN_PHAMS': '#MSG_EDIT_DANH_MUC_SAN_PHAM',
               'TEN_SAN_PHAM': '#{{ $uuid1 }}_EDIT_TEN_SAN_PHAM',
               'MA_SAN_PHAM': '#{{ $uuid1 }}_EDIT_MA_SAN_PHAM',
               'KEYWORDS_SEO_WEBSITE': '#{{ $uuid1 }}_EDIT_KEYWORDS_SEO_WEBSITE',
@@ -749,7 +748,8 @@ $(document).ready(function () {
 
             Object.keys(errors).forEach(function(key) {
               if (key.match(/DANH_SACH_BIEN_THE_SAN_PHAM\./)) return; // đã xử lý phía trên
-              const selector = keyToSelector[key];
+              const selector = keyToSelector[key]
+                || (key.startsWith('DANH_MUC_SAN_PHAMS.') ? '#MSG_EDIT_DANH_MUC_SAN_PHAM' : null);
               const msg = (errors[key] || []).join(' ');
               if (!selector) return;
               if (selector.startsWith('#MSG_')) {

@@ -54,6 +54,8 @@ class ProductDetailDto implements \JsonSerializable
 
 
     public ?CategoryPDetailDto $danhMucSanPham;
+    /** @var array<CategoryPDetailDto>|null */
+    public ?array $danhMucSanPhams = null;
 
     /** @var array<\App\Dto\productVariant\ProductVariantDetailDto>|null */
     public ?array $danhSachBienThe = null;
@@ -292,6 +294,7 @@ class ProductDetailDto implements \JsonSerializable
             , 'DANH_SACH_VIDEO' => $this->danhSachVideo
             , 'DANH_SACH_FILE_DINH_KEM' => $this->danhSachFileDinhKem
             , 'DANH_MUC_SAN_PHAM' => $this->danhMucSanPham
+            , 'DANH_MUC_SAN_PHAMS' => $this->danhMucSanPhams
             , 'DANH_SACH_BIEN_THE' => $this->danhSachBienThe
             , 'TEN_NHOM_BIEN_THE' => $this->tenNhomBienThe
             , 'DIA_CHI' => $this->diaChiBds

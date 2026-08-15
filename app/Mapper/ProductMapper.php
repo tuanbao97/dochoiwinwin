@@ -256,24 +256,32 @@ class ProductMapper
 
         // Danh mục sản phẩm
         if (isset($product->categories) && count($product->categories) > 0) {
-            $danhMucSanPham = CategoryPDetailDto::createEmpty();
-            
-            $danhMucSanPham->id = $product->categories[0]->ID;
-            $danhMucSanPham->name = $product->categories[0]->NAME;
-            $danhMucSanPham->parentId = $product->categories[0]->PARENT_ID;
-            $danhMucSanPham->sortOrder = $product->categories[0]->SORT_ORDER;
-            $danhMucSanPham->description = $product->categories[0]->DESCRIPTION;
-            $danhMucSanPham->treeLevel = $product->categories[0]->TREE_LEVEL;
+            $productDto->danhMucSanPhams = [];
+            foreach ($product->categories as $category) {
+                $danhMucSanPham = CategoryPDetailDto::createEmpty();
 
-            $danhMucSanPham->crtId = $product->categories[0]->CRT_ID;
-            $danhMucSanPham->crtName = $product->categories[0]->CRT_NAME;
-            $danhMucSanPham->crtDt = $product->categories[0]->CRT_DT;
-            $danhMucSanPham->updId = $product->categories[0]->UPD_ID;
-            $danhMucSanPham->updName = $product->categories[0]->UPD_NAME;
-            $danhMucSanPham->updDt = $product->categories[0]->UPD_DT;
-            if (!is_null($product->categories[0]->IS_ACTIVE)) $danhMucSanPham->isActive = filter_var($product->categories[0]->IS_ACTIVE, FILTER_VALIDATE_BOOLEAN);
-            
-            $productDto->danhMucSanPham = $danhMucSanPham;
+                $danhMucSanPham->id = $category->ID;
+                $danhMucSanPham->name = $category->NAME;
+                $danhMucSanPham->parentId = $category->PARENT_ID;
+                $danhMucSanPham->sortOrder = $category->SORT_ORDER;
+                $danhMucSanPham->description = $category->DESCRIPTION;
+                $danhMucSanPham->treeLevel = $category->TREE_LEVEL;
+
+                $danhMucSanPham->crtId = $category->CRT_ID;
+                $danhMucSanPham->crtName = $category->CRT_NAME;
+                $danhMucSanPham->crtDt = $category->CRT_DT;
+                $danhMucSanPham->updId = $category->UPD_ID;
+                $danhMucSanPham->updName = $category->UPD_NAME;
+                $danhMucSanPham->updDt = $category->UPD_DT;
+                if (!is_null($category->IS_ACTIVE)) {
+                    $danhMucSanPham->isActive = filter_var($category->IS_ACTIVE, FILTER_VALIDATE_BOOLEAN);
+                }
+
+                $productDto->danhMucSanPhams[] = $danhMucSanPham;
+            }
+
+            // Giữ field cũ để tương thích các client chỉ đọc một danh mục.
+            $productDto->danhMucSanPham = $productDto->danhMucSanPhams[0];
         }
 
         // Biến thể sản phẩm

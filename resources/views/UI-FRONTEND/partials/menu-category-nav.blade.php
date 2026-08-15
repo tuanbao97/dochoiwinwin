@@ -56,6 +56,11 @@
           </div>
           <div class="mega-menu__inner flex-wrap gap-3 flex items-start">
             <ul class="submenu__list flex flex-col gap-4 w-full">
+              <li class="submenu__item submenu__item--main font-semibold">
+                <a class="link" title="Tất cả {{ $catName }}" href="{{ $catUrl }}" data-prefetch="{{ parse_url($catUrl, PHP_URL_PATH) ?: $catUrl }}">
+                  Tất cả
+                </a>
+              </li>
               @foreach ($children as $child)
                 @php
                   $childName = (string) ($child->NAME ?? '');
