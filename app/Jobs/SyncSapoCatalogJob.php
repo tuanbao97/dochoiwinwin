@@ -54,6 +54,11 @@ class SyncSapoCatalogJob
                 $productIds = $cache->allCachedProductIds();
             }
 
+            // Sapo không có thay đổi nhưng bảng product còn thiếu (DB mới deploy, import lỗi giữa chừng…)
+            if ($productIds === []) {
+                $productIds = $this->missingFromLocal($cache);
+            }
+
             $import = ['products_ok' => 0, 'products_skip' => 0, 'products_error' => 0, 'variants_ok' => 0, 'images_ok' => 0, 'images_skip' => 0, 'images_error' => 0, 'deactivated' => 0, 'errors' => []];
             if ($productIds !== []) {
                 $import = $importer->import($productIds);
@@ -94,5 +99,24 @@ class SyncSapoCatalogJob
     private function shouldBootstrapImport(): bool
     {
         return ! Product::query()->whereNotNull('SAPO_ID')->exists();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function missingFromLocal(SapoCatalogCache $cache): array
+    {
+        $cached = $cache->allCachedProductIds();
+        if ($cached === []) {
+            return [];
+        }
+
+        $existing = Product::query()
+            ->whereIn('SAPO_ID', $cached)
+            ->pluck('SAPO_ID')
+            ->map(static fn ($id) => (int) $id)
+            ->all();
+
+        return array_values(array_diff($cached, $existing));
     }
 }

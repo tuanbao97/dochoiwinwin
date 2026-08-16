@@ -444,6 +444,10 @@
 								<i class="fa fa-caret-left btn-icon-prepend"></i>Quay về
 							</button>
 
+							<button type="button" class="btn btn-action btn-warning btn-icon-text me-1" name="BTN_FETCH_SAPO_FULL">
+								<i class="fa fa-cloud-download btn-icon-prepend"></i>Fetch full
+							</button>
+
 							<button type="button" class="btn btn-action btn-info btn-icon-text" name="BTN_FETCH_SAPO">
 								<i class="fa fa-refresh btn-icon-prepend"></i>Fetch Sapo
 							</button>
@@ -452,6 +456,10 @@
 						<div class="action-mobile">
 							<button type="button" class="btn btn-action btn-light btn-icon-text me-1" name="BTN_GO_BACK">
 								<i class="fa fa-caret-left btn-icon-prepend"></i>Quay về
+							</button>
+
+							<button type="button" class="btn btn-action btn-warning btn-icon-text me-1" name="BTN_FETCH_SAPO_FULL">
+								<i class="fa fa-cloud-download btn-icon-prepend"></i>Fetch full
 							</button>
 
 							<button type="button" class="btn btn-action btn-info btn-icon-text" name="BTN_FETCH_SAPO">
@@ -1800,18 +1808,27 @@ $(document).ready(function () {
 	$('button[name="BTN_FETCH_SAPO"]').on('click', function() {
 		showSwalWarningPopup(function callback(result) {
 			if (result.isConfirmed === true) {
-				fetchSapoCatalog();
+				fetchSapoCatalog(false);
 			}
 		}, 'Bạn có chắc chắn muốn <span style="display: inline-block;">fetch sản phẩm Sapo?</span>');
 	});
 
-	fetchSapoCatalog = function() {
+	/* Fetch full: GET lại toàn bộ sản phẩm Sapo, bỏ qua mốc last_fetch */
+	$('button[name="BTN_FETCH_SAPO_FULL"]').on('click', function() {
+		showSwalWarningPopup(function callback(result) {
+			if (result.isConfirmed === true) {
+				fetchSapoCatalog(true);
+			}
+		}, 'Fetch FULL sẽ tải lại toàn bộ sản phẩm Sapo <span style="display: inline-block;">(có thể mất vài phút). Tiếp tục?</span>');
+	});
+
+	fetchSapoCatalog = function(full) {
 		$.ajax({
 			type: "POST",
 			url: '{{ url("/api/sapo/sync") }}',
 			contentType: "application/json",
 			showLoading: true,
-			data: JSON.stringify({}),
+			data: JSON.stringify({ FULL: full === true }),
 			success: function(data, textStatus, request) {
 				if (data.STATUS === false) {
 					showToastFailure('top-right', data.STATUS_DETAIL || 'Fetch Sapo thất bại!');
