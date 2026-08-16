@@ -164,6 +164,12 @@ class ProductServiceImpl implements ProductService
             ->all();
         // Lưu danh mục sản phẩm
         self::handleSaveDanhMucSanPhams($product->ID, $arrDanhMucSanPham);
+        if ($request->exists('DANH_SACH_BIEN_THE')) {
+            $this->productVariantRepository->saveBienTheSanPhams(
+                $product->ID,
+                $request->input('DANH_SACH_BIEN_THE', [])
+            );
+        }
 
 
 
