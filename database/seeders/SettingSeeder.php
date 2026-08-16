@@ -37,7 +37,7 @@ class SettingSeeder extends Seeder
 HTML;
 
         $camKetHtml = <<<'HTML'
-<p>❤️ Win Win–Chọn đúng đồ chơi</p>
+<p>❤️ Đồ Chơi Win Win – Hàng chính hãng 100% • Vật liệu an toàn • Giá cả cạnh tranh</p>
 HTML;
 
         // Mỗi ý một dòng: giao diện render với white-space: pre-line
