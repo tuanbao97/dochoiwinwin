@@ -91,10 +91,6 @@
                             </li>
                           </ul>
                         </div>
-
-                        <p class="ww-about__cta">
-                          ❤️ Win Win–Chọn đúng đồ chơi
-                        </p>
                       </div>
                     </div>
                   </div>
