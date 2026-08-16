@@ -176,7 +176,8 @@ details[open] > summary > .icon-carret-right {
 }
 @media(max-width: 374px){
 	.header .logo-wrapper {
-		width: 77px
+		width: auto;
+		max-width: 145px;
 	}
 }
 
