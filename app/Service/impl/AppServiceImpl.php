@@ -116,8 +116,18 @@ class AppServiceImpl implements AppService
 
     public function syncSapoCatalog(Request $request)
     {
-        $forceFull = filter_var($request->input('FULL', false), FILTER_VALIDATE_BOOLEAN);
-        $result = SyncSapoCatalogJob::dispatchSync($forceFull, true, false);
+        try {
+            $forceFull = filter_var($request->input('FULL', false), FILTER_VALIDATE_BOOLEAN);
+            $result = SyncSapoCatalogJob::dispatchSync($forceFull, true, false);
+        } catch (\Throwable $e) {
+            return response()->json(
+                new ApiResponseDto(
+                    AppConstant::STATUS_FAILURE,
+                    'Fetch Sapo lỗi: '.$e->getMessage(),
+                    []
+                )
+            )->setStatusCode(JsonResponse::HTTP_OK);
+        }
 
         $mode = $result['mode'] ?? '';
         $fetched = (int) ($result['fetched'] ?? 0);
@@ -129,7 +139,7 @@ class AppServiceImpl implements AppService
         $errors = (int) ($import['products_error'] ?? 0) + (int) ($import['images_error'] ?? 0);
 
         $detail = match ($mode) {
-            'disabled' => 'Sapo chưa được bật.',
+            'disabled' => $this->sapoDisabledMessage(),
             'locked' => 'Đang có tiến trình fetch khác, vui lòng thử lại sau.',
             'fresh' => 'Cache còn mới, chưa cần fetch lại.',
             'full' => 'Fetch full thành công ('.$fetched.' sản phẩm).',
@@ -155,6 +165,17 @@ class AppServiceImpl implements AppService
                 'LAST_FETCH_API_SAPO' => $lastFetch,
             ])
         )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    private function sapoDisabledMessage(): string
+    {
+        $status = app(\App\Service\SapoService::class)->configurationStatus();
+        if ($status['missing'] === []) {
+            return 'Sapo chưa được bật.';
+        }
+
+        return 'Sapo chưa cấu hình trên server. Thiếu: '.implode(', ', $status['missing'])
+            .' trong .env (sau đó chạy php artisan optimize:clear).';
     }
 
 

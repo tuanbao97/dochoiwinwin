@@ -7,6 +7,16 @@ interface SapoService
     public function isEnabled(): bool;
 
     /**
+     * @return array{
+     *     enabled: bool,
+     *     missing: array<int, string>,
+     *     store: string,
+     *     product_type: string
+     * }
+     */
+    public function configurationStatus(): array;
+
+    /**
      * @param  array<string, mixed>  $query
      * @return array{products: array<int, array<string, mixed>>, count: int}
      */
