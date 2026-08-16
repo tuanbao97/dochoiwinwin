@@ -146,6 +146,11 @@ details[open] > summary > .icon-carret-right {
   animation: fade-in 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
 }
 
+/* Thanh header dính cao 6.4rem nên logo phải nhỏ lại để không tràn */
+.header.active .logo-wrapper img {
+  max-height: var(--logo-height);
+}
+
 @media (min-width: 1271px) {
   .header .logo-wrapper {
     transition: all 0.3s 0.1s ease;

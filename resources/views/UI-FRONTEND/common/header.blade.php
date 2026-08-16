@@ -40,7 +40,7 @@
           </div>
           <a href="{{ url('/') }}" data-prefetch="" class="logo-wrapper mx-auto" title="Đồ Chơi Win Win">
 
-              <img src="{{ storefrontLogoWideUrl() }}" alt="Đồ Chơi Win Win" style="max-height: var(--logo-height); width: auto; max-width: min(200px, 100%); object-fit: contain;">
+              <img src="{{ storefrontLogoWideUrl() }}" alt="Đồ Chơi Win Win" style="max-height: var(--logo-height-header); width: auto; max-width: min(var(--logo-max-width-header), 100%); object-fit: contain;">
 
           </a>
         </div>
