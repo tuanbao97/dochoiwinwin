@@ -169,8 +169,8 @@
                   <div class="embla__slide flex-[0_0_100%] overflow-hidden rounded">
                     <a class="block" href="https://dochoiwinwin.com/" title="Đồ chơi an toàn — Giao nhanh">
                       <picture>
-                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}">
-                        <img class="block mx-auto w-full object-contain" loading="eager" width="1920" height="624" src="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}" alt="Đồ chơi an toàn — Giao nhanh" fetchpriority="high">
+                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}?ww-banner-4">
+                        <img class="block mx-auto w-full object-contain" loading="eager" width="1024" height="409" src="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}?ww-banner-4" alt="Đồ chơi Win Win — Chất lượng, an toàn, niềm vui" fetchpriority="high">
                       </picture>
                     </a>
                   </div>
@@ -231,11 +231,11 @@
 
 				   <div class="embla__slide  mx-auto flex h-inherit flex-nowrap item relative  gap-4 py-3 md:py-4 px-4  ">
 					<div class="w-6  flex-grow-0 flex-shrink-0">
-					  <img class="object-contain" loading="lazy" width="24" height="24" src="100/531/894/themes/1018832/assets/policies_icon_2.png?1768901692132" alt="Giao hàng miễn phí trong 24h (chỉ áp dụng khu vực nội thành)">
+					  <img class="object-contain" loading="lazy" width="24" height="24" src="100/531/894/themes/1018832/assets/policies_icon_an-toan.svg?ww-1" alt="An toàn vật liệu">
 					</div>
 					<div class="">
-					  <span class="font-semibold block">Bảo hành rõ ràng</span>
-					  <span class="text-xs">Đảm bảo quyền lợi cho khách hàng</span>
+					  <span class="font-semibold block">An toàn vật liệu</span>
+					  <span class="text-xs">Đạt chuẩn an toàn cho bé</span>
 					</div>
 				  </div>
 

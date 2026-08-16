@@ -8,7 +8,7 @@ class ProductVariantDetailDto implements \JsonSerializable
     public ?int $productId;
     public ?string $productStatus;
     public ?string $productColor;
-    public ?float $productStorage;
+    public ?string $productStorage;
 
     public ?bool $isContactPrice;
     public ?float $productPrice;
@@ -20,6 +20,10 @@ class ProductVariantDetailDto implements \JsonSerializable
     public ?array $danhSachHinhAnhDaiDien;
 
     public ?string $title;
+    public ?int $sapoVariantId = null;
+    public ?string $sku = null;
+    public ?int $inventoryQuantity = null;
+    public ?array $optionValues = null;
 
     public ?string $crtDt;
     public ?string $crtId;
@@ -75,6 +79,10 @@ class ProductVariantDetailDto implements \JsonSerializable
             , 'PRODUCT_ID' => $this->productId
 
             , 'TEN_BIEN_THE' => $this->title
+            , 'SAPO_VARIANT_ID' => $this->sapoVariantId
+            , 'SKU' => $this->sku
+            , 'SO_LUONG_TON' => $this->inventoryQuantity
+            , 'OPTION_VALUES' => $this->optionValues
             , 'TINH_TRANG_SAN_PHAM' => $this->productStatus
             , 'MAU_SAC' => $this->productColor
             , 'DUNG_LUONG' => $this->productStorage

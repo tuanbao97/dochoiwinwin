@@ -185,7 +185,8 @@ class SapoProductImporterImpl implements SapoProductImporter
         }
 
         $product->SAPO_ID = $sapoId;
-        $product->SAPO_PAYLOAD = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $product->SAPO_PAYLOAD = $payload;
+        $product->VARIANT_OPTIONS = $this->variantOptions($payload);
         $product->NAME = $name;
         $product->MA_SAN_PHAM = $alias !== '' ? $this->clip($alias, 100) : (string) $sapoId;
         $product->TYPE = $this->clip((string) ($payload['product_type'] ?? AppConstant::TYPE_PRODUCT_COMMON), 1000);
@@ -394,6 +395,13 @@ class SapoProductImporterImpl implements SapoProductImporter
             $localImageId = $imageId > 0 ? ($imageBySapoId[$imageId] ?? null) : null;
 
             $row->SAPO_VARIANT_ID = $sapoVariantId;
+            $row->OPTION_VALUES = array_values(array_filter([
+                $variant['option1'] ?? null,
+                $variant['option2'] ?? null,
+                $variant['option3'] ?? null,
+            ], static fn ($value) => $value !== null && trim((string) $value) !== ''));
+            $row->SKU = $this->clip((string) ($variant['sku'] ?? ''), 255) ?: null;
+            $row->INVENTORY_QUANTITY = $qty;
             $row->PRODUCT_ID = $product->ID;
             $row->PRODUCT_STATUS = $inStock ? 'CON_HANG' : 'HET_HANG';
             $row->PRODUCT_COLOR = $this->clip($color, 500);
@@ -429,6 +437,34 @@ class SapoProductImporterImpl implements SapoProductImporter
             ]);
 
         return $count;
+    }
+
+    /**
+     * @return array<int, array{name:string, values:array<int, string>}>
+     */
+    private function variantOptions(array $payload): array
+    {
+        $result = [];
+        $variants = is_array($payload['variants'] ?? null) ? $payload['variants'] : [];
+        foreach (array_values(is_array($payload['options'] ?? null) ? $payload['options'] : []) as $index => $option) {
+            if (!is_array($option) || $index > 2) {
+                continue;
+            }
+            $name = trim((string) ($option['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $values = [];
+            foreach ($variants as $variant) {
+                $value = is_array($variant) ? trim((string) ($variant['option'.($index + 1)] ?? '')) : '';
+                if ($value !== '' && !in_array($value, $values, true)) {
+                    $values[] = $value;
+                }
+            }
+            $result[] = ['name' => $name, 'values' => $values];
+        }
+
+        return $result;
     }
 
     /**

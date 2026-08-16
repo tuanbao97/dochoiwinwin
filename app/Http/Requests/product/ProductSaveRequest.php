@@ -191,6 +191,108 @@ class ProductSaveRequest extends FormRequest
                 , 'nullable'
                 , 'boolean'
             ]
+            , 'OPTIONS' => [
+                'bail'
+                , 'sometimes'
+                , 'array'
+                , 'max:3'
+            ]
+            , 'OPTIONS.*.name' => [
+                'bail'
+                , 'required'
+                , 'string'
+                , 'max:100'
+                , 'distinct'
+            ]
+            , 'OPTIONS.*.values' => [
+                'bail'
+                , 'required'
+                , 'array'
+                , 'min:1'
+            ]
+            , 'OPTIONS.*.values.*' => [
+                'bail'
+                , 'required'
+                , 'string'
+                , 'max:255'
+                , 'distinct'
+            ]
+            , 'DANH_SACH_BIEN_THE' => [
+                'bail'
+                , 'sometimes'
+                , 'array'
+                , 'max:500'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.ID' => [
+                'bail'
+                , 'nullable'
+                , 'integer'
+                , 'distinct'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.TEN_BIEN_THE' => [
+                'bail'
+                , 'required'
+                , 'string'
+                , 'max:1000'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.OPTION_VALUES' => [
+                'bail'
+                , 'required'
+                , 'array'
+                , 'min:1'
+                , 'max:3'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.OPTION_VALUES.*' => [
+                'bail'
+                , 'required'
+                , 'string'
+                , 'max:255'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.SKU' => [
+                'bail'
+                , 'nullable'
+                , 'string'
+                , 'max:255'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.PRODUCT_IMAGE_ID' => [
+                'bail'
+                , 'nullable'
+                , 'integer'
+                , 'exists:document_storage,ID'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.GIA_LIEN_HE' => [
+                'bail'
+                , 'required'
+                , 'boolean'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.GIA_BAN' => [
+                'bail'
+                , 'nullable'
+                , 'numeric'
+                , 'min:0'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.GIA_GOC' => [
+                'bail'
+                , 'nullable'
+                , 'numeric'
+                , 'min:0'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.SO_LUONG_TON' => [
+                'bail'
+                , 'nullable'
+                , 'integer'
+                , 'min:0'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.CON_HANG' => [
+                'bail'
+                , 'required'
+                , 'boolean'
+            ]
+            , 'DANH_SACH_BIEN_THE.*.TRANG_THAI_HOAT_DONG' => [
+                'bail'
+                , 'required'
+                , 'boolean'
+            ]
         ];
 
         // Check tồn tại id sản phẩm (cho phép cả USING và SOLD)
@@ -201,6 +303,17 @@ class ProductSaveRequest extends FormRequest
                     $fail('Id sản phẩm không tồn tại.');
                 }
             };
+
+            foreach ($this->input('DANH_SACH_BIEN_THE', []) as $index => $variant) {
+                $variantId = is_array($variant) ? ($variant['ID'] ?? null) : null;
+                if ($variantId) {
+                    $rules["DANH_SACH_BIEN_THE.{$index}.ID"][] = function ($attribute, $value, $fail) use ($id) {
+                        if (!DB::table('product_variant')->where('ID', $value)->where('PRODUCT_ID', $id)->exists()) {
+                            $fail('Biến thể không thuộc sản phẩm đang chỉnh sửa.');
+                        }
+                    };
+                }
+            }
         }
         
         // Check tồn tại danh sách hình ảnh đại diện
@@ -277,6 +390,64 @@ class ProductSaveRequest extends FormRequest
 
         return $messages;
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $options = $this->input('OPTIONS', []);
+            $variants = $this->input('DANH_SACH_BIEN_THE', []);
+            if (!is_array($options) || !is_array($variants)) {
+                return;
+            }
+
+            $allowedByPosition = array_map(
+                static fn ($option) => is_array($option) && is_array($option['values'] ?? null)
+                    ? array_map('strval', $option['values'])
+                    : [],
+                $options
+            );
+            $seen = [];
+            foreach ($variants as $index => $variant) {
+                if (!is_array($variant)) {
+                    continue;
+                }
+                $values = is_array($variant['OPTION_VALUES'] ?? null)
+                    ? array_map('strval', $variant['OPTION_VALUES'])
+                    : [];
+                if (count($values) !== count($options)) {
+                    $validator->errors()->add(
+                        "DANH_SACH_BIEN_THE.{$index}.OPTION_VALUES",
+                        'Số giá trị của biến thể không khớp số thuộc tính.'
+                    );
+                    continue;
+                }
+                foreach ($values as $position => $value) {
+                    if (!in_array($value, $allowedByPosition[$position] ?? [], true)) {
+                        $validator->errors()->add(
+                            "DANH_SACH_BIEN_THE.{$index}.OPTION_VALUES.{$position}",
+                            'Giá trị biến thể không thuộc danh sách đã khai báo.'
+                        );
+                    }
+                }
+                $key = json_encode($values, JSON_UNESCAPED_UNICODE);
+                if (isset($seen[$key])) {
+                    $validator->errors()->add(
+                        "DANH_SACH_BIEN_THE.{$index}.OPTION_VALUES",
+                        'Tổ hợp biến thể bị trùng.'
+                    );
+                }
+                $seen[$key] = true;
+
+                $contactPrice = filter_var($variant['GIA_LIEN_HE'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                if (!$contactPrice && ($variant['GIA_BAN'] ?? null) === null) {
+                    $validator->errors()->add(
+                        "DANH_SACH_BIEN_THE.{$index}.GIA_BAN",
+                        'Giá bán biến thể là bắt buộc.'
+                    );
+                }
+            }
+        });
+    }
     
     /* Override phương thức attributes để change label thành tên hiển thị lỗi như mong muốn */
     public function attributes()
@@ -293,6 +464,17 @@ class ProductSaveRequest extends FormRequest
             'GIA_HIEN_THI' => 'Giá hiển thị',
             'KEYWORDS_SEO_WEBSITE' => 'Từ khóa SEO',
             'MA_SAN_PHAM' => 'Mã sản phẩm',
+            'OPTIONS' => 'Thuộc tính biến thể',
+            'OPTIONS.*.name' => 'Tên thuộc tính',
+            'OPTIONS.*.values' => 'Giá trị thuộc tính',
+            'DANH_SACH_BIEN_THE' => 'Danh sách biến thể',
+            'DANH_SACH_BIEN_THE.*.TEN_BIEN_THE' => 'Tên biến thể',
+            'DANH_SACH_BIEN_THE.*.OPTION_VALUES' => 'Giá trị biến thể',
+            'DANH_SACH_BIEN_THE.*.SKU' => 'SKU biến thể',
+            'DANH_SACH_BIEN_THE.*.PRODUCT_IMAGE_ID' => 'Ảnh biến thể',
+            'DANH_SACH_BIEN_THE.*.GIA_BAN' => 'Giá bán biến thể',
+            'DANH_SACH_BIEN_THE.*.GIA_GOC' => 'Giá gốc biến thể',
+            'DANH_SACH_BIEN_THE.*.SO_LUONG_TON' => 'Số lượng tồn',
         ];
 
         /* Merge message from locale and for this request */

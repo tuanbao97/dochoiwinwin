@@ -3,7 +3,6 @@
 namespace App\Repository\impl;
 
 use App\Enum\AppConstant;
-use App\Mapper\ProductCategoryMapper;
 use App\Mapper\ProductVariantMapper;
 use App\Models\ProductVariant;
 use App\Repository\BaseRepository;
@@ -26,23 +25,48 @@ class ProductVariantRepositoryImpl extends BaseRepository implements ProductVari
 
     public function saveBienTheSanPhams($productId, array $productVariants)
     {
-        if (isset($productVariants) && count($productVariants) > 0) {
-            foreach ($productVariants as $index => $productVariant) {
-                $data = [
-                    'PRODUCT_ID' => $productId
-                    , 'PRODUCT_STATUS' => $productVariant['TINH_TRANG_SAN_PHAM']
-                    , 'PRODUCT_COLOR' => $productVariant['MAU_SAC']
-                    , 'PRODUCT_STORAGE' => $productVariant['DUNG_LUONG']
-                    , 'PRODUCT_IMAGE_ID' => $productVariant['DANH_SACH_HINH_ANH_DAI_DIEN'][0]['ID']
-                    , 'IS_CONTACT_PRICE' => $productVariant['GIA_LIEN_HE']
-                    , 'PRODUCT_PRICE' => $productVariant['GIA_BAN']
-                    , 'PRODUCT_ORIGINAL_PRICE' => $productVariant['GIA_GOC']
-                    , 'IS_IN_STOCK' => $productVariant['CON_HANG']
-                ];
-                $productVariant = ProductVariantMapper::mapFromArray(new ProductVariant(), $data);
-                // Save
-                $productVariant->save();
-            }
+        $keptIds = [];
+        foreach ($productVariants as $variantInput) {
+            $variantId = isset($variantInput['ID']) ? (int) $variantInput['ID'] : null;
+            $variant = $variantId
+                ? ProductVariant::query()->where('PRODUCT_ID', $productId)->where('ID', $variantId)->firstOrFail()
+                : new ProductVariant();
+            $optionValues = array_values(array_map(
+                static fn ($value) => trim((string) $value),
+                $variantInput['OPTION_VALUES'] ?? []
+            ));
+            $imageId = $variantInput['PRODUCT_IMAGE_ID']
+                ?? ($variantInput['DANH_SACH_HINH_ANH_DAI_DIEN'][0]['ID'] ?? null);
+            $isContactPrice = filter_var($variantInput['GIA_LIEN_HE'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $quantity = isset($variantInput['SO_LUONG_TON']) && $variantInput['SO_LUONG_TON'] !== ''
+                ? (int) $variantInput['SO_LUONG_TON']
+                : null;
+
+            ProductVariantMapper::mapFromArray($variant, [
+                'PRODUCT_ID' => $productId,
+                'PRODUCT_STATUS' => ($variantInput['CON_HANG'] ?? true) ? 'CON_HANG' : 'HET_HANG',
+                'PRODUCT_COLOR' => $optionValues[0] ?? ($variantInput['MAU_SAC'] ?? 'Mặc định'),
+                'PRODUCT_STORAGE' => $optionValues[1] ?? null,
+                'PRODUCT_IMAGE_ID' => $imageId,
+                'IS_CONTACT_PRICE' => $isContactPrice,
+                'PRODUCT_PRICE' => $isContactPrice ? null : ($variantInput['GIA_BAN'] ?? null),
+                'PRODUCT_ORIGINAL_PRICE' => $isContactPrice ? null : ($variantInput['GIA_GOC'] ?? null),
+                'IS_IN_STOCK' => filter_var($variantInput['CON_HANG'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'OPTION_VALUES' => $optionValues,
+                'SKU' => trim((string) ($variantInput['SKU'] ?? '')) ?: null,
+                'INVENTORY_QUANTITY' => $quantity,
+                'TITLE' => trim((string) ($variantInput['TEN_BIEN_THE'] ?? implode(' / ', $optionValues))),
+                'IS_ACTIVE' => filter_var($variantInput['TRANG_THAI_HOAT_DONG'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            ])->save();
+            $keptIds[] = (int) $variant->ID;
         }
+
+        ProductVariant::query()
+            ->where('PRODUCT_ID', $productId)
+            ->when($keptIds !== [], fn ($query) => $query->whereNotIn('ID', $keptIds))
+            ->update([
+                'STATUS' => AppConstant::STATUS_DELETED,
+                'IS_ACTIVE' => false,
+            ]);
     }
 }

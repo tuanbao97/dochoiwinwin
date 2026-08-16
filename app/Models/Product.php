@@ -42,6 +42,7 @@ class Product extends Model
         'ID' => null,
         'SAPO_ID' => null,
         'SAPO_PAYLOAD' => null,
+        'VARIANT_OPTIONS' => null,
         'UUID' => null,
         'MA_SAN_PHAM' => null,
         'NAME' => null,
@@ -78,6 +79,8 @@ class Product extends Model
     protected $casts = [
         'IS_ACTIVE' => 'boolean',
         'SAPO_ID' => 'integer',
+        'SAPO_PAYLOAD' => 'array',
+        'VARIANT_OPTIONS' => 'array',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
     ];

@@ -63,6 +63,9 @@ class ProductDetailDto implements \JsonSerializable
     /** Nhãn nhóm biến thể Sapo (vd: Màu sắc, Phân loại) */
     public ?string $tenNhomBienThe = null;
 
+    /** @var array<int, array{name:string, values:array<int, string>}>|null */
+    public ?array $variantOptions = null;
+
     public ?AddressDetailDto $diaChiBds;
     public ?string $googleMapPinsPosition;
 
@@ -297,6 +300,7 @@ class ProductDetailDto implements \JsonSerializable
             , 'DANH_MUC_SAN_PHAMS' => $this->danhMucSanPhams
             , 'DANH_SACH_BIEN_THE' => $this->danhSachBienThe
             , 'TEN_NHOM_BIEN_THE' => $this->tenNhomBienThe
+            , 'OPTIONS' => $this->variantOptions
             , 'DIA_CHI' => $this->diaChiBds
             , 'GOOGLE_MAP_PINS_POSITION' => $this->googleMapPinsPosition
 

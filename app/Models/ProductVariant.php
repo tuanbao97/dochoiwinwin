@@ -40,6 +40,9 @@ class ProductVariant extends Model
     protected $attributes = [
         'ID' => null,
         'SAPO_VARIANT_ID' => null,
+        'OPTION_VALUES' => null,
+        'SKU' => null,
+        'INVENTORY_QUANTITY' => null,
         'PRODUCT_ID' => null,
         'PRODUCT_STATUS' => null,
         'PRODUCT_COLOR' => null,
@@ -66,6 +69,8 @@ class ProductVariant extends Model
         'IS_CONTACT_PRICE' => 'boolean',
         'IS_IN_STOCK' => 'boolean',
         'SAPO_VARIANT_ID' => 'integer',
+        'OPTION_VALUES' => 'array',
+        'INVENTORY_QUANTITY' => 'integer',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
     ];

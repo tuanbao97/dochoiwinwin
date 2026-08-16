@@ -45,6 +45,10 @@ class ProductMapper
         
         $product->NAME = self::issetkey($data, 'TEN_SAN_PHAM');
         $product->KEYWORDS_SEO_WEBSITE = self::issetkey($data, 'KEYWORDS_SEO_WEBSITE');
+        if (array_key_exists('OPTIONS', $data)) {
+            $product->VARIANT_OPTIONS = array_values($data['OPTIONS'] ?? []);
+            $product->ATTR3 = $product->VARIANT_OPTIONS[0]['name'] ?? null;
+        }
         
         $product->DESCRIPTION_DETAIL = self::issetkey($data, fieldName:'MO_TA_CHI_TIET');
         $product->DESCRIPTION_DETAIL_ONLY_TEXT = self::issetkey($data, fieldName:'MO_TA_CHI_TIET_ONLY_TEXT');
@@ -286,6 +290,20 @@ class ProductMapper
 
         // Biến thể sản phẩm
         $productDto->danhSachBienThe = [];
+        $productDto->variantOptions = is_array($product->VARIANT_OPTIONS)
+            ? $product->VARIANT_OPTIONS
+            : [];
+        if ($productDto->variantOptions === [] && is_array($product->SAPO_PAYLOAD)) {
+            foreach (($product->SAPO_PAYLOAD['options'] ?? []) as $option) {
+                if (!is_array($option)) continue;
+                $name = trim((string) ($option['name'] ?? ''));
+                if ($name === '') continue;
+                $values = is_array($option['values'] ?? null)
+                    ? array_values(array_filter(array_map('strval', $option['values'])))
+                    : [];
+                $productDto->variantOptions[] = ['name' => $name, 'values' => $values];
+            }
+        }
         $optionGroup = trim((string) ($product->ATTR3 ?? ''));
         $productDto->tenNhomBienThe = $optionGroup !== '' ? $optionGroup : 'Phân loại';
         if (isset($product->variants) && count($product->variants) > 0) {
@@ -296,6 +314,29 @@ class ProductMapper
                 $bienTheSanPham->productStatus = $variant->PRODUCT_STATUS;
                 $bienTheSanPham->productColor = $variant->PRODUCT_COLOR;
                 $bienTheSanPham->title = $variant->ATTR4 ?: $variant->PRODUCT_COLOR;
+                $bienTheSanPham->sapoVariantId = $variant->SAPO_VARIANT_ID;
+                $bienTheSanPham->sku = $variant->SKU ?: $variant->ATTR1;
+                $bienTheSanPham->inventoryQuantity = $variant->INVENTORY_QUANTITY;
+                $bienTheSanPham->optionValues = is_array($variant->OPTION_VALUES)
+                    ? $variant->OPTION_VALUES
+                    : array_values(array_filter([
+                        $variant->PRODUCT_COLOR,
+                        $variant->ATTR2,
+                        $variant->ATTR3,
+                    ], static fn ($value) => $value !== null && $value !== ''));
+                foreach ($bienTheSanPham->optionValues as $optionIndex => $optionValue) {
+                    if (!isset($productDto->variantOptions[$optionIndex])) {
+                        $productDto->variantOptions[$optionIndex] = [
+                            'name' => $optionIndex === 0 ? $productDto->tenNhomBienThe : 'Thuộc tính '.($optionIndex + 1),
+                            'values' => [],
+                        ];
+                    }
+                    $values = $productDto->variantOptions[$optionIndex]['values'] ?? [];
+                    if (!in_array($optionValue, $values, true)) {
+                        $values[] = $optionValue;
+                    }
+                    $productDto->variantOptions[$optionIndex]['values'] = $values;
+                }
                 $bienTheSanPham->productStorage = $variant->PRODUCT_STORAGE;
                 $bienTheSanPham->isContactPrice = $variant->IS_CONTACT_PRICE;
                 $bienTheSanPham->productPrice = $variant->PRODUCT_PRICE;
