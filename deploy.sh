@@ -22,5 +22,8 @@ fi
 echo "==> Xóa cache"
 php artisan optimize:clear
 
+echo "==> Kiểm tra Sapo"
+php artisan sapo:status --ping || true
+
 echo "==> Xong"
 php artisan migrate:status

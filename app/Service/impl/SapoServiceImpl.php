@@ -12,12 +12,35 @@ class SapoServiceImpl implements SapoService
 {
     public function isEnabled(): bool
     {
-        $cfg = config('services.sapo', []);
+        $status = $this->configurationStatus();
 
-        return ! empty($cfg['enabled'])
-            && ! empty($cfg['store'])
-            && ! empty($cfg['api_key'])
-            && ! empty($cfg['api_secret']);
+        return $status['enabled'];
+    }
+
+    public function configurationStatus(): array
+    {
+        $cfg = config('services.sapo', []);
+        $missing = [];
+
+        if (empty($cfg['enabled'])) {
+            $missing[] = 'SAPO_ENABLED';
+        }
+        if (trim((string) ($cfg['store'] ?? '')) === '') {
+            $missing[] = 'SAPO_STORE';
+        }
+        if (trim((string) ($cfg['api_key'] ?? '')) === '') {
+            $missing[] = 'SAPO_API_KEY';
+        }
+        if (trim((string) ($cfg['api_secret'] ?? '')) === '') {
+            $missing[] = 'SAPO_API_SECRET';
+        }
+
+        return [
+            'enabled' => $missing === [],
+            'missing' => $missing,
+            'store' => trim((string) ($cfg['store'] ?? '')),
+            'product_type' => trim((string) ($cfg['product_type'] ?? '')),
+        ];
     }
 
     public function getProducts(array $query = []): array

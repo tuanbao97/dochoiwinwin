@@ -53,12 +53,14 @@
 		],
 		"post-install-cmd" : [
 			"@php artisan migrate --force --graceful --no-interaction --ansi",
-			"@php artisan deploy:seed --no-interaction --ansi"
+			"@php artisan deploy:seed --no-interaction --ansi",
+			"@php artisan optimize:clear --ansi"
 		],
 		"post-update-cmd" : [
 			"@php artisan vendor:publish --tag=laravel-assets --ansi --force",
 			"@php artisan migrate --force --graceful --no-interaction --ansi",
-			"@php artisan deploy:seed --no-interaction --ansi"
+			"@php artisan deploy:seed --no-interaction --ansi",
+			"@php artisan optimize:clear --ansi"
 		],
 		"post-root-package-install" : "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
 		"post-create-project-cmd" : [
