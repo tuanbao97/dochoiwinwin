@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Service\SapoService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class SapoStatusCommand extends Command
@@ -16,13 +18,19 @@ class SapoStatusCommand extends Command
     {
         $status = $sapoService->configurationStatus();
 
-        $this->table(['Key', 'Value'], [
+        $rows = [
             ['enabled', $status['enabled'] ? 'yes' : 'no'],
             ['store', $status['store'] !== '' ? $status['store'] : '(empty)'],
             ['product_type', $status['product_type'] !== '' ? $status['product_type'] : '(empty)'],
             ['missing', $status['missing'] === [] ? '-' : implode(', ', $status['missing'])],
             ['config_cached', file_exists(base_path('bootstrap/cache/config.php')) ? 'yes' : 'no'],
-        ]);
+        ];
+
+        foreach ($this->databaseStats() as $label => $value) {
+            $rows[] = [$label, $value];
+        }
+
+        $this->table(['Key', 'Value'], $rows);
 
         if (! $status['enabled']) {
             $this->error('Sapo chưa sẵn sàng. Thêm biến thiếu vào .env rồi chạy: php artisan optimize:clear');
@@ -48,5 +56,31 @@ class SapoStatusCommand extends Command
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function databaseStats(): array
+    {
+        try {
+            $cacheCount = Schema::hasTable('sapo_product_cache')
+                ? DB::table('sapo_product_cache')->count()
+                : null;
+            $lastFetch = Schema::hasTable('sapo_sync_state')
+                ? DB::table('sapo_sync_state')->where('SCOPE', 'products')->value('LAST_FETCH_API_SAPO')
+                : null;
+            $localCount = Schema::hasTable('product')
+                ? DB::table('product')->whereNotNull('SAPO_ID')->count()
+                : null;
+        } catch (Throwable $e) {
+            return ['db' => 'lỗi: '.$e->getMessage()];
+        }
+
+        return [
+            'sapo_product_cache' => $cacheCount === null ? '(chưa migrate)' : (string) $cacheCount,
+            'product có SAPO_ID' => $localCount === null ? '(chưa migrate)' : (string) $localCount,
+            'last_fetch_api_sapo (UTC)' => $lastFetch ? (string) $lastFetch : '(chưa fetch lần nào)',
+        ];
     }
 }
