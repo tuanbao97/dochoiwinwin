@@ -11,6 +11,9 @@ composer install --no-dev --optimize-autoloader --no-interaction
 echo "==> Cập nhật database"
 php artisan migrate --force --no-interaction
 
+echo "==> Seed dữ liệu nền (tài khoản, phân quyền, cấu hình, danh mục)"
+php artisan deploy:seed --no-interaction
+
 echo "==> Kiểm tra Passport key"
 if [ ! -f storage/oauth-private.key ]; then
   php artisan passport:keys --force

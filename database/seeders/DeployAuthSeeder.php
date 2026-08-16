@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 
 /**
  * Seed tối thiểu để đăng nhập admin khi deploy.
+ * Không gồm danh mục, tin tức: muốn seed đầy đủ dùng `php artisan deploy:seed`.
  *
  * Chạy trên server:
  *   php artisan db:seed --class=DeployAuthSeeder
