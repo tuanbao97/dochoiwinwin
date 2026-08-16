@@ -9,20 +9,16 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Deploy chỉ cần đăng nhập admin:
+     * Deploy dùng bộ đầy đủ:
+     *   php artisan deploy:seed
+     * Chỉ cần tài khoản đăng nhập:
      *   php artisan db:seed --class=DeployAuthSeeder
      */
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
-            CategoryPSeeder::class,
+            DeploySeeder::class,
             ToyStoreBrandSeeder::class,
-            PermissionSeeder::class,
-            RoleSeeder::class,
-            RolePermissionSeeder::class,
-            TitleSeeder::class,
-            DonHangPermissionSeeder::class,
         ]);
     }
 }
