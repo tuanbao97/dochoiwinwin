@@ -51,12 +51,22 @@
 			"Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
 			"@php artisan package:discover --ansi"
 		],
-		"post-update-cmd" : "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+		"post-install-cmd" : [
+			"@php artisan migrate --force --graceful --no-interaction --ansi"
+		],
+		"post-update-cmd" : [
+			"@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+			"@php artisan migrate --force --graceful --no-interaction --ansi"
+		],
 		"post-root-package-install" : "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
 		"post-create-project-cmd" : [
 			"@php artisan key:generate --ansi",
 			"@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
 			"@php artisan migrate --graceful --ansi"
+		],
+		"deploy" : [
+			"@php artisan migrate --force --no-interaction --ansi",
+			"@php artisan optimize:clear --ansi"
 		]
 	},
 	"extra" : {
