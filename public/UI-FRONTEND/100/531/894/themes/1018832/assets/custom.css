@@ -3169,6 +3169,41 @@ body.checkout .checkout-order-item {
 }
 
 /* Dai chu de dau trang danh sach san pham */
+.ww-topics__viewport {
+	position: relative;
+}
+.ww-topics__nav {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.4rem;
+	height: 3.4rem;
+	border-radius: 9999px;
+	background: #ffffff;
+	border: 1px solid rgba(15, 23, 42, 0.1);
+	box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
+	color: #334155;
+	cursor: pointer;
+	transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.ww-topics__nav[hidden] {
+	display: none;
+}
+.ww-topics__nav:hover {
+	background: #f97316;
+	border-color: #f97316;
+	color: #ffffff;
+}
+.ww-topics__nav--prev {
+	left: 0.2rem;
+}
+.ww-topics__nav--next {
+	right: 0.2rem;
+}
 .ww-topics__scroller {
 	display: flex;
 	flex-wrap: nowrap;
@@ -3240,6 +3275,16 @@ body.checkout .checkout-order-item {
 @media (min-width: 768px) {
 	.ww-topics__scroller {
 		gap: 1.2rem;
+	}
+	.ww-topics__nav {
+		width: 4rem;
+		height: 4rem;
+	}
+	.ww-topics__nav--prev {
+		left: -1.2rem;
+	}
+	.ww-topics__nav--next {
+		right: -1.2rem;
 	}
 	.ww-topics__item {
 		width: 13rem;
