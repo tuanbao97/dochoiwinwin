@@ -477,6 +477,12 @@
 	var isRefreshing = false;
 	var requestQueue = [];
 
+	// Token đăng nhập cửa hàng (Google/Facebook/USER) không được dùng trong admin
+	if (localStorage.getItem('AUTH_SCOPE') === 'storefront') {
+		localStorage.clear();
+		window.location = '{{ url('/admin/login') }}';
+	}
+
 	var activeRequests = 0; // Đếm số request đang hoạt động
 	/* Handle show/ hidden loading */
     $(document).ready(function() {

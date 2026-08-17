@@ -30,6 +30,8 @@ class OrderItem extends Model
         'ID' => null,
         'TRANSACTION_ID' => null,
         'PRODUCT_ID' => null,
+        'PRODUCT_VARIANT_ID' => null,
+        'SAPO_VARIANT_ID' => null,
         'QUANTITY' => 0,
         'PRICE' => 0,
         'CRT_DT' => null,
@@ -46,6 +48,8 @@ class OrderItem extends Model
         'IS_ACTIVE' => 'boolean',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
+        'PRODUCT_VARIANT_ID' => 'integer',
+        'SAPO_VARIANT_ID' => 'integer',
     ];
 
     public function transaction(): BelongsTo

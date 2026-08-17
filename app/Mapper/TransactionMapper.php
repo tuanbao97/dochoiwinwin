@@ -18,6 +18,7 @@ class TransactionMapper
 
         $dto = TransactionDetailDto::createEmpty();
         $dto->id = $transaction->ID;
+        $dto->maDon = $transaction->SAPO_ORDER_NAME ?: '#'.$transaction->ID;
         $dto->hoTen = $transaction->USER_BUY_FULLNAME;
         $dto->soDienThoai = $transaction->USER_BUY_PHONE;
         $dto->email = $transaction->USER_BUY_EMAIL;

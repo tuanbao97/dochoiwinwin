@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\ThemeStorefrontController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\Cors;
@@ -7,6 +8,13 @@ use App\Service\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+
+Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])
+    ->whereIn('provider', ['google', 'facebook'])
+    ->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])
+    ->whereIn('provider', ['google', 'facebook'])
+    ->name('social.callback');
 
 Route::middleware(['count-client-view-website'])->group(function() {
 
@@ -53,6 +61,12 @@ Route::middleware(['count-client-view-website'])->group(function() {
     // Account
     Route::get('account/login', function () {
         return view('UI-FRONTEND/account/login', ['productId' => 0]);
+    });
+    Route::get('account/orders', function () {
+        return view('UI-FRONTEND/account/orders', ['productId' => 0]);
+    });
+    Route::get('account/profile', function () {
+        return view('UI-FRONTEND/account/profile', ['productId' => 0]);
     });
 
     // API giỏ hàng & sản phẩm theme UI-FRONTEND

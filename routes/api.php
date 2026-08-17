@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProvinceController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\StorefrontAccountController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WardController;
 use App\Http\Controllers\Auth\AuthController;
@@ -35,11 +36,22 @@ Route::prefix('auth')->middleware([])->group(function() {
 
 Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
     Route::post('/auth/logout-user', [AuthController::class, 'logoutUser']);
+    Route::get('/auth/storefront-profile', [StorefrontAccountController::class, 'profile']);
+    Route::put('/auth/storefront-profile', [StorefrontAccountController::class, 'updateProfile']);
+    Route::get('/auth/storefront-orders', [StorefrontAccountController::class, 'orders']);
+    Route::get('/auth/storefront-orders/{ID}', [StorefrontAccountController::class, 'orderDetail'])
+        ->whereNumber('ID');
+    Route::post('/auth/storefront/place-order', [TransactionController::class, 'placeOrder'])
+        ->middleware([
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+        ]);
     Route::get('/auth/my-info', [AuthController::class, 'myInfo']);
     Route::post('/auth/my-info/update', [AuthController::class, 'updateMyInfo']);
     Route::post('/auth/my-info/update-password', [AuthController::class, 'updatePassword']);
 
-    Route::middleware(['evict-cache-public-api'])->group(function() {
+    Route::middleware(['require-admin-access', 'evict-cache-public-api'])->group(function() {
         Route::get('/user/list', [UserController::class, 'getListUser']);
         Route::put('/user/active/{ID}', [UserController::class, 'activeUser']);
         Route::delete('/user/delete/{ID}', [UserController::class, 'deleteUser']);
@@ -114,7 +126,9 @@ Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
 });
 
 
-Route::prefix('public')->middleware(['cache-public-api-response'])->group(function() {
+// Tạm tắt cache UI (public API). Bật lại: thêm middleware 'cache-public-api-response'.
+// Route::prefix('public')->middleware(['cache-public-api-response'])->group(function() {
+Route::prefix('public')->middleware([])->group(function() {
     Route::get("/province/list", [ProvinceController::class, 'getListTinhThanh']);
     Route::get("/district/list", [DistrictController::class, 'getListQuanHuyen']);
     Route::get("/ward/list", [WardController::class, 'getListPhuongXaThiTran']);

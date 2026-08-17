@@ -64,11 +64,7 @@
           </a>
         </portal-opener>
 
-          <a href="{{ url('/account/login') }}" title="Đăng nhập" class="header-icon-group dnone md:flex gap-2 items-center cart-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150  md:px-2 px-1 py-1 rounded-sm ">
-            <div class="header-icon w-[3.6rem] h-[3.6rem]  p-2 rounded-full flex items-center justify-center relative border border-neutral-50 ">
-              <i class="icon icon-user"></i>
-            </div>
-          </a>
+          @include('UI-FRONTEND.partials.header-account')
 
         <portal-opener>
           <a data-portal="#cart-drawer" href="{{ url('/cart') }}" title="Giỏ hàng" class="mini-cart header-icon-group flex gap-2 items-center cart-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150  md:px-2 px-1  py-1 rounded-sm">

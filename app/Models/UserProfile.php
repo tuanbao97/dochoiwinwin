@@ -49,7 +49,6 @@ class UserProfile extends Model
         'UPD_NAME' => null,
         'STATUS' => 'USING',
         'IS_ACTIVE' => true,
-        'DISTRICT_CODE' => null
     ];
     
     /* Định nghĩa kiểu dữ liệu các attributes */

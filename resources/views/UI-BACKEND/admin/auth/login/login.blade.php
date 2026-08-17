@@ -179,6 +179,7 @@
 						// showToastSuccess('top-right', data.STATUS_DETAIL);
 
 						localStorage.setItem('ACCESS_TOKEN', data.DATAS.access_token);
+						localStorage.setItem('AUTH_SCOPE', 'admin');
 
 						const rememberMe = $("#CHECKBOX_REMEMBER_ME").is(":checked") ? true : false;
 						if (rememberMe === true) {

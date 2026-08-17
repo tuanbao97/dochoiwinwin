@@ -43,6 +43,20 @@ class RoleSeeder extends Seeder
                 'UPD_NAME' => AuthConstant::USER_SUPER_ADMIN_FULL_NAME,
                 'STATUS' => AppConstant::STATUS_USING,
                 'IS_ACTIVE' => true
+            ],
+            [
+                'ID' => 3,
+                'CODE' => 'USER',
+                'NAME' => 'Người dùng',
+                'DESCRIPTION' => 'Tài khoản khách hàng trên giao diện cửa hàng, không có quyền quản trị',
+                'CRT_DT' => now(),
+                'UPD_DT' => now(),
+                'CRT_ID' => AuthConstant::USER_SUPER_ADMIN_ID,
+                'UPD_ID' => AuthConstant::USER_SUPER_ADMIN_ID,
+                'CRT_NAME' => AuthConstant::USER_SUPER_ADMIN_FULL_NAME,
+                'UPD_NAME' => AuthConstant::USER_SUPER_ADMIN_FULL_NAME,
+                'STATUS' => AppConstant::STATUS_USING,
+                'IS_ACTIVE' => true
             ]
             
         ];

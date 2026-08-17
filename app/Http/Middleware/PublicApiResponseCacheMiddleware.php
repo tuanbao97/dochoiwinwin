@@ -11,6 +11,10 @@ class PublicApiResponseCacheMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
+        // TODO: tạm tắt cache response UI. Bỏ comment khối bên dưới khi muốn bật lại.
+        return $next($request);
+
+        /*
         $route = $request->route();
         $routePrefix = $route ? $route->getPrefix() : null;
 
@@ -54,6 +58,7 @@ class PublicApiResponseCacheMiddleware
         }
 
         return $response;
+        */
     }
 
     /**

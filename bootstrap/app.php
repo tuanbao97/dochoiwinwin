@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => Illuminate\Auth\Middleware\Authenticate::class,
             'auth:api' => Laravel\Passport\Http\Middleware\CheckClientCredentials::class,
             'custom-validate-oauth-token' => App\Http\Middleware\CustomValidateOauthTokenMiddleware::class,
+            'require-admin-access' => App\Http\Middleware\RequireAdminAccessMiddleware::class,
             'count-client-view-website' => App\Http\Middleware\CountClientViewWebsiteMiddleware::class,
             'cache-public-api-response' => PublicApiResponseCacheMiddleware::class,
             'evict-cache-public-api' => EvictCachePublicApiMiddleware::class,

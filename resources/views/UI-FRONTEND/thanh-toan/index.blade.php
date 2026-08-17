@@ -291,7 +291,13 @@
     var btn = document.getElementById('ww-checkout-submit');
     var errEl = document.getElementById('ww-checkout-error');
     var placeUrl = @json(url('/api/public/transaction/place-order'));
+    var authenticatedPlaceUrl = @json(url('/api/auth/storefront/place-order'));
+    var accessToken = null;
+    try {
+      accessToken = localStorage.getItem('ACCESS_TOKEN');
+    } catch (e) {}
     var homeUrl = @json(url('/'));
+    var profileUrl = @json(url('/api/auth/storefront-profile'));
     var successModal = document.getElementById('ww-order-success-modal');
     var successCodeEl = document.getElementById('ww-order-success-code');
     var successHomeBtn = document.getElementById('ww-order-success-home');
@@ -302,6 +308,27 @@
       DIA_CHI: 'address',
       GHI_CHU: 'note'
     };
+
+    if (accessToken) {
+      fetch(profileUrl, {
+        headers: {
+          'Authorization': 'Bearer ' + accessToken,
+          'Accept': 'application/json'
+        }
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error('profile');
+          return response.json();
+        })
+        .then(function (payload) {
+          var profile = payload && payload.DATAS ? payload.DATAS : {};
+          if (!form.name.value) form.name.value = profile.FULL_NAME || '';
+          if (!form.phone.value) form.phone.value = profile.PHONE || '';
+          if (!form.email.value) form.email.value = profile.EMAIL || '';
+          if (!form.address.value) form.address.value = profile.ADDRESS || '';
+        })
+        .catch(function () {});
+    }
 
     function clearFieldErrors() {
       form.querySelectorAll('.error-message').forEach(function (el) {
@@ -344,15 +371,15 @@
       return hasField;
     }
 
-    function showOrderSuccessModal(orderId) {
+    function showOrderSuccessModal(orderCode) {
       if (!successModal) {
         window.location.href = homeUrl;
         return;
       }
       if (successCodeEl) {
-        if (orderId) {
+        if (orderCode) {
           successCodeEl.hidden = false;
-          successCodeEl.textContent = 'Mã đơn #' + orderId;
+          successCodeEl.textContent = 'Mã đơn ' + orderCode;
         } else {
           successCodeEl.hidden = true;
           successCodeEl.textContent = '';
@@ -397,14 +424,19 @@
         ITEMS: items
       };
 
-      fetch(placeUrl, {
+      var headers = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': form.querySelector('[name="_token"]').value
+      };
+      if (accessToken) {
+        headers.Authorization = 'Bearer ' + accessToken;
+      }
+
+      fetch(accessToken ? authenticatedPlaceUrl : placeUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': form.querySelector('[name="_token"]').value
-        },
+        headers: headers,
         credentials: 'same-origin',
         body: JSON.stringify(payload)
       })
@@ -429,7 +461,8 @@
             }
             throw new Error(msg);
           }
-          var id = res.data && res.data.DATAS && res.data.DATAS.TRANSACTION && res.data.DATAS.TRANSACTION.ID;
+          var transaction = (res.data && res.data.DATAS && res.data.DATAS.TRANSACTION) || {};
+          var orderCode = transaction.SAPO_ORDER_NAME || (transaction.ID ? '#' + transaction.ID : '');
           return fetch(@json(url('/cart/clear')), {
             method: 'POST',
             headers: {
@@ -447,7 +480,7 @@
                 el.textContent = '0';
               });
             } catch (e) {}
-            showOrderSuccessModal(id);
+            showOrderSuccessModal(orderCode);
           });
         })
         .catch(function (err) {
