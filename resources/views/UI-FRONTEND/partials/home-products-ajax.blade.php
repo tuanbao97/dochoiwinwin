@@ -496,7 +496,9 @@
     params.set('PER_PAGE', '9999');
     params.set('IS_GET_ALL_ELEMENTS', 'true');
     params.set('BO_LOC', 'default');
-    params.append('DANH_MUC_SAN_PHAM_ID[]', String(categoryId));
+    if (categoryId) {
+      params.append('DANH_MUC_SAN_PHAM_ID[]', String(categoryId));
+    }
 
     return fetch(cfg.apiUrl + '?' + params.toString(), {
       method: 'GET',
@@ -603,6 +605,18 @@
 
   function buildCategoryListUrl(cat, opts) {
     opts = opts || {};
+    var isAllProducts = opts.allProducts === true || (cat && cat.IS_ALL_PRODUCTS === true);
+    if (isAllProducts) {
+      var allParts = ['/tat-ca-san-pham'];
+      if (opts.boLoc && opts.boLoc !== 'default') {
+        allParts.push('sap-xep/' + encodeURIComponent(String(opts.boLoc)));
+      }
+      if (opts.productHot) {
+        allParts.push('noi-bat');
+      }
+      return cfg.appUrl + allParts.join('/');
+    }
+
     var cid = opts.categoryId != null ? opts.categoryId : cat && cat.ID;
     if (!cid) return cfg.appUrl + '/tat-ca-san-pham';
     var slug = (opts.slug || (cat && cat.TEN_DANH_MUC_SAN_PHAM_SLUG) || 'danh-muc').toString();
@@ -765,6 +779,8 @@
   function loadCategorySectionTabs(cat, perPage) {
     var catId = cat && cat.ID;
     if (!catId) return;
+    var isAllProducts = cat && cat.IS_ALL_PRODUCTS === true;
+    var filterCategoryId = isAllProducts ? null : catId;
     var p = '#home-category-products-' + catId;
     var n = perPage == null ? 10 : perPage;
     var children = getCategoryChildren(cat);
@@ -773,7 +789,7 @@
     beginCategoryLoads(catId, children.length + 2);
 
     loadProducts('category', p + '-t1', {
-      categoryId: catId,
+      categoryId: filterCategoryId,
       perPage: n,
       boLoc: 'default',
       trackCategoryId: catId,
@@ -800,7 +816,7 @@
       if (skEl) skEl.innerHTML = buildProductGridSkeletonHtml(n, false);
     }
 
-    fetchAllCategoryProducts(catId)
+    fetchAllCategoryProducts(filterCategoryId)
       .then(function (allRows) {
         var hasAny = allRows && allRows.length > 0;
         for (var t = 0; t < sortTabs.length; t++) {
@@ -888,6 +904,16 @@
           var sb = b && b.SORT_ORDER != null ? Number(b.SORT_ORDER) : 0;
           return sa - sb;
         });
+
+        var allProducts = {
+          ID: 'all',
+          TEN_DANH_MUC_SAN_PHAM: 'Tất cả sản phẩm',
+          TEN_DANH_MUC_SAN_PHAM_SLUG: 'tat-ca-san-pham',
+          DANH_SACH_CHILDREN: [],
+          IS_ALL_PRODUCTS: true,
+        };
+        wrapper.insertAdjacentHTML('beforeend', buildCategorySectionHtml(allProducts, 10));
+        loadCategorySectionTabs(allProducts, 10);
 
         for (var i = 0; i < roots.length; i++) {
           var c = roots[i];

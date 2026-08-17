@@ -18,6 +18,25 @@
 @endphp
 
 <ul class="">
+  <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
+    <a
+      class="menu-item__link flex items-center gap-3 py-2 font-semibold min-w-0"
+      title="Tất cả sản phẩm"
+      href="{{ url('/tat-ca-san-pham') }}"
+      data-prefetch="{{ parse_url(url('/tat-ca-san-pham'), PHP_URL_PATH) ?: url('/tat-ca-san-pham') }}"
+    >
+      <img
+        loading="lazy"
+        width="36"
+        height="36"
+        class="w-9 h-9 shrink-0"
+        src="{{ asset('UI-FRONTEND/assets/ww-menu-icons/chu-de-tat-ca.svg') }}"
+        alt="Tất cả sản phẩm"
+      >
+      <span class="min-w-0 flex-1 leading-snug whitespace-normal break-words">{{ storefrontMenuLabel('Tất cả sản phẩm') }}</span>
+    </a>
+  </li>
+
   @forelse ($menuRoots as $cat)
     @php
       $catName = (string) ($cat->NAME ?? '');

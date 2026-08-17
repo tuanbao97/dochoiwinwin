@@ -371,10 +371,26 @@ $(document).ready(function () {
       ...(@json($duLieu['DANH_SACH_HINH_ANH'] ?? []))
     ].filter((image, index, all) => image && image.ID && all.findIndex(item => item && item.ID === image.ID) === index);
 
+    // Phải escape cả nháy kép/đơn vì chuỗi này còn dùng cho giá trị thuộc tính HTML.
     function {{ $uuid1 }}_escapeHtml(value) {
-      return $('<div>').text(value == null ? '' : String(value)).html();
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
     const variantEscapeHtml = {{ $uuid1 }}_escapeHtml;
+
+    function {{ $uuid1 }}_parseOptionValues(raw) {
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
 
     function {{ $uuid1 }}_normalizeOption(option) {
       const name = String((option && (option.name || option.NAME)) || '').trim();
@@ -455,7 +471,7 @@ $(document).ready(function () {
         const $row = $(this);
         variants.push({
           ID: $row.attr('data-id') ? Number($row.attr('data-id')) : null,
-          OPTION_VALUES: JSON.parse($row.attr('data-option-values') || '[]'),
+          OPTION_VALUES: {{ $uuid1 }}_parseOptionValues($row.attr('data-option-values')),
           TEN_BIEN_THE: $row.find('.variant-title').val().trim(),
           SKU: $row.find('.variant-sku').val().trim() || null,
           PRODUCT_IMAGE_ID: $row.find('.variant-image').val() ? Number($row.find('.variant-image').val()) : null,
