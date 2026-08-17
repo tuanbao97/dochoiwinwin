@@ -241,6 +241,7 @@ $(document).ready(function () {
 							STT: index
 							, FULL_DU_LIEU: item
 							, ID: !isEmpty(item.ID) ? item.ID : ''
+							, MA_DON: !isEmpty(item.MA_DON) ? item.MA_DON : ''
 							, HO_TEN: !isEmpty(item.HO_TEN) ? item.HO_TEN : ''
 							, SO_DIEN_THOAI: !isEmpty(item.SO_DIEN_THOAI) ? item.SO_DIEN_THOAI : ''
 							, EMAIL: !isEmpty(item.EMAIL) ? item.EMAIL : ''
@@ -323,7 +324,8 @@ $(document).ready(function () {
 				, "width": "100px"
 				, "render": function (data, type, row) {
 					let pathUrl = '{{ url("/admin/don-hang/chi-tiet") }}/dh-' + data;
-					return '<a class="text-decoration-none fw-bold" href="' + pathUrl + '">#' + data + '</a>';
+					let code = !isEmpty(row.MA_DON) ? row.MA_DON : ('#' + data);
+					return '<a class="text-decoration-none fw-bold" href="' + pathUrl + '">' + code + '</a>';
 				}
 			}
 			, {

@@ -33,7 +33,16 @@ return [
 
     'facebook' => [
         // App ID từ https://developers.facebook.com/apps — bắt buộc để hết cảnh báo fb:app_id
-        'app_id' => env('FACEBOOK_APP_ID', ''),
+        'app_id' => env('FACEBOOK_APP_ID', env('FACEBOOK_CLIENT_ID', '')),
+        'client_id' => env('FACEBOOK_CLIENT_ID', env('FACEBOOK_APP_ID', '')),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET', ''),
+        'redirect' => env('FACEBOOK_REDIRECT_URI', rtrim(env('APP_URL', ''), '/').'/auth/facebook/callback'),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID', ''),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET', ''),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim(env('APP_URL', ''), '/').'/auth/google/callback'),
     ],
 
     /*

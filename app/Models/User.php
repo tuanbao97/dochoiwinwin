@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enum\AppConstant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Passport\HasApiTokens;
@@ -51,7 +52,7 @@ class User extends Authenticatable
         'CRT_NAME' => null,
         'UPD_NAME' => null,
         'STATUS' => 'USING',
-        'IS_ACTIVE' => true
+        'IS_ACTIVE' => true,
     ];
 
     /* Định nghĩa kiểu dữ liệu các attributes */
@@ -108,5 +109,39 @@ class User extends Authenticatable
                 ['user_profile.IS_DEFAULT', true],
                 ['user_profile.STATUS', '=', AppConstant::STATUS_USING]
             ]);
+    }
+
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(UserSocialAccount::class, 'USER_ID', 'ID');
+    }
+
+    /**
+     * Staff = role ADMIN hoặc CHUYEN_VIEN đang active. Role USER (khách) không được vào admin.
+     */
+    public function hasStaffAccess(): bool
+    {
+        return DB::table('title as t')
+            ->join('role as r', 'r.ID', '=', 't.ROLE_ID')
+            ->where('t.USER_ID', $this->ID)
+            ->where('t.STATUS', AppConstant::STATUS_USING)
+            ->where('t.IS_ACTIVE', true)
+            ->where('r.STATUS', AppConstant::STATUS_USING)
+            ->where('r.IS_ACTIVE', true)
+            ->whereIn('r.CODE', ['ADMIN', 'CHUYEN_VIEN'])
+            ->exists();
+    }
+
+    public function isAdmin(): bool
+    {
+        return DB::table('title as t')
+            ->join('role as r', 'r.ID', '=', 't.ROLE_ID')
+            ->where('t.USER_ID', $this->ID)
+            ->where('t.STATUS', AppConstant::STATUS_USING)
+            ->where('t.IS_ACTIVE', true)
+            ->where('r.STATUS', AppConstant::STATUS_USING)
+            ->where('r.IS_ACTIVE', true)
+            ->where('r.CODE', 'ADMIN')
+            ->exists();
     }
 }

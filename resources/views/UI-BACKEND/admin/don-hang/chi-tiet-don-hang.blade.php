@@ -103,7 +103,7 @@ $(document).ready(function () {
 					showToastFailure('top-right', 'Không tìm thấy đơn hàng.');
 					return;
 				}
-				$('#TXT_ID').text(data.ID || '');
+				$('#TXT_ID').text(data.MA_DON || data.ID || '');
 				$('#TXT_HO_TEN').text(data.HO_TEN || '');
 				$('#TXT_SDT').text(data.SO_DIEN_THOAI || '');
 				$('#TXT_EMAIL').text(data.EMAIL || '');

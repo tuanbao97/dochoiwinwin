@@ -67,15 +67,26 @@
     <div class="portal-inner animation bg-background h-full grid grid-rows-[auto_1fr_auto]">
       <div class="navigation-header pt-4 flex justify-between items-center border-b pb-3 border-neutral-50 px-4">
 
-          <a href="{{ url('/account/login') }}" title="Đăng nhập" class="header-icon-group flex gap-2 items-center account-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150 px-2 py-1 rounded-sm ">
-            <div class="header-icon w-[3.6rem] h-[3.6rem] p-2 rounded-sm flex items-center justify-center border border-neutral-50">
-              <i class="icon icon-user"></i>
+          <a href="{{ url('/account/login') }}" title="Đăng nhập" class="header-icon-group flex gap-2 items-center account-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150 px-2 py-1 rounded-sm " data-ww-drawer-account>
+            <div class="header-icon w-[3.6rem] h-[3.6rem] p-2 rounded-sm flex items-center justify-center border border-neutral-50 overflow-hidden">
+              <img class="ww-account__drawer-avatar" alt="" data-ww-drawer-avatar hidden referrerpolicy="no-referrer">
+              <i class="icon icon-user" data-ww-drawer-icon></i>
             </div>
             <div class=" ">
               <span class="text-xs">Tài khoản</span>
-              <span class="font-semibold block">Đăng nhập</span>
+              <span class="font-semibold block" data-ww-drawer-name>Đăng nhập</span>
             </div>
           </a>
+
+          <div class="ww-account__drawer-actions">
+            <a
+              href="{{ url('/admin/san-pham/danh-sach') }}"
+              class="ww-account__drawer-admin"
+              data-ww-drawer-admin
+              hidden
+            >Quản lý</a>
+            <button type="button" class="ww-account__drawer-logout" data-ww-drawer-logout hidden>Đăng xuất</button>
+          </div>
 
         <button type="button" id="PortalClose-menu-crawer" class="portal-close-button w-[3.2rem] h-[3.2rem] rounded-full border border-white text-white flex items-center justify-center active:scale-95 transition-transform hover:animate-spin" title="Đóng" aria-label="Đóng">
           <i class="icon icon-cross"></i>

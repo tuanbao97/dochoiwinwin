@@ -1,0 +1,23 @@
+# Biến môi trường (chứa secret, không được commit)
+/.env
+/.env.*
+!/.env.example
+
+# Khóa Passport (deploy.sh sẽ tự sinh lại nếu thiếu)
+/storage/*.key
+
+# File tạm / cache sinh ra khi chạy
+/storage/logs/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*.php
+/bootstrap/cache/*.php
+/bootstrap/cache/*.tmp
+/.phpunit.result.cache
+/.rnd
+
+# IDE / OS
+/.idea
+/.vscode
+.DS_Store
+Thumbs.db

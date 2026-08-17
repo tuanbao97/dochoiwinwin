@@ -255,12 +255,14 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        DB::listen(function ($query) {
-            Log::info($query->sql, [
-                'bindings' => $query->bindings,
-                'time' => $query->time
-            ]);
-        });
+        if (config('app.debug') && config('app.env') === 'local') {
+            DB::listen(function ($query) {
+                Log::info($query->sql, [
+                    'bindings' => $query->bindings,
+                    'time' => $query->time,
+                ]);
+            });
+        }
 
         /* PHẦN PASSPORT SECURITY */
         // Cấu hình enable grant password

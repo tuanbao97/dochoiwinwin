@@ -5,6 +5,7 @@ namespace App\Dto\transaction;
 class TransactionDetailDto implements \JsonSerializable
 {
     public ?int $id;
+    public ?string $maDon;
     public ?string $hoTen;
     public ?string $soDienThoai;
     public ?string $email;
@@ -27,6 +28,7 @@ class TransactionDetailDto implements \JsonSerializable
     {
         return [
             'ID' => $this->id,
+            'MA_DON' => $this->maDon,
             'HO_TEN' => $this->hoTen,
             'SO_DIEN_THOAI' => $this->soDienThoai,
             'EMAIL' => $this->email,
