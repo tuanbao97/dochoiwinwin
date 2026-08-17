@@ -7,6 +7,7 @@ use App\Service\CategoryNService;
 use App\Service\NewsService;
 use App\Service\ProductService;
 use App\Service\VideoService;
+use App\Support\StorefrontInventory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ class ThemeStorefrontController extends Controller
         private NewsService $newsService,
         private CategoryNService $categoryNService,
         private VideoService $videoService,
+        private StorefrontInventory $inventory,
     ) {}
 
     /**
@@ -85,25 +87,34 @@ class ThemeStorefrontController extends Controller
 
     public function cartAdd(Request $request): \Illuminate\Http\JsonResponse
     {
-        $variantId = (int) ($request->input('variantId')
+        $identifier = (int) ($request->input('variantId')
             ?? $request->input('VariantId')
             ?? $request->input('id'));
         $quantity = max(1, (int) $request->input('quantity', 1));
 
-        if ($variantId <= 0) {
+        if ($identifier <= 0) {
             return response()->json(['message' => 'Thiếu mã biến thể'], 422);
         }
 
-        $meta = self::VARIANT_CATALOG[$variantId] ?? null;
-        $title = $request->input('product_title', $meta['title'] ?? 'Sản phẩm');
-        $handle = $request->input('product_handle', $meta['handle'] ?? '');
-        $price = (int) $request->input('price', $meta['price'] ?? 0);
-        $imageRel = $request->input('image', $meta['image'] ?? '');
+        $resolved = $this->inventory->resolve($identifier);
+        if (! $resolved) {
+            return response()->json([
+                'message' => 'Sản phẩm không còn khả dụng.',
+            ], 409);
+        }
+        if ($resolved['stock'] <= 0) {
+            return response()->json([
+                'message' => $resolved['title'].' đã hết hàng.',
+                'stock' => 0,
+            ], 409);
+        }
+
+        $variantId = $resolved['variant_id'];
         $categoryId = (int) ($request->input('category_id')
             ?? $request->input('product_category_id')
             ?? 0);
         if ($categoryId <= 0) {
-            $categoryId = $this->resolveProductCategoryId($variantId);
+            $categoryId = $this->resolveProductCategoryId($resolved['product_id']);
         }
 
         $items = array_values($this->getCartLines());
@@ -115,13 +126,26 @@ class ThemeStorefrontController extends Controller
             }
         }
 
+        $newQuantity = $quantity;
+        if ($existingIndex !== null) {
+            $newQuantity += (int) ($items[$existingIndex]['quantity'] ?? 0);
+        }
+        if ($newQuantity > $resolved['stock']) {
+            return response()->json([
+                'message' => $resolved['title'].' chỉ còn '.$resolved['stock'].' sản phẩm.',
+                'stock' => $resolved['stock'],
+            ], 409);
+        }
+
         if ($existingIndex !== null) {
             $existing = $items[$existingIndex];
             unset($items[$existingIndex]);
             $items = array_values($items);
 
-            $existing['quantity'] = (int) ($existing['quantity'] ?? 0) + $quantity;
-            $existing['line_price'] = $existing['quantity'] * (int) ($existing['price'] ?? 0);
+            $existing['quantity'] = $newQuantity;
+            $existing['price'] = $resolved['price'];
+            $existing['line_price'] = $newQuantity * $resolved['price'];
+            $existing['stock'] = $resolved['stock'];
             if ($categoryId > 0) {
                 $existing['category_id'] = $categoryId;
             }
@@ -130,39 +154,38 @@ class ThemeStorefrontController extends Controller
         } else {
             array_unshift($items, [
                 'variant_id' => $variantId,
-                'title' => $title,
-                'variant_title' => $request->input('variant_title', 'Mặc định'),
+                'product_id' => $resolved['product_id'],
+                'sapo_variant_id' => $resolved['sapo_variant_id'],
+                'title' => $resolved['title'],
+                'variant_title' => $resolved['variant_title'],
                 'quantity' => $quantity,
-                'price' => $price,
-                'line_price' => $price * $quantity,
-                'image' => $imageRel,
-                'handle' => $handle,
+                'price' => $resolved['price'],
+                'line_price' => $resolved['price'] * $quantity,
+                'image' => (string) $request->input('image', ''),
+                'handle' => $resolved['handle'],
                 'category_id' => $categoryId,
+                'stock' => $resolved['stock'],
             ]);
         }
 
         session([self::SESSION_KEY => array_values($items)]);
 
-        $detailHandle = trim((string) $handle);
-        if ($detailHandle === '') {
-            $detailHandle = 'sp-'.$variantId;
-        } elseif (! preg_match('/-\d+$/', $detailHandle)) {
-            $detailHandle .= '-'.$variantId;
-        }
+        $detailHandle = $resolved['handle'].'-'.$resolved['product_id'];
         $url = url('san-pham/chi-tiet/'.ltrim($detailHandle, '/'));
 
         $line = collect($items)->firstWhere('variant_id', $variantId);
 
         return response()->json([
             'variant_id' => $variantId,
-            'title' => is_array($line) ? ($line['title'] ?? $title) : $title,
+            'title' => is_array($line) ? ($line['title'] ?? $resolved['title']) : $resolved['title'],
             'variant_title' => is_array($line) ? ($line['variant_title'] ?? 'Mặc định') : 'Mặc định',
             'url' => $url,
             'item_count' => $this->totalQuantity($items),
+            'stock' => $resolved['stock'],
         ]);
     }
 
-    public function cartChange(Request $request): Response
+    public function cartChange(Request $request): Response|\Illuminate\Http\JsonResponse
     {
         $line = max(1, (int) $request->query('line', 0));
         $quantity = (int) $request->query('quantity', 0);
@@ -176,8 +199,23 @@ class ThemeStorefrontController extends Controller
         if ($quantity <= 0) {
             array_splice($items, $index, 1);
         } else {
+            $resolved = $this->inventory->resolve((int) $items[$index]['variant_id']);
+            if (! $resolved || $resolved['stock'] <= 0) {
+                return response()->json([
+                    'message' => ($items[$index]['title'] ?? 'Sản phẩm').' đã hết hàng.',
+                    'stock' => 0,
+                ], 409);
+            }
+            if ($quantity > $resolved['stock']) {
+                return response()->json([
+                    'message' => $resolved['title'].' chỉ còn '.$resolved['stock'].' sản phẩm.',
+                    'stock' => $resolved['stock'],
+                ], 409);
+            }
             $items[$index]['quantity'] = $quantity;
-            $items[$index]['line_price'] = $quantity * (int) $items[$index]['price'];
+            $items[$index]['price'] = $resolved['price'];
+            $items[$index]['line_price'] = $quantity * $resolved['price'];
+            $items[$index]['stock'] = $resolved['stock'];
         }
 
         session([self::SESSION_KEY => $items]);
@@ -215,17 +253,22 @@ class ThemeStorefrontController extends Controller
         ]);
     }
 
-    public function checkoutPage(): View
+    public function checkoutPage(Request $request): View
     {
         $items = $this->getCartLines();
-
-        return view('UI-FRONTEND.thanh-toan.index', [
+        $data = [
             'productId' => 0,
             'items' => $items,
             'totalQuantity' => $this->totalQuantity($items),
             'totalPrice' => $this->totalPrice($items),
             'appUrl' => rtrim(url('/'), '/'),
-        ]);
+        ];
+
+        if ($request->query('view') === 'summary') {
+            return view('UI-FRONTEND.thanh-toan.partials.order-summary', $data);
+        }
+
+        return view('UI-FRONTEND.thanh-toan.index', $data);
     }
 
     public function cartRecommendations(Request $request): \Illuminate\Http\JsonResponse
@@ -284,6 +327,7 @@ class ThemeStorefrontController extends Controller
             'IS_API_PUBLIC' => true,
             'DANH_MUC_SAN_PHAM_ID' => $categoryIds,
             'NOT_IN_ID' => $cartProductIds,
+            'CON_HANG' => true,
         ]);
 
         $response = $this->productService->getListSanPham($listRequest);
@@ -1293,7 +1337,17 @@ class ThemeStorefrontController extends Controller
      */
     private function getCartLines(): array
     {
-        return session(self::SESSION_KEY, []) ?: [];
+        $lines = session(self::SESSION_KEY, []) ?: [];
+        $result = $this->inventory->reconcileCart(is_array($lines) ? $lines : []);
+
+        if ($result['changed']) {
+            session([self::SESSION_KEY => $result['items']]);
+            if ($result['notices'] !== []) {
+                session()->flash('cart_stock_notices', $result['notices']);
+            }
+        }
+
+        return $result['items'];
     }
 
     private function resolveProductCategoryId(int $productId): int

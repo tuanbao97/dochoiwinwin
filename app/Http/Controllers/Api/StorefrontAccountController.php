@@ -176,11 +176,18 @@ class StorefrontAccountController extends Controller
             'STATUS' => $order->TRANSACTION_STATUS,
             'STATUS_LABEL' => $status?->description() ?? (string) $order->TRANSACTION_STATUS,
             'TOTAL_QUANTITY' => (float) $order->TOTAL_QUANTITY,
+            'SUBTOTAL' => (float) $order->SUBTOTAL_PRICE,
+            'SHIPPING_FEE' => (float) $order->SHIPPING_FEE,
+            'DISCOUNT_CODE' => $order->DISCOUNT_CODE,
+            'DISCOUNT_AMOUNT' => (float) $order->DISCOUNT_AMOUNT,
             'TOTAL_PRICE' => (float) $order->TOTAL_PRICE,
             'PAYMENT_METHOD' => $order->PAYMENT_METHOD,
             'CREATED_AT' => $order->CRT_DT?->toIso8601String(),
             'ASSIGNEE_NAME' => $order->SAPO_ASSIGNEE_NAME,
             'EXPECTED_DELIVERY_DATE' => $order->EXPECTED_DELIVERY_DATE?->toIso8601String(),
+            'CANCEL_REASON' => $order->TRANSACTION_STATUS === TransactionStatusEnum::CANCELLED->value
+                ? $order->SAPO_CANCEL_REASON
+                : null,
             'BUYER' => [
                 'FULL_NAME' => $order->USER_BUY_FULLNAME,
                 'EMAIL' => $order->USER_BUY_EMAIL,
@@ -190,6 +197,9 @@ class StorefrontAccountController extends Controller
             ],
             'ITEMS' => $order->orderItems->map(static fn ($item): array => [
                 'ID' => (int) $item->ID,
+                'SAPO_LINE_ITEM_ID' => $item->SAPO_LINE_ITEM_ID
+                    ? (int) $item->SAPO_LINE_ITEM_ID
+                    : null,
                 'PRODUCT_ID' => (int) $item->PRODUCT_ID,
                 'NAME' => $item->ATTR1 ?: $item->product?->NAME,
                 'IMAGE' => $item->ATTR2,

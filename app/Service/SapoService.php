@@ -70,4 +70,15 @@ interface SapoService
      * @return array<string, mixed>
      */
     public function post(string $path, array $payload = []): array;
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public function put(string $path, array $payload = []): array;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function delete(string $path): array;
 }

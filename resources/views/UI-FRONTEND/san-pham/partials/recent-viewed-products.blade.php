@@ -125,9 +125,25 @@
     return Array.isArray(list) && list.length > 1;
   }
 
+  function variantInStock(v) {
+    return !!v && Number(v.SO_LUONG_TON || 0) > 0 &&
+      (v.CON_HANG === true || v.CON_HANG === 1 || v.CON_HANG === '1');
+  }
+
+  function productInStock(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    if (!Array.isArray(list) || !list.length) return false;
+    return list.some(variantInStock);
+  }
+
   function productCartVariantId(p) {
     var list = p && p.DANH_SACH_BIEN_THE;
-    if (Array.isArray(list) && list.length && list[0] && list[0].ID) return list[0].ID;
+    if (Array.isArray(list) && list.length) {
+      for (var i = 0; i < list.length; i++) {
+        if (variantInStock(list[i]) && list[i].ID) return list[i].ID;
+      }
+      return list[0] && list[0].ID ? list[0].ID : 0;
+    }
     if (p && p.ATTR1) return p.ATTR1;
     return p && p.ID;
   }
@@ -140,6 +156,7 @@
       for (var i = 0; i < list.length; i++) {
         var v = list[i];
         if (!v) continue;
+        if (!variantInStock(v)) continue;
         var vp = Math.round(Number(v.GIA_BAN) || 0);
         if (vp <= 0) continue;
         if (minPrice <= 0 || vp < minPrice) {
@@ -167,6 +184,10 @@
     var title = p.TEN_SAN_PHAM || 'Sản phẩm';
     var href = detailUrl(p);
     var imgRel = relativeImagePath(p);
+    var inStock = productInStock(p);
+    var soldOutOverlay = inStock
+      ? ''
+      : '<div class="ww-card-soldout" aria-hidden="true"><span>Hết hàng</span></div>';
     var priceInfo = productListPriceInfo(p);
     var priceInt = priceInfo.price;
     var compareInt = priceInfo.compare;
@@ -211,7 +232,9 @@
       : '';
 
     return (
-      '<card-product class="h-full card-product--vertical ww-card-opens-qv" data-product-id="' +
+      '<card-product class="h-full card-product--vertical ww-card-opens-qv' +
+      (inStock ? '' : ' is-soldout') +
+      '" data-product-id="' +
       escapeHtml(p.ID) +
       '" data-requires-variant="' +
       (productRequiresVariantSelect(p) ? '1' : '0') +
@@ -229,6 +252,7 @@
       '<picture><source media="(max-width: 600px)" srcset="' + escapeHtml(avatarUrl(p)) + '">' +
       '<img class="' + imgMainClass + '" width="480" height="480" loading="lazy" style="--image-scale:1" src="' + escapeHtml(avatarUrl(p)) + '" alt="' + escapeHtml(title) + '"></picture>' +
       hoverPictures +
+      soldOutOverlay +
       '</a>' +
       '</div>' +
       '<div class="card-product__body flex flex-col gap-2 px-2 pb-2 md:gap-1 md:px-2 md:pb-2">' +
@@ -241,7 +265,7 @@
       '</a>' +
       '<div class="card-product__cart-btn shrink-0">' +
       '<input type="hidden" name="variantId" value="' + escapeHtml(productCartVariantId(p)) + '">' +
-      '<button type="button" class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3" data-variant-id="' + escapeHtml(productCartVariantId(p)) + '" data-requires-variant="' + (productRequiresVariantSelect(p) ? '1' : '0') + '" data-action="addtocart" aria-label="Thêm vào giỏ">' +
+      '<button type="button" ' + (inStock ? '' : 'disabled aria-disabled="true" ') + 'class="btn bg-relative addtocart-btn font-semibold add_to_cart flex justify-center items-center gap-3' + (inStock ? '' : ' opacity-50 cursor-not-allowed') + '" data-variant-id="' + escapeHtml(productCartVariantId(p)) + '" data-requires-variant="' + (productRequiresVariantSelect(p) ? '1' : '0') + '" data-action="addtocart" aria-label="' + (inStock ? 'Thêm vào giỏ' : 'Hết hàng') + '">' +
       '<span class="loading-icon gap-1 hidden items-center justify-center">' +
       '<span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>' +
       '<span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>' +
@@ -311,6 +335,8 @@
     var params = new URLSearchParams();
     params.set('PAGE', '1');
     params.set('PER_PAGE', String(ids.length));
+    params.set('TRANG_THAI_HOAT_DONG', 'true');
+    params.set('IS_API_PUBLIC', 'true');
     ids.forEach(function (id) {
       params.append('DANH_SACH_SAN_PHAM_ID[]', id);
     });

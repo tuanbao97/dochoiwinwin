@@ -199,4 +199,4 @@
     );
   })();
 </script>
-<script src="100/531/894/themes/1018832/assets/cart.js?ww-cart-min-price-1" defer fetchpriority="low"></script>
+<script src="100/531/894/themes/1018832/assets/cart.js?ww-stock-guard-1" defer fetchpriority="low"></script>

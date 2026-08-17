@@ -629,6 +629,12 @@
       if (priceInput) priceInput.value = String(minPrice || 0);
       const addBtn = shell.querySelector("#ww-qv-addtocart");
       if (addBtn) addBtn.dataset.variantId = "";
+      const quantityInput = shell.querySelector('.ww-qv-cart-form [name="quantity"]');
+      if (quantityInput) {
+        quantityInput.max = "1";
+        quantityInput.removeAttribute("data-stock");
+        if (window.wwQuantityStockHint) window.wwQuantityStockHint.reset(quantityInput);
+      }
       setQuickViewAddCartEnabled(shell, true, "Giao hàng tận nơi hoặc nhận tại cửa hàng");
       return;
     }
@@ -640,6 +646,7 @@
     const price = parseInt(btn.getAttribute("data-price") || "0", 10) || 0;
     const compare = parseInt(btn.getAttribute("data-compare") || "0", 10) || 0;
     const inStock = btn.getAttribute("data-in-stock") === "1";
+    const stock = Math.max(0, parseInt(btn.getAttribute("data-stock") || "0", 10) || 0);
     const image = btn.getAttribute("data-image") || "";
     const imageIndexAttr = btn.getAttribute("data-image-index");
 
@@ -697,6 +704,13 @@
 
     const addBtn = shell.querySelector("#ww-qv-addtocart");
     if (addBtn) addBtn.dataset.variantId = id;
+    const quantityInput = shell.querySelector('.ww-qv-cart-form [name="quantity"]');
+    if (quantityInput) {
+      quantityInput.max = String(stock > 0 ? stock : 1);
+      quantityInput.setAttribute("data-stock", String(stock));
+      if (stock > 0 && Number(quantityInput.value || 1) > stock) quantityInput.value = String(stock);
+      if (window.wwQuantityStockHint) window.wwQuantityStockHint.reset(quantityInput);
+    }
     setQuickViewAddCartEnabled(
       shell,
       inStock,

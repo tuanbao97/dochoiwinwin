@@ -301,7 +301,7 @@
 
 
 	 
-    <div class="flex items-center gap-3 mb-4 ">
+    <div class="flex items-center flex-wrap gap-3 mb-4 ">
       <div class="w-[88px] text-neutral-400"> Số lượng </div>
       <quantity-input>
         <div class="custom-number-input product-quantity">
@@ -309,7 +309,7 @@
             <button type="button" name="minus" class="h-full w-20  cursor-pointer outline-non p-2">
               <i class="m-auto icon icon-minus"></i>
             </button>
-            <input type="number" class="focus:outline-none form-quantity w-full focus:ring-transparent text-base  font-semibold text-md  md:text-basecursor-default flex items-center outline-none bg-transparent border-none text-center" name="quantity" value="1" min="1">
+            <input type="number" class="focus:outline-none form-quantity w-full focus:ring-transparent text-base  font-semibold text-md  md:text-basecursor-default flex items-center outline-none bg-transparent border-none text-center" name="quantity" value="1" min="1" max="1">
             <button type="button" name="plus" class=" h-full w-20 rounded-r cursor-pointer p-2">
               <i class="m-auto icon icon-plus"></i>
             </button>

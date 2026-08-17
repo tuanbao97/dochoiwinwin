@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Enum\AppConstant;
 use App\Mapper\ProductMapper;
+use App\Mapper\SapoMapper;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Service\impl\SapoImageDownloaderImpl;
@@ -76,5 +77,26 @@ class SapoCatalogImportTest extends TestCase
         $this->assertCount(1, $dto->danhSachBienThe);
         $this->assertSame('Đỏ', $dto->danhSachBienThe[0]->productColor);
         $this->assertNull($product->SAPO_ID);
+    }
+
+    public function test_sapo_mapper_clamps_negative_inventory_and_marks_variant_sold_out(): void
+    {
+        $dto = SapoMapper::mapProduct([
+            'id' => 123,
+            'name' => 'Sản phẩm hết hàng',
+            'status' => 'active',
+            'variants' => [[
+                'id' => 456,
+                'title' => 'Mặc định',
+                'price' => 100000,
+                'inventory_quantity' => -5,
+                'inventory_policy' => 'continue',
+            ]],
+        ]);
+
+        $this->assertCount(1, $dto->danhSachBienThe);
+        $this->assertSame(0, $dto->danhSachBienThe[0]->inventoryQuantity);
+        $this->assertFalse($dto->danhSachBienThe[0]->isInStock);
+        $this->assertSame('HET_HANG', $dto->danhSachBienThe[0]->productStatus);
     }
 }

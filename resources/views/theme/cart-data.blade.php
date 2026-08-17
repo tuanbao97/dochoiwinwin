@@ -11,7 +11,7 @@
   };
   $productUrl = static function (array $line) use ($appUrl): string {
       $handle = trim((string) ($line['handle'] ?? ''));
-      $productId = (int) ($line['variant_id'] ?? 0);
+      $productId = (int) ($line['product_id'] ?? 0);
       if ($handle === '') {
           return $productId > 0 ? url('san-pham/chi-tiet/sp-' . $productId) : '#';
       }
@@ -57,6 +57,14 @@ HTML;
 
 <span class="cart-count">{{ $totalQuantity }}</span>
 
+@if(session('cart_stock_notices'))
+<div class="cart-stock-notices rounded border border-warning bg-warning/10 p-3 mb-3 text-sm">
+  @foreach((array) session('cart_stock_notices') as $notice)
+    <div>{{ $notice }}</div>
+  @endforeach
+</div>
+@endif
+
 <div class="cart-table">
   <div class="cart-header dnone lg:grid md:grid-cols-[var(--cart-template)] gap-[var(--table-gap)] border-t border-b border-neutral-50 font-semibold text-center">
     <div class="py-3">Sản phẩm</div>
@@ -70,7 +78,7 @@ HTML;
       $lineIndex = $idx + 1;
       $imgUrl = $resolveImageUrl($line);
       $variantTitle = trim((string) ($line['variant_title'] ?? ''));
-      $showVariant = $variantTitle !== '' && $variantTitle !== 'Mặc định';
+      $showVariant = ! in_array(mb_strtolower($variantTitle), ['', 'mặc định', 'default title'], true);
       $itemUrl = $productUrl($line);
     @endphp
     <div
@@ -120,6 +128,8 @@ HTML;
                 data-line-index="{{ $lineIndex }}"
                 value="{{ (int) ($line['quantity'] ?? 1) }}"
                 min="1"
+                max="{{ max(1, (int) ($line['stock'] ?? 1)) }}"
+                data-stock="{{ max(0, (int) ($line['stock'] ?? 0)) }}"
                 aria-label="Số lượng"
               >
               <button type="button" name="plus" class="h-full w-20 rounded-r cursor-pointer p-2">

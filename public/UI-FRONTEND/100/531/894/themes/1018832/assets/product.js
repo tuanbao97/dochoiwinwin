@@ -497,9 +497,10 @@ subscribe(window.themeConfigs.firstInteraction, () => {
         credentials: "same-origin",
         body: data,
       })
-        .then((res) => {
-          if (!res.ok) throw new Error("Add to cart failed");
-          return res.json();
+        .then(async (res) => {
+          const response = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(response.message || "Không thể thêm sản phẩm vào giỏ");
+          return response;
         })
         .then((response) => {
           publish(productAddEvent, {
@@ -838,9 +839,10 @@ subscribe(window.themeConfigs.firstInteraction, () => {
         credentials: "same-origin",
         body: data,
       })
-        .then((res) => {
-          if (!res.ok) throw new Error("Add to cart failed");
-          return res.json();
+        .then(async (res) => {
+          const response = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(response.message || "Không thể thêm sản phẩm vào giỏ");
+          return response;
         })
         .then((response) => {
           publish(productAddEvent, {
@@ -1092,6 +1094,110 @@ function wwRegisterCompareElements() {
 
   return true;
 }
+
+/** Cảnh báo đỏ khi tăng số lượng vượt tồn kho (trang sản phẩm + xem nhanh).
+ *  Tồn kho lấy từ data-stock do hydrate/quick-view gán; thiếu attribute thì bỏ qua. */
+(function wwQuantityStockHint() {
+  var HIDE_AFTER = 4000;
+
+  function stockOf(input) {
+    var raw = input.getAttribute("data-stock");
+    if (raw === null || raw === "") return null;
+    var stock = Math.floor(Number(raw));
+    return isFinite(stock) && stock >= 0 ? stock : null;
+  }
+
+  function hintOf(input, create) {
+    var host = input.closest("quantity-input");
+    if (!host) return null;
+    var hint = host.parentElement
+      ? host.parentElement.querySelector(".ww-qty-stock-msg")
+      : null;
+    if (!hint && create) {
+      hint = document.createElement("span");
+      hint.className = "ww-qty-stock-msg";
+      hint.setAttribute("role", "alert");
+      host.insertAdjacentElement("afterend", hint);
+    }
+    return hint;
+  }
+
+  function show(input, text) {
+    var hint = hintOf(input, true);
+    if (!hint) return;
+    hint.textContent = text;
+    hint.classList.add("is-visible");
+    clearTimeout(hint._wwHideTimer);
+    hint._wwHideTimer = setTimeout(function () {
+      hint.classList.remove("is-visible");
+    }, HIDE_AFTER);
+  }
+
+  function hide(input) {
+    var hint = hintOf(input, false);
+    if (!hint) return;
+    clearTimeout(hint._wwHideTimer);
+    hint.classList.remove("is-visible");
+  }
+
+  function check(input, wanted) {
+    var stock = stockOf(input);
+    if (stock === null) return;
+    if (stock <= 0) {
+      show(input, "Sản phẩm đã hết hàng");
+      return;
+    }
+    if (wanted > stock) {
+      show(input, "Chỉ còn " + stock + " sản phẩm trong kho");
+      return;
+    }
+    hide(input);
+  }
+
+  document.addEventListener(
+    "click",
+    function (e) {
+      var target = e.target;
+      if (!target || !target.closest) return;
+
+      var btn = target.closest('quantity-input button[name="plus"], quantity-input button[name="minus"]');
+      if (btn) {
+        var host = btn.closest("quantity-input");
+        var input = host && host.querySelector("input");
+        if (!input) return;
+        if (btn.getAttribute("name") === "minus") {
+          hide(input);
+          return;
+        }
+        check(input, Math.floor(Number(input.value) || 1) + 1);
+        return;
+      }
+
+      if (target.closest("[data-variant-id]")) {
+        document.querySelectorAll("quantity-input input").forEach(hide);
+      }
+    },
+    true
+  );
+
+  document.addEventListener(
+    "input",
+    function (e) {
+      var input = e.target;
+      if (!input || input.tagName !== "INPUT" || !input.closest) return;
+      if (!input.closest("quantity-input")) return;
+      var value = Math.floor(Number(input.value) || 0);
+      if (value <= 0) {
+        hide(input);
+        return;
+      }
+      check(input, value);
+    },
+    true
+  );
+
+  window.wwQuantityStockHint = { reset: hide };
+})();
 
 (function wwWaitCompareDeps() {
   if (wwRegisterCompareElements()) return;

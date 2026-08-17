@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\ProvinceController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\StorefrontAccountController;
+use App\Http\Controllers\Api\StorefrontVoucherController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WardController;
 use App\Http\Controllers\Auth\AuthController;
@@ -164,6 +165,8 @@ Route::prefix('public')->middleware([
     \Illuminate\Session\Middleware\StartSession::class,
 ])->group(function () {
     Route::post('/transaction/place-order', [TransactionController::class, 'placeOrder']);
+    Route::post('/voucher/list', [StorefrontVoucherController::class, 'index']);
+    Route::post('/voucher/quote', [StorefrontVoucherController::class, 'quote']);
 });
 
 

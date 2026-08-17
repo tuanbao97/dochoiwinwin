@@ -715,8 +715,8 @@
 
 	</quick-view>
 
-<script src="100/531/894/themes/1018832/assets/product.js?ww-portal-opener-fix-1" defer fetchpriority="low"></script>
-	<script src="100/531/894/themes/1018832/assets/quick-view-enhance.js?ww-qv-cart-prompt-1" defer fetchpriority="low"></script>
+<script src="100/531/894/themes/1018832/assets/product.js?ww-qty-hint-2" defer fetchpriority="low"></script>
+	<script src="100/531/894/themes/1018832/assets/quick-view-enhance.js?ww-qty-hint-1" defer fetchpriority="low"></script>
 
 	@include('UI-FRONTEND.common.cart-drawer')
 

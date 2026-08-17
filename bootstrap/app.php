@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -55,6 +56,17 @@ return Application::configure(basePath: dirname(__DIR__))
                 'CODE' => JsonResponse::HTTP_UNAUTHORIZED,
                 'STATUS_DETAIL' => $errors['MSG']
             ], JsonResponse::HTTP_UNAUTHORIZED);
+        });
+
+        // 422 - Dữ liệu không hợp lệ (bao gồm kiểm tra tồn kho).
+        $exceptions->render(function (ValidationException $e, $request) {
+            return response()->json([
+                'ERRORS' => $e->errors(),
+                'STATUS' => AppConstant::STATUS_FAILURE,
+                'CODE' => JsonResponse::HTTP_UNPROCESSABLE_ENTITY,
+                'STATUS_DETAIL' => collect($e->errors())->flatten()->first()
+                    ?: 'Dữ liệu không hợp lệ.',
+            ], JsonResponse::HTTP_UNPROCESSABLE_ENTITY);
         });
 
 

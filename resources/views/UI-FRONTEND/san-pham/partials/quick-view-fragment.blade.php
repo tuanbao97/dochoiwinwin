@@ -143,6 +143,7 @@
           'price' => (int) round((float) ($v['GIA_BAN'] ?? 0)),
           'compare' => (int) round((float) ($v['GIA_GOC'] ?? 0)),
           'in_stock' => ! empty($v['CON_HANG']),
+          'stock' => max(0, (int) ($v['SO_LUONG_TON'] ?? 0)),
           'image' => $vImg,
           'image_index' => $imageIndex,
       ];
@@ -184,12 +185,10 @@
       }
   }
 
-  $defaultVariantId = $hasVariants
-      ? ''
-      : (int) ($p['ATTR1'] ?? $id);
-  if (! $hasVariants && (int) $defaultVariantId <= 0) {
-      $defaultVariantId = $id;
-  }
+  $singleVariant = !$hasVariants && count($variants) === 1 ? $variants[0] : null;
+  $singleStock = $singleVariant ? (int) $singleVariant['stock'] : 0;
+  $singleInStock = $singleVariant && !empty($singleVariant['in_stock']) && $singleStock > 0;
+  $defaultVariantId = $hasVariants ? '' : (int) ($singleVariant['id'] ?? 0);
   $productSku = (string) ($p['MA_SAN_PHAM'] ?? $id);
 @endphp
 <div class="ww-qv-shell">
@@ -296,7 +295,7 @@
 
             <div class="ww-qv-meta text-sm text-neutral-300 mb-4">
               <div>Mã sản phẩm: <b class="text-foreground" id="ww-qv-sku">{{ $productSku }}</b></div>
-              <div>Tình trạng: <b class="{{ ($hasVariants ? $anyVariantInStock : true) ? 'text-success' : 'text-danger' }}" id="ww-qv-stock">{{ ($hasVariants ? $anyVariantInStock : true) ? 'Còn hàng' : 'Hết hàng' }}</b></div>
+              <div>Tình trạng: <b class="{{ ($hasVariants ? $anyVariantInStock : $singleInStock) ? 'text-success' : 'text-danger' }}" id="ww-qv-stock">{{ ($hasVariants ? $anyVariantInStock : $singleInStock) ? 'Còn hàng' : 'Hết hàng' }}</b></div>
               @if ($categoryName !== '')
                 <div>Danh mục: <b class="text-foreground">{{ $categoryName }}</b></div>
               @endif
@@ -335,6 +334,7 @@
                       data-price="{{ $variant['price'] }}"
                       data-compare="{{ $variant['compare'] }}"
                       data-in-stock="{{ !empty($variant['in_stock']) ? '1' : '0' }}"
+                      data-stock="{{ (int) ($variant['stock'] ?? 0) }}"
                       data-image="{{ $variant['image'] }}"
                       data-image-index="{{ (int) ($variant['image_index'] ?? -1) }}"
                       title="{{ $variant['title'] }}"
@@ -365,7 +365,7 @@
                 <input type="hidden" name="image" id="ww-qv-image-input" value="{{ $imageRels[0] ?? '' }}">
                 <input type="hidden" name="category_id" value="{{ $categoryId ?: '' }}">
 
-                <div class="flex items-center gap-3 mb-4">
+                <div class="flex items-center flex-wrap gap-3 mb-4">
                   <div class="w-[88px] text-neutral-400">Số lượng</div>
                   <quantity-input>
                     <div class="custom-number-input product-quantity">
@@ -373,7 +373,7 @@
                         <button type="button" name="minus" class="h-full w-20 cursor-pointer outline-none p-2">
                           <i class="m-auto icon icon-minus"></i>
                         </button>
-                        <input type="number" class="focus:outline-none form-quantity w-full focus:ring-transparent text-base font-semibold bg-transparent border-none text-center" name="quantity" value="1" min="1">
+                        <input type="number" class="focus:outline-none form-quantity w-full focus:ring-transparent text-base font-semibold bg-transparent border-none text-center" name="quantity" value="1" min="1" max="{{ $hasVariants ? 1 : max(1, $singleStock) }}" @unless($hasVariants) data-stock="{{ max(0, (int) $singleStock) }}" @endunless>
                         <button type="button" name="plus" class="h-full w-20 rounded-r cursor-pointer p-2">
                           <i class="m-auto icon icon-plus"></i>
                         </button>
@@ -391,8 +391,9 @@
                     data-variant-id="{{ $defaultVariantId }}"
                     data-action="addtocart"
                     data-requires-variant="{{ $hasVariants ? '1' : '0' }}"
+                    @if(!$hasVariants && !$singleInStock) disabled aria-disabled="true" @endif
                   >
-                    THÊM VÀO GIỎ
+                    {{ (!$hasVariants && !$singleInStock) ? 'HẾT HÀNG' : 'THÊM VÀO GIỎ' }}
                     <br><span class="text-xs font-normal opacity-90">Giao hàng tận nơi hoặc nhận tại cửa hàng</span>
                   </button>
                 </div>
