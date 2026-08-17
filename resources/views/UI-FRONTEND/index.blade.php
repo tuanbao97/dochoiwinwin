@@ -992,7 +992,7 @@
       </div>
       <nav class="navigation-vertical overflow-y-auto no-scrollbar ">
         @include('UI-FRONTEND.partials.menu-category-nav')
-      </nav>
+        </nav>
       <div class="navigation-footer 4 border-t border-neutral-50 flex">
 
           <div class="w-1/2">
