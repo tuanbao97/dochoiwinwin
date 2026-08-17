@@ -483,6 +483,7 @@ use Illuminate\Support\Facades\DB;
             $file = match (true) {
                 str_contains($n, 'bé gái') || str_contains($n, 'be gai') => 'do-choi-be-gai.svg',
                 str_contains($n, 'vận động') || str_contains($n, 'van dong') => 'do-choi-van-dong.svg',
+                str_contains($n, 'bỏ pin') || str_contains($n, 'bo pin') || str_contains($n, 'tự động') || str_contains($n, 'tu dong') => 'do-choi-bo-pin-tu-dong.svg',
                 str_contains($n, 'máy bay') || str_contains($n, 'may bay') => 'may-bay-dieu-khien.svg',
                 str_starts_with($n, 'xe ') => 'xe-dieu-khien.svg',
                 str_contains($n, 'siêu xe') || str_contains($n, 'sieu xe') => 'lap-ghep-xe-dua.svg',
@@ -516,7 +517,7 @@ use Illuminate\Support\Facades\DB;
             $phrases = [
                 'siêu anh hùng', 'siêu nhân', 'siêu xe', 'xe đua', 'máy bay', 'điều khiển',
                 'lắp ghép', 'xếp hình', 'tổng hợp', 'con vật', 'đồ chơi', 'bé gái',
-                'vui nhộn', 'vận động', 'giáo dục', 'mô hình', 'trẻ em',
+                'vui nhộn', 'vận động', 'bỏ pin', 'tự động', 'giáo dục', 'mô hình', 'trẻ em',
             ];
 
             foreach ($phrases as $phrase) {
