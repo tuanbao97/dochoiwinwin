@@ -96,8 +96,16 @@
       return appUrl + '/' + value.replace(/^\/+/, '');
     }
 
-    function productUrl(handle) {
-      return handle ? appUrl + '/' + String(handle).replace(/^\/+/, '') : '#';
+    function productUrl(handle, productId) {
+      var id = Number(productId) || 0;
+      var slug = String(handle || '').replace(/^\/+/, '');
+      if (slug === '') {
+        return id > 0 ? appUrl + '/san-pham/chi-tiet/sp-' + id : '#';
+      }
+      if (id > 0 && !/-\d+$/.test(slug)) {
+        slug += '-' + id;
+      }
+      return appUrl + '/san-pham/chi-tiet/' + slug;
     }
 
     function statusClass(status) {
@@ -107,7 +115,7 @@
 
     function renderItem(item) {
       var image = imageUrl(item.IMAGE);
-      var href = productUrl(item.HANDLE);
+      var href = productUrl(item.HANDLE, item.PRODUCT_ID);
       return '<div class="ww-orders__product">'
         + (image
           ? '<a href="' + escapeHtml(href) + '" class="ww-orders__product-image"><img src="' + escapeHtml(image) + '" alt="' + escapeHtml(item.NAME) + '" loading="lazy"></a>'
@@ -136,11 +144,23 @@
     function renderOrder(order) {
       var buyer = order.BUYER || {};
       var items = Array.isArray(order.ITEMS) ? order.ITEMS : [];
+      var discountText = Number(order.DISCOUNT_AMOUNT || 0) > 0
+        ? ' · Giảm giá' + (order.DISCOUNT_CODE ? ' (' + escapeHtml(order.DISCOUNT_CODE) + ')' : '')
+          + ': -' + money(order.DISCOUNT_AMOUNT)
+        : '';
+      var cancelReason = order.STATUS === 'CANCELLED'
+        ? '<div class="ww-orders__cancel-reason">'
+          + '<span class="ww-orders__cancel-icon" aria-hidden="true">!</span>'
+          + '<span><small>Lý do hủy đơn</small><strong>'
+          + escapeHtml(order.CANCEL_REASON || 'Sapo chưa cung cấp lý do hủy')
+          + '</strong></span></div>'
+        : '';
       return '<article class="ww-orders__card">'
         + '<div class="ww-orders__card-head">'
         + '<div><strong>Đơn hàng ' + escapeHtml(order.CODE || ('#' + order.ID)) + '</strong><span>' + escapeHtml(dateTime(order.CREATED_AT)) + '</span></div>'
         + '<span class="ww-orders__status ww-orders__status--' + statusClass(order.STATUS) + '">' + escapeHtml(order.STATUS_LABEL) + '</span>'
         + '</div>'
+        + cancelReason
         + '<div class="ww-orders__products">' + items.map(renderItem).join('') + '</div>'
         + '<div class="ww-orders__delivery">'
         + '<div><span>Người nhận</span><strong>' + escapeHtml(buyer.FULL_NAME || '') + '</strong></div>'
@@ -151,7 +171,8 @@
         + renderTracking('👤', 'Nhân viên phụ trách', order.ASSIGNEE_NAME, 'Chưa phân công')
         + renderTracking('🚚', 'Ngày hẹn giao', dateTime(order.EXPECTED_DELIVERY_DATE), 'Chưa có lịch hẹn')
         + '</div>'
-        + '<div class="ww-orders__total"><span>Tổng cộng</span><strong>' + money(order.TOTAL_PRICE) + '</strong></div>'
+        + '<div class="ww-orders__total"><span class="ww-orders__total-breakdown">Tạm tính: ' + money(order.SUBTOTAL) + ' · Phí vận chuyển: ' + money(order.SHIPPING_FEE) + discountText + '</span>'
+        + '<span class="ww-orders__grand-total">Tổng cộng <strong>' + money(order.TOTAL_PRICE) + '</strong></span></div>'
         + '</article>';
     }
 
@@ -207,9 +228,25 @@
             order.CODE,
             order.STATUS,
             order.STATUS_LABEL,
+            order.TOTAL_QUANTITY,
+            order.SUBTOTAL,
+            order.SHIPPING_FEE,
+            order.DISCOUNT_CODE,
+            order.DISCOUNT_AMOUNT,
             order.TOTAL_PRICE,
             order.ASSIGNEE_NAME,
-            order.EXPECTED_DELIVERY_DATE
+            order.EXPECTED_DELIVERY_DATE,
+            order.CANCEL_REASON,
+            (Array.isArray(order.ITEMS) ? order.ITEMS : []).map(function (item) {
+              return [
+                item.SAPO_LINE_ITEM_ID || item.ID,
+                item.PRODUCT_ID,
+                item.NAME,
+                item.QUANTITY,
+                item.PRICE,
+                item.LINE_TOTAL
+              ];
+            })
           ];
         })
       });

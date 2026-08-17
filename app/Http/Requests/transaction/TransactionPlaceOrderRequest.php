@@ -4,6 +4,7 @@ namespace App\Http\Requests\transaction;
 
 use App\Enum\AppConstant;
 use App\Exceptions\BadRequestException;
+use App\Support\StorefrontVoucher;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TransactionPlaceOrderRequest extends FormRequest
@@ -48,6 +49,11 @@ class TransactionPlaceOrderRequest extends FormRequest
             'EMAIL' => $normalize($this->input('EMAIL', $this->input('email'))),
             'DIA_CHI' => $normalize($this->input('DIA_CHI', $this->input('address'))),
             'GHI_CHU' => $normalize($this->input('GHI_CHU', $this->input('note'))),
+            'DISCOUNT_CODE' => $normalize($this->input('DISCOUNT_CODE', $this->input('discount_code'))),
+            'DISCOUNT_CODES' => StorefrontVoucher::normalizeCodes(array_merge(
+                (array) $this->input('DISCOUNT_CODES', $this->input('discount_codes', [])),
+                [$this->input('DISCOUNT_CODE', $this->input('discount_code', ''))]
+            )),
             'ITEMS' => $items,
         ]);
     }
@@ -86,6 +92,23 @@ class TransactionPlaceOrderRequest extends FormRequest
                 'string',
                 'max:2000',
             ],
+            'DISCOUNT_CODE' => [
+                'bail',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'DISCOUNT_CODES' => [
+                'bail',
+                'nullable',
+                'array',
+                'max:2',
+            ],
+            'DISCOUNT_CODES.*' => [
+                'bail',
+                'string',
+                'max:255',
+            ],
             'ITEMS' => [
                 'bail',
                 'required',
@@ -100,7 +123,7 @@ class TransactionPlaceOrderRequest extends FormRequest
             'ITEMS.*.QUANTITY' => [
                 'bail',
                 'required',
-                'numeric',
+                'integer',
                 'min:1',
             ],
             'ITEMS.*.PRICE' => [

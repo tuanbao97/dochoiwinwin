@@ -256,6 +256,46 @@ class SapoServiceImpl implements SapoService
         return is_array($json) ? $json : [];
     }
 
+    public function put(string $path, array $payload = []): array
+    {
+        if (! $this->isEnabled()) {
+            throw new RuntimeException('Sapo API chưa được cấu hình (SAPO_ENABLED / credentials).');
+        }
+
+        $response = $this->client()
+            ->asJson()
+            ->put($this->baseUrl().$path, $payload);
+
+        if ($response->failed()) {
+            throw new RuntimeException(
+                'Sapo API error '.$response->status().': '.$response->body()
+            );
+        }
+
+        $json = $response->json();
+
+        return is_array($json) ? $json : [];
+    }
+
+    public function delete(string $path): array
+    {
+        if (! $this->isEnabled()) {
+            throw new RuntimeException('Sapo API chưa được cấu hình (SAPO_ENABLED / credentials).');
+        }
+
+        $response = $this->client()->delete($this->baseUrl().$path);
+
+        if ($response->failed()) {
+            throw new RuntimeException(
+                'Sapo API error '.$response->status().': '.$response->body()
+            );
+        }
+
+        $json = $response->json();
+
+        return is_array($json) ? $json : [];
+    }
+
     private function client(): PendingRequest
     {
         $cfg = config('services.sapo');

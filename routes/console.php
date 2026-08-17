@@ -3,6 +3,7 @@
 use App\Jobs\SyncSapoCatalogJob;
 use App\Jobs\RetryPendingSapoOrdersJob;
 use App\Jobs\PullSapoOrderUpdatesJob;
+use App\Jobs\SyncSapoVouchersJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -15,6 +16,11 @@ Schedule::job(new SyncSapoCatalogJob)
     ->everyFiveMinutes()
     ->withoutOverlapping(10)
     ->name('sapo-catalog-sync');
+
+Schedule::job(new SyncSapoVouchersJob)
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->name('sapo-voucher-sync');
 
 Schedule::job(new RetryPendingSapoOrdersJob)
     ->everyMinute()

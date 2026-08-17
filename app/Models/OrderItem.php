@@ -29,7 +29,9 @@ class OrderItem extends Model
     protected $attributes = [
         'ID' => null,
         'TRANSACTION_ID' => null,
+        'SAPO_LINE_ITEM_ID' => null,
         'PRODUCT_ID' => null,
+        'SAPO_PRODUCT_ID' => null,
         'PRODUCT_VARIANT_ID' => null,
         'SAPO_VARIANT_ID' => null,
         'QUANTITY' => 0,
@@ -48,6 +50,8 @@ class OrderItem extends Model
         'IS_ACTIVE' => 'boolean',
         'CRT_DT' => 'datetime',
         'UPD_DT' => 'datetime',
+        'SAPO_LINE_ITEM_ID' => 'integer',
+        'SAPO_PRODUCT_ID' => 'integer',
         'PRODUCT_VARIANT_ID' => 'integer',
         'SAPO_VARIANT_ID' => 'integer',
     ];

@@ -349,6 +349,7 @@
         price: Math.round(Number(v.GIA_BAN) || 0),
         compare: Math.round(Number(v.GIA_GOC) || 0),
         inStock: !!(v.CON_HANG === true || v.CON_HANG === 1 || v.CON_HANG === '1'),
+        stock: Math.max(0, Math.floor(Number(v.SO_LUONG_TON) || 0)),
         image: img,
         imageIndex: imageIndex,
       });
@@ -406,6 +407,17 @@
     var cartForm = document.getElementById('add-to-cart-form');
     if (soldOutBtn) soldOutBtn.classList.toggle('hidden', !isSold);
     if (cartForm) cartForm.classList.toggle('hidden', isSold);
+  }
+
+  function setQuantityMax(stock, known) {
+    var input = document.querySelector('#add-to-cart-form [name="quantity"]');
+    if (!input) return;
+    stock = Math.max(0, Math.floor(Number(stock) || 0));
+    input.max = String(stock > 0 ? stock : 1);
+    if (known === false) input.removeAttribute('data-stock');
+    else input.setAttribute('data-stock', String(stock));
+    if (stock > 0 && Number(input.value || 1) > stock) input.value = String(stock);
+    if (window.wwQuantityStockHint) window.wwQuantityStockHint.reset(input);
   }
 
   function clearVariantError() {
@@ -506,6 +518,7 @@
     var price = Math.round(Number(btn.getAttribute('data-price')) || 0);
     var compare = Math.round(Number(btn.getAttribute('data-compare')) || 0);
     var inStock = btn.getAttribute('data-in-stock') === '1';
+    var stock = Math.max(0, Math.floor(Number(btn.getAttribute('data-stock')) || 0));
     var variantId = btn.getAttribute('data-variant-id') || '';
     var imageRel = btn.getAttribute('data-image-rel') || '';
     var imageUrl = btn.getAttribute('data-image') || '';
@@ -521,6 +534,7 @@
 
     updatePriceUi(price, compare, price <= 0, '');
     setStockUi(inStock, false);
+    setQuantityMax(stock);
 
     var imgInput = document.getElementById('ww-pd-product-image');
     if (imgInput && (imageRel || imageUrl)) imgInput.value = imageRel || imageUrl;
@@ -603,6 +617,8 @@
         escapeAttr(String(v.compare)) +
         '" data-in-stock="' +
         (v.inStock ? '1' : '0') +
+        '" data-stock="' +
+        escapeAttr(String(v.stock)) +
         '" data-image="' +
         escapeAttr(v.image) +
         '" data-image-rel="' +
@@ -737,11 +753,16 @@
       }
       if (variantInput) variantInput.value = '';
       if (variantTitleInput) variantTitleInput.value = '';
+      setQuantityMax(0, false);
       setStockUi(anyInStock, productSold);
     } else {
-      setStockUi(!productSold, productSold);
-      if (!defaultVariantId && variantState.variants.length === 1 && variantState.variants[0].id) {
-        if (variantInput) variantInput.value = String(variantState.variants[0].id);
+      var onlyVariant = variantState.variants.length === 1 ? variantState.variants[0] : null;
+      var singleInStock = !!(onlyVariant && onlyVariant.inStock);
+      setStockUi(singleInStock, productSold);
+      setQuantityMax(onlyVariant ? onlyVariant.stock : 0);
+      if (onlyVariant && onlyVariant.id) {
+        if (variantInput) variantInput.value = String(onlyVariant.id);
+        if (variantTitleInput) variantTitleInput.value = onlyVariant.title || 'Mặc định';
       }
     }
 

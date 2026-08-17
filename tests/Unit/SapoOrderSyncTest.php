@@ -9,12 +9,15 @@ use App\Service\SapoService;
 use App\Service\impl\SapoServiceImpl;
 use App\Support\SapoOrderPuller;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
 use ReflectionMethod;
 use Tests\TestCase;
 
 class SapoOrderSyncTest extends TestCase
 {
+    use DatabaseTransactions;
+
     public function test_order_payload_maps_sapo_variant_customer_and_local_reference(): void
     {
         $transaction = new Transaction([
@@ -24,6 +27,9 @@ class SapoOrderSyncTest extends TestCase
             'USER_BUY_PHONE' => '0909000111',
             'USER_BUY_ADDRESS' => '12 Nguyễn Trãi, TP.HCM',
             'USER_BUY_MESSAGE' => 'Giao giờ hành chính',
+            'SHIPPING_FEE' => 30000,
+            'DISCOUNT_CODE' => 'WINWIN10',
+            'DISCOUNT_AMOUNT' => 30000,
         ]);
         $transaction->ID = 123;
 
@@ -48,6 +54,14 @@ class SapoOrderSyncTest extends TestCase
             [['variant_id' => 84440001, 'quantity' => 2]],
             $order['line_items']
         );
+        $this->assertSame([
+            ['title' => 'Phí vận chuyển', 'price' => 30000, 'code' => 'WEBSITE_FIXED'],
+        ], $order['shipping_lines']);
+        $this->assertSame([[
+            'code' => 'WINWIN10',
+            'amount' => 30000,
+            'type' => 'fixed_amount',
+        ]], $order['discount_codes']);
         $this->assertSame('+84909000111', $order['shipping_address']['phone']);
         $this->assertSame(
             ['name' => 'local_transaction_id', 'value' => '123'],
@@ -104,6 +118,283 @@ class SapoOrderSyncTest extends TestCase
         );
 
         $this->assertSame([], $orders);
+    }
+
+    public function test_sapo_pull_replaces_items_and_recalculates_order_totals(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 990000001,
+            'TOTAL_QUANTITY' => 1,
+            'SUBTOTAL_PRICE' => 100000,
+            'SHIPPING_FEE' => 30000,
+            'TOTAL_PRICE' => 130000,
+            'TRANSACTION_STATUS' => 'PENDING',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+        $oldItem = OrderItem::query()->create([
+            'TRANSACTION_ID' => $transaction->ID,
+            'SAPO_LINE_ITEM_ID' => 7001,
+            'SAPO_PRODUCT_ID' => 8001,
+            'SAPO_VARIANT_ID' => 9001,
+            'QUANTITY' => 1,
+            'PRICE' => 100000,
+            'ATTR1' => 'Sản phẩm cũ',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+
+        $sapoOrder = [
+            'id' => 990000001,
+            'status' => 'open',
+            'financial_status' => 'pending',
+            'line_items' => [
+                [
+                    'id' => 7001,
+                    'product_id' => 8001,
+                    'variant_id' => 9001,
+                    'current_quantity' => 0,
+                    'quantity' => 1,
+                    'deleted' => true,
+                    'price' => 100000,
+                    'name' => 'Sản phẩm cũ',
+                ],
+                [
+                    'id' => 7002,
+                    'product_id' => 8002,
+                    'variant_id' => 9002,
+                    'current_quantity' => 3,
+                    'quantity' => 3,
+                    'price' => 120000,
+                    'name' => 'Sản phẩm mới',
+                ],
+            ],
+            'current_subtotal_price' => 360000,
+            'total_shipping_price' => 30000,
+            'current_total_price' => 390000,
+        ];
+
+        $method = new ReflectionMethod(SapoOrderPuller::class, 'apply');
+        $method->setAccessible(true);
+        $changed = $method->invoke(
+            new SapoOrderPuller($this->createMock(SapoService::class)),
+            $transaction,
+            $sapoOrder
+        );
+
+        $this->assertTrue($changed);
+        $this->assertSame('DELETED', $oldItem->fresh()->STATUS);
+        $newItem = OrderItem::query()
+            ->where('TRANSACTION_ID', $transaction->ID)
+            ->where('SAPO_LINE_ITEM_ID', 7002)
+            ->firstOrFail();
+        $this->assertNull($newItem->PRODUCT_ID);
+        $this->assertSame(3.0, (float) $newItem->QUANTITY);
+        $this->assertSame('Sản phẩm mới', $newItem->ATTR1);
+
+        $transaction->refresh();
+        $this->assertSame(3.0, (float) $transaction->TOTAL_QUANTITY);
+        $this->assertSame(360000, (int) $transaction->SUBTOTAL_PRICE);
+        $this->assertSame(30000, (int) $transaction->SHIPPING_FEE);
+        $this->assertSame(390000, (int) $transaction->TOTAL_PRICE);
+    }
+
+    public function test_sapo_pull_does_not_inflate_capped_website_discount(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 990000010,
+            'TOTAL_QUANTITY' => 1,
+            'SUBTOTAL_PRICE' => 500000,
+            'SHIPPING_FEE' => 30000,
+            'DISCOUNT_CODE' => 'WINWIN10',
+            'DISCOUNT_AMOUNT' => 30000,
+            'DISCOUNT_SNAPSHOT' => [
+                'type' => 'PERCENTAGE',
+                'value' => 1000,
+                'max_discount_amount' => 30000,
+            ],
+            'TOTAL_PRICE' => 500000,
+            'TRANSACTION_STATUS' => 'PENDING',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+        OrderItem::query()->create([
+            'TRANSACTION_ID' => $transaction->ID,
+            'SAPO_LINE_ITEM_ID' => 8010,
+            'QUANTITY' => 1,
+            'PRICE' => 500000,
+            'ATTR1' => 'Xe điều khiển',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+
+        $method = new ReflectionMethod(SapoOrderPuller::class, 'apply');
+        $method->setAccessible(true);
+        $method->invoke(
+            new SapoOrderPuller($this->createMock(SapoService::class)),
+            $transaction,
+            [
+                'id' => 990000010,
+                'status' => 'open',
+                'line_items' => [[
+                    'id' => 8010,
+                    'quantity' => 1,
+                    'current_quantity' => 1,
+                    'price' => 500000,
+                    'name' => 'Xe điều khiển',
+                ]],
+                'current_subtotal_price' => 500000,
+                'total_shipping_price' => 30000,
+                'total_discounts' => 50000,
+                'current_total_price' => 480000,
+            ]
+        );
+
+        $transaction->refresh();
+        $this->assertSame(500000, (int) $transaction->SUBTOTAL_PRICE);
+        $this->assertSame(30000, (int) $transaction->DISCOUNT_AMOUNT);
+        $this->assertSame(500000, (int) $transaction->TOTAL_PRICE);
+    }
+
+    public function test_sapo_pull_keeps_item_image_when_catalog_has_no_thumbnail(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 990000004,
+            'TOTAL_QUANTITY' => 1,
+            'SUBTOTAL_PRICE' => 100000,
+            'SHIPPING_FEE' => 30000,
+            'TOTAL_PRICE' => 130000,
+            'TRANSACTION_STATUS' => 'PENDING',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+        $item = OrderItem::query()->create([
+            'TRANSACTION_ID' => $transaction->ID,
+            'SAPO_LINE_ITEM_ID' => 7030,
+            'QUANTITY' => 1,
+            'PRICE' => 100000,
+            'ATTR1' => 'Sản phẩm có ảnh',
+            'ATTR2' => 'upload/UI-BACKEND/2026-08-14/1x1_anh-goc.jpg',
+            'ATTR3' => 'san-pham-co-anh',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+
+        $method = new ReflectionMethod(SapoOrderPuller::class, 'apply');
+        $method->setAccessible(true);
+        $method->invoke(
+            new SapoOrderPuller($this->createMock(SapoService::class)),
+            $transaction,
+            [
+                'id' => 990000004,
+                'status' => 'open',
+                'line_items' => [[
+                    'id' => 7030,
+                    'quantity' => 4,
+                    'price' => 100000,
+                    'name' => 'Sản phẩm có ảnh',
+                ]],
+                'current_subtotal_price' => 400000,
+                'total_shipping_price' => 30000,
+                'current_total_price' => 430000,
+            ]
+        );
+
+        $item->refresh();
+        $this->assertSame(4.0, (float) $item->QUANTITY);
+        $this->assertSame('upload/UI-BACKEND/2026-08-14/1x1_anh-goc.jpg', $item->ATTR2);
+        $this->assertSame('san-pham-co-anh', $item->ATTR3);
+    }
+
+    public function test_sapo_pull_without_line_items_keeps_existing_items(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 990000002,
+            'TOTAL_QUANTITY' => 1,
+            'SUBTOTAL_PRICE' => 100000,
+            'SHIPPING_FEE' => 30000,
+            'TOTAL_PRICE' => 130000,
+            'TRANSACTION_STATUS' => 'PENDING',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+        $item = OrderItem::query()->create([
+            'TRANSACTION_ID' => $transaction->ID,
+            'SAPO_LINE_ITEM_ID' => 7010,
+            'QUANTITY' => 1,
+            'PRICE' => 100000,
+            'ATTR1' => 'Giữ nguyên',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+
+        $method = new ReflectionMethod(SapoOrderPuller::class, 'apply');
+        $method->setAccessible(true);
+        $method->invoke(
+            new SapoOrderPuller($this->createMock(SapoService::class)),
+            $transaction,
+            ['id' => 990000002, 'status' => 'open']
+        );
+
+        $this->assertSame('USING', $item->fresh()->STATUS);
+        $this->assertSame(1.0, (float) $item->fresh()->QUANTITY);
+    }
+
+    public function test_cancelled_sapo_order_keeps_purchased_items_and_original_total(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 990000003,
+            'TOTAL_QUANTITY' => 1,
+            'SUBTOTAL_PRICE' => 180000,
+            'SHIPPING_FEE' => 0,
+            'TOTAL_PRICE' => 180000,
+            'TRANSACTION_STATUS' => 'PENDING',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+        $item = OrderItem::query()->create([
+            'TRANSACTION_ID' => $transaction->ID,
+            'SAPO_LINE_ITEM_ID' => 7020,
+            'QUANTITY' => 1,
+            'PRICE' => 180000,
+            'ATTR1' => 'Búp bê Baby',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+
+        $method = new ReflectionMethod(SapoOrderPuller::class, 'apply');
+        $method->setAccessible(true);
+        $method->invoke(
+            new SapoOrderPuller($this->createMock(SapoService::class)),
+            $transaction,
+            [
+                'id' => 990000003,
+                'status' => 'cancelled',
+                'cancelled_on' => '2026-08-17T09:00:00Z',
+                'cancel_reason' => 'customer',
+                'line_items' => [[
+                    'id' => 7020,
+                    'quantity' => 1,
+                    'current_quantity' => 0,
+                    'deleted' => false,
+                    'price' => 180000,
+                    'name' => 'Búp bê Baby',
+                ]],
+                'current_subtotal_price' => 0,
+                'subtotal_price' => 180000,
+                'current_total_price' => 0,
+                'total_price' => 180000,
+                'total_shipping_price' => 0,
+            ]
+        );
+
+        $this->assertSame('USING', $item->fresh()->STATUS);
+        $this->assertSame(1.0, (float) $item->fresh()->QUANTITY);
+        $transaction->refresh();
+        $this->assertSame(180000, (int) $transaction->SUBTOTAL_PRICE);
+        $this->assertSame(180000, (int) $transaction->TOTAL_PRICE);
+        $this->assertSame('CANCELLED', $transaction->TRANSACTION_STATUS);
+        $this->assertSame('Khách hàng yêu cầu hủy', $transaction->SAPO_CANCEL_REASON);
     }
 
     /**

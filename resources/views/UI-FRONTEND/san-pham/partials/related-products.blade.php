@@ -128,9 +128,25 @@
     return Array.isArray(list) && list.length > 1;
   }
 
+  function variantInStock(v) {
+    return !!v && Number(v.SO_LUONG_TON || 0) > 0 &&
+      (v.CON_HANG === true || v.CON_HANG === 1 || v.CON_HANG === '1');
+  }
+
+  function productInStock(p) {
+    var list = p && p.DANH_SACH_BIEN_THE;
+    if (!Array.isArray(list) || !list.length) return false;
+    return list.some(variantInStock);
+  }
+
   function productCartVariantId(p) {
     var list = p && p.DANH_SACH_BIEN_THE;
-    if (Array.isArray(list) && list.length && list[0] && list[0].ID) return list[0].ID;
+    if (Array.isArray(list) && list.length) {
+      for (var i = 0; i < list.length; i++) {
+        if (variantInStock(list[i]) && list[i].ID) return list[i].ID;
+      }
+      return list[0] && list[0].ID ? list[0].ID : 0;
+    }
     if (p && p.ATTR1) return p.ATTR1;
     return p && p.ID;
   }
@@ -143,6 +159,7 @@
       for (var i = 0; i < list.length; i++) {
         var v = list[i];
         if (!v) continue;
+        if (!variantInStock(v)) continue;
         var vp = Math.round(Number(v.GIA_BAN) || 0);
         if (vp <= 0) continue;
         if (minPrice <= 0 || vp < minPrice) {
@@ -313,6 +330,9 @@
     params.set('PAGE', '1');
     params.set('PER_PAGE', String(cfg.limit));
     params.set('BO_LOC', 'moi-den-cu');
+    params.set('TRANG_THAI_HOAT_DONG', 'true');
+    params.set('IS_API_PUBLIC', 'true');
+    params.set('CON_HANG', 'true');
     params.append('DANH_MUC_SAN_PHAM_ID[]', String(categoryId));
     if (currentProductId > 0) {
       params.append('NOT_IN_ID[]', String(currentProductId));
@@ -331,7 +351,12 @@
         if (!data || data.STATUS !== true || !data.DATAS || !data.DATAS.PRODUCT) {
           throw new Error('invalid');
         }
-        var rows = data.DATAS.PRODUCT.DATA || [];
+        var rows = (data.DATAS.PRODUCT.DATA || []).filter(function (p) {
+          var list = p && p.DANH_SACH_BIEN_THE;
+          // Thiếu dữ liệu biến thể thì giữ lại, đã có thì phải còn ít nhất một biến thể còn hàng
+          if (!Array.isArray(list) || !list.length) return true;
+          return list.some(variantInStock);
+        });
         if (!rows.length) {
           section.classList.add('hidden');
           return;

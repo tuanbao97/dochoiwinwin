@@ -15,7 +15,9 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\TransactionRepository;
 use App\Service\TransactionService;
+use App\Support\StorefrontInventory;
 use App\Support\StorefrontProfileWriter;
+use App\Support\StorefrontVoucher;
 use App\Utils\PaginationUtils;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -32,8 +34,11 @@ class TransactionServiceImpl implements TransactionService
 
     private TransactionRepository $transactionRepository;
 
-    public function __construct(TransactionRepository $transactionRepository)
-    {
+    public function __construct(
+        TransactionRepository $transactionRepository,
+        private readonly StorefrontInventory $inventory,
+        private readonly StorefrontVoucher $voucher
+    ) {
         $this->transactionRepository = $transactionRepository;
     }
 
@@ -117,19 +122,10 @@ class TransactionServiceImpl implements TransactionService
 
     public function placeOrder(Request $request)
     {
-        $items = array_map(
-            fn (array $item) => $this->resolveCatalogItem($item),
-            $this->resolveOrderItems($request)
-        );
-        $totalQuantity = 0;
-        $totalPrice = 0;
-
-        foreach ($items as $item) {
-            $quantity = (float) ($item['QUANTITY'] ?? 0);
-            $price = (float) ($item['PRICE'] ?? 0);
-            $totalQuantity += $quantity;
-            $totalPrice += $quantity * $price;
-        }
+        $requestedItems = $this->aggregateOrderItems($this->resolveOrderItems($request));
+        $shippingFee = max(0, (int) config('storefront.shipping_fee', 30000));
+        $discountCode = StorefrontVoucher::normalizeCode($request->input('DISCOUNT_CODE'));
+        $discountCodes = StorefrontVoucher::normalizeCodes($request->input('DISCOUNT_CODES', $discountCode));
 
         $user = Auth::user();
         $buyerName = $request->input('HO_TEN');
@@ -141,9 +137,9 @@ class TransactionServiceImpl implements TransactionService
         try {
             $transaction = DB::transaction(function () use (
                 $request,
-                $items,
-                $totalQuantity,
-                $totalPrice,
+                $requestedItems,
+                $shippingFee,
+                $discountCodes,
                 $user,
                 $buyerName,
                 $buyerPhone,
@@ -151,6 +147,60 @@ class TransactionServiceImpl implements TransactionService
                 $buyerAddress,
                 $buyerNote
             ): Transaction {
+                $items = [];
+                $totalQuantity = 0;
+                $subtotal = 0;
+
+                // Khóa theo ID tăng dần để các checkout đồng thời không thể
+                // cùng mua vượt số lượng cuối cùng và giảm nguy cơ deadlock.
+                ksort($requestedItems);
+                foreach ($requestedItems as $requestedItem) {
+                    $item = $this->resolveCatalogItem($requestedItem, true);
+                    $quantity = (int) ($item['QUANTITY'] ?? 0);
+                    $stock = (int) ($item['STOCK'] ?? 0);
+                    if ($stock < $quantity) {
+                        throw ValidationException::withMessages([
+                            'ITEMS' => ($item['TEN_SAN_PHAM'] ?? 'Sản phẩm')
+                                .' chỉ còn '.$stock.' sản phẩm trong kho.',
+                        ]);
+                    }
+
+                    /** @var ProductVariant $variant */
+                    $variant = $item['_VARIANT'];
+                    $remaining = $stock - $quantity;
+                    $variant->INVENTORY_QUANTITY = $remaining;
+                    $variant->IS_IN_STOCK = $remaining > 0;
+                    $variant->PRODUCT_STATUS = $remaining > 0 ? 'CON_HANG' : 'HET_HANG';
+                    $variant->UPD_NAME = 'WEBSITE ORDER';
+                    $variant->save();
+                    Product::query()->whereKey($item['PRODUCT_ID'])->update([
+                        'PRODUCT_QUANTITY' => DB::raw(
+                            'GREATEST(COALESCE(PRODUCT_QUANTITY, 0) - '.(int) $quantity.', 0)'
+                        ),
+                        'UPD_DT' => now(),
+                        'UPD_NAME' => 'WEBSITE ORDER',
+                    ]);
+
+                    unset($item['_VARIANT']);
+                    $items[] = $item;
+                    $totalQuantity += $quantity;
+                    $subtotal += $quantity * (int) $item['PRICE'];
+                }
+
+                $discount = null;
+                if ($discountCodes !== []) {
+                    $discount = $this->voucher->redeemMany(
+                        $discountCodes,
+                        $subtotal,
+                        $shippingFee,
+                        $user?->ID ? (int) $user->ID : null,
+                        $buyerEmail,
+                        $buyerPhone
+                    );
+                }
+                $discountAmount = (int) ($discount['discount_amount'] ?? 0);
+                $totalPrice = max(0, $subtotal + $shippingFee - $discountAmount);
+
                 $transaction = new Transaction();
                 $transaction->USER_BUY_ID = $user?->ID;
                 $transaction->USER_BUY_EMAIL = $buyerEmail;
@@ -159,7 +209,15 @@ class TransactionServiceImpl implements TransactionService
                 $transaction->USER_BUY_ADDRESS = $buyerAddress;
                 $transaction->USER_BUY_MESSAGE = $buyerNote;
                 $transaction->TOTAL_QUANTITY = $totalQuantity;
+                $transaction->SUBTOTAL_PRICE = $subtotal;
                 $transaction->TOTAL_PRICE = $totalPrice;
+                $transaction->SHIPPING_FEE = $shippingFee;
+                $transaction->DISCOUNT_VOUCHER_ID = $discount['voucher_id'] ?? null;
+                $transaction->DISCOUNT_CODE = $discount['code'] ?? null;
+                $transaction->DISCOUNT_AMOUNT = $discountAmount;
+                $transaction->DISCOUNT_SNAPSHOT = $discount;
+                $transaction->SHIPPING_VOUCHER_ID = $discount['extra_voucher_id'] ?? null;
+                $transaction->SHIPPING_CODE = $discount['extra_code'] ?? null;
                 $transaction->TRANSACTION_STATUS = TransactionStatusEnum::PENDING->value;
                 $transaction->PAYMENT_METHOD = $request->input('PHUONG_THUC_THANH_TOAN');
                 $transaction->SAPO_SYNC_STATUS = 'PENDING';
@@ -226,6 +284,11 @@ class TransactionServiceImpl implements TransactionService
                         'SAPO_ORDER_NAME' => $transaction->SAPO_ORDER_NAME,
                         'SAPO_SYNC_STATUS' => $transaction->SAPO_SYNC_STATUS,
                         'SAPO_SYNCED' => (bool) ($sapoSync['synced'] ?? false),
+                        'SUBTOTAL' => (int) $transaction->SUBTOTAL_PRICE,
+                        'SHIPPING_FEE' => (int) $transaction->SHIPPING_FEE,
+                        'DISCOUNT_CODE' => $transaction->DISCOUNT_CODE,
+                        'DISCOUNT_AMOUNT' => (int) $transaction->DISCOUNT_AMOUNT,
+                        'TOTAL' => (int) $transaction->TOTAL_PRICE,
                     ],
                 ]
             )
@@ -264,76 +327,68 @@ class TransactionServiceImpl implements TransactionService
     }
 
     /**
+     * Gộp các dòng cùng biến thể để không thể vượt tồn kho bằng cách gửi
+     * nhiều item trùng ID trong payload checkout.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function aggregateOrderItems(array $items): array
+    {
+        $aggregated = [];
+
+        foreach ($items as $item) {
+            $resolved = $this->inventory->resolve((int) ($item['PRODUCT_ID'] ?? 0));
+            if (! $resolved) {
+                throw ValidationException::withMessages([
+                    'ITEMS' => 'Sản phẩm trong giỏ không còn khả dụng.',
+                ]);
+            }
+
+            $variantId = $resolved['variant_id'];
+            $quantity = max(1, (int) ($item['QUANTITY'] ?? 0));
+            if (! isset($aggregated[$variantId])) {
+                $aggregated[$variantId] = $item;
+                $aggregated[$variantId]['PRODUCT_ID'] = $variantId;
+                $aggregated[$variantId]['QUANTITY'] = 0;
+            }
+            $aggregated[$variantId]['QUANTITY'] += $quantity;
+
+            if ($aggregated[$variantId]['QUANTITY'] > $resolved['stock']) {
+                throw ValidationException::withMessages([
+                    'ITEMS' => $resolved['title'].' chỉ còn '.$resolved['stock'].' sản phẩm trong kho.',
+                ]);
+            }
+        }
+
+        return $aggregated;
+    }
+
+    /**
      * Product cards can submit a local variant ID, a local product ID, or
      * Sapo's default variant ID. Normalize all three before persisting.
      *
      * @param  array<string, mixed>  $item
      * @return array<string, mixed>
      */
-    private function resolveCatalogItem(array $item): array
+    private function resolveCatalogItem(array $item, bool $lockForUpdate = false): array
     {
         $cartId = (int) ($item['PRODUCT_ID'] ?? 0);
-        if ($cartId <= 0) {
+        $resolved = $this->inventory->resolve($cartId, $lockForUpdate);
+        if (! $resolved) {
             throw ValidationException::withMessages([
-                'ITEMS' => 'Sản phẩm trong giỏ hàng không hợp lệ.',
+                'ITEMS' => 'Sản phẩm #'.$cartId.' không còn khả dụng.',
             ]);
         }
 
-        $variant = ProductVariant::query()
-            ->where('ID', $cartId)
-            ->where('STATUS', AppConstant::STATUS_USING)
-            ->where('IS_ACTIVE', true)
-            ->first();
-
-        if (! $variant) {
-            $variant = ProductVariant::query()
-                ->where('SAPO_VARIANT_ID', $cartId)
-                ->where('STATUS', AppConstant::STATUS_USING)
-                ->where('IS_ACTIVE', true)
-                ->first();
-        }
-
-        $product = $variant
-            ? Product::query()->find((int) $variant->PRODUCT_ID)
-            : Product::query()
-                ->where(function ($query) use ($cartId) {
-                    $query->where('ID', $cartId)
-                        ->orWhere('ATTR1', (string) $cartId);
-                })
-                ->where('STATUS', AppConstant::STATUS_USING)
-                ->where('IS_ACTIVE', true)
-                ->first();
-
-        if (! $product) {
-            throw ValidationException::withMessages([
-                'ITEMS' => 'Không tìm thấy sản phẩm #'.$cartId.' trong danh mục hiện tại.',
-            ]);
-        }
-
-        if (! $variant) {
-            $defaultSapoVariantId = (int) $product->ATTR1;
-            $variant = ProductVariant::query()
-                ->where('PRODUCT_ID', $product->ID)
-                ->where('STATUS', AppConstant::STATUS_USING)
-                ->where('IS_ACTIVE', true)
-                ->when(
-                    $defaultSapoVariantId > 0,
-                    fn ($query) => $query->orderByRaw('SAPO_VARIANT_ID = ? DESC', [$defaultSapoVariantId])
-                )
-                ->orderBy('ID')
-                ->first();
-        }
-
-        $item['PRODUCT_ID'] = (int) $product->ID;
-        $item['PRODUCT_VARIANT_ID'] = $variant ? (int) $variant->ID : null;
-        $item['SAPO_VARIANT_ID'] = $variant
-            ? ((int) $variant->SAPO_VARIANT_ID ?: null)
-            : ((int) $product->ATTR1 ?: null);
-
-        $trustedPrice = $variant ? (float) $variant->PRODUCT_PRICE : (float) $product->PRICE;
-        if ($trustedPrice > 0) {
-            $item['PRICE'] = $trustedPrice;
-        }
+        $item['PRODUCT_ID'] = $resolved['product_id'];
+        $item['PRODUCT_VARIANT_ID'] = $resolved['variant_id'];
+        $item['SAPO_VARIANT_ID'] = $resolved['sapo_variant_id'];
+        $item['PRICE'] = $resolved['price'];
+        $item['TEN_SAN_PHAM'] = $resolved['title'];
+        $item['HANDLE'] = $resolved['handle'];
+        $item['STOCK'] = $resolved['stock'];
+        $item['_VARIANT'] = $resolved['variant'];
 
         return $item;
     }

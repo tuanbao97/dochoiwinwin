@@ -165,7 +165,7 @@ class SapoProductImporterImpl implements SapoProductImporter
             if (! is_array($variant)) {
                 continue;
             }
-            $qty += (int) ($variant['inventory_quantity'] ?? 0);
+            $qty += max(0, (int) ($variant['inventory_quantity'] ?? 0));
             $variantPrice = isset($variant['price']) ? (float) $variant['price'] : 0.0;
             if ($variantPrice <= 0) {
                 continue;
@@ -197,7 +197,7 @@ class SapoProductImporterImpl implements SapoProductImporter
         $product->PRODUCT_TAGS = $this->clip((string) ($payload['tags'] ?? ''), 1000) ?: null;
         $product->PRICE = $price > 0 ? $price : null;
         $product->PRICE_SALE = ($compare !== null && $compare > $price) ? $compare : null;
-        $product->PRODUCT_QUANTITY = $qty > 0 ? $qty : null;
+        $product->PRODUCT_QUANTITY = $qty;
         $product->STATUS = AppConstant::STATUS_USING;
         $product->IS_ACTIVE = $status === 'active';
         $product->PRODUCT_HOT = (bool) ($product->PRODUCT_HOT ?? false);
@@ -383,10 +383,8 @@ class SapoProductImporterImpl implements SapoProductImporter
             if ($color === '') {
                 $color = 'Mặc định';
             }
-            $qty = (int) ($variant['inventory_quantity'] ?? 0);
-            $policy = (string) ($variant['inventory_policy'] ?? 'deny');
-            $managed = (string) ($variant['inventory_management'] ?? '');
-            $inStock = $managed === '' || $managed === 'null' || $qty > 0 || $policy === 'continue';
+            $qty = max(0, (int) ($variant['inventory_quantity'] ?? 0));
+            $inStock = $qty > 0;
 
             $imageId = isset($variant['image_id']) ? (int) $variant['image_id'] : 0;
             if ($imageId <= 0) {

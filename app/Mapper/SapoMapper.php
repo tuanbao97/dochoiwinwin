@@ -156,10 +156,8 @@ class SapoMapper
                 ? (float) $variant['compare_at_price']
                 : null;
             $title = trim((string) ($variant['title'] ?? $variant['option1'] ?? 'Mặc định'));
-            $qty = (int) ($variant['inventory_quantity'] ?? 0);
-            $policy = (string) ($variant['inventory_policy'] ?? 'deny');
-            $managed = (string) ($variant['inventory_management'] ?? '');
-            $inStock = $managed === '' || $managed === 'null' || $qty > 0 || $policy === 'continue';
+            $qty = max(0, (int) ($variant['inventory_quantity'] ?? 0));
+            $inStock = $qty > 0;
 
             $dto = ProductVariantDetailDto::createEmpty();
             $dto->id = (int) ($variant['id'] ?? 0);
@@ -171,6 +169,7 @@ class SapoMapper
             $dto->productPrice = $price > 0 ? $price : null;
             $dto->productOriginalPrice = ($compare !== null && $compare > $price) ? $compare : null;
             $dto->isInStock = $inStock;
+            $dto->inventoryQuantity = $qty;
             $dto->isActive = true;
             $dto->crtDt = self::normalizeDate($variant['created_on'] ?? null);
             $dto->updDt = self::normalizeDate($variant['modified_on'] ?? null);

@@ -461,15 +461,18 @@ __wwBootCartComponents(() => {
       this.classList.add("loading");
       line.classList.add("loading");
       fetch(themeApiUrl(`/cart/change?line=${index}&quantity=${quanity}`))
-        .then((response) => {
+        .then(async (response) => {
           if (response.ok) {
             this.updateCart();
           } else {
-            throw new Error("Đã có lỗi xảy ra");
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.message || "Số lượng vượt quá tồn kho");
           }
         })
         .catch((err) => {
           console.log(err);
+          publish(window.themeConfigs.error, { error: err });
+          this.updateCart();
           this.classList.remove("loading");
           line.classList.remove("loading");
         });

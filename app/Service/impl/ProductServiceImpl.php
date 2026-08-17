@@ -4,12 +4,14 @@ namespace App\Service\impl;
 
 use App\Dto\product\ProductBdsDatDetailDto;
 use App\Dto\product\ProductDetailDto;
+use App\Dto\productVariant\ProductVariantDetailDto;
 use App\Dto\response\ApiResponseDto;
 use App\Enum\AppConstant;
 use App\Mapper\ProductMapper;
 use App\Mapper\SapoMapper;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductVariant;
 use App\Repository\ProductCategoryRepository;
 use App\Repository\ProductDocumentStorageRepository;
 use App\Repository\ProductRepository;
@@ -335,6 +337,9 @@ class ProductServiceImpl implements ProductService
         
         // Mapping entity to dto
         $listProductDto = ProductMapper::mapListProductDetailFromPaginator($resultPagination->getCollection());
+        if ($isApiPublic) {
+            $this->attachInventoryVariants($listProductDto);
+        }
         $resultPagination->setCollection($listProductDto);
 
         // Custom response pagination
@@ -392,6 +397,13 @@ class ProductServiceImpl implements ProductService
                 $exclude = array_map('intval', $arrNotInId);
                 $mapped = array_values(array_filter($mapped, static function (ProductDetailDto $p) use ($exclude): bool {
                     return ! in_array((int) $p->id, $exclude, true);
+                }));
+            }
+
+            $chiConHang = filter_var($request->input('CON_HANG', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($chiConHang === true) {
+                $mapped = array_values(array_filter($mapped, static function (ProductDetailDto $p): bool {
+                    return self::hasVariantInStock($p);
                 }));
             }
 
@@ -541,6 +553,76 @@ class ProductServiceImpl implements ProductService
                 ]
             )
         )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    private function attachInventoryVariants($products): void
+    {
+        $productIds = $products->pluck('id')->map('intval')->filter()->values();
+        if ($productIds->isEmpty()) {
+            return;
+        }
+
+        $variants = ProductVariant::query()
+            ->whereIn('PRODUCT_ID', $productIds)
+            ->where('STATUS', AppConstant::STATUS_USING)
+            ->where('IS_ACTIVE', true)
+            ->orderBy('ID')
+            ->get()
+            ->groupBy('PRODUCT_ID');
+
+        foreach ($products as $productDto) {
+            $productDto->danhSachBienThe = ($variants[(int) $productDto->id] ?? collect())
+                ->map(static function (ProductVariant $variant): ProductVariantDetailDto {
+                    $stock = max(0, (int) $variant->INVENTORY_QUANTITY);
+                    $dto = ProductVariantDetailDto::createEmpty();
+                    $dto->id = (int) $variant->ID;
+                    $dto->productId = (int) $variant->PRODUCT_ID;
+                    $dto->title = (string) ($variant->ATTR4 ?: 'Mặc định');
+                    $dto->sapoVariantId = (int) $variant->SAPO_VARIANT_ID ?: null;
+                    $dto->sku = $variant->SKU;
+                    $dto->inventoryQuantity = $stock;
+                    $dto->optionValues = $variant->OPTION_VALUES;
+                    $dto->productStatus = $stock > 0 ? 'CON_HANG' : 'HET_HANG';
+                    $dto->productColor = $variant->PRODUCT_COLOR;
+                    $dto->isContactPrice = (bool) $variant->IS_CONTACT_PRICE;
+                    $dto->productPrice = $variant->PRODUCT_PRICE;
+                    $dto->productOriginalPrice = $variant->PRODUCT_ORIGINAL_PRICE;
+                    $dto->isInStock = $stock > 0;
+                    $dto->isActive = true;
+                    $dto->danhSachHinhAnhDaiDien = [];
+
+                    return $dto;
+                })
+                ->values()
+                ->all();
+        }
+    }
+
+    /** Sản phẩm còn bán được khi có ít nhất một biến thể còn tồn kho. */
+    private static function hasVariantInStock(ProductDetailDto $product): bool
+    {
+        $variants = $product->danhSachBienThe;
+        if (! is_array($variants) || $variants === []) {
+            return false;
+        }
+
+        foreach ($variants as $variant) {
+            $stock = 0;
+            $inStock = false;
+            if ($variant instanceof ProductVariantDetailDto) {
+                $stock = (int) $variant->inventoryQuantity;
+                $inStock = (bool) $variant->isInStock;
+            } elseif (is_array($variant)) {
+                $stock = (int) ($variant['SO_LUONG_TON'] ?? 0);
+                $inStock = (bool) ($variant['CON_HANG'] ?? false);
+            }
+
+            if ($stock > 0 && $inStock) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function useSapoStorefront(): bool

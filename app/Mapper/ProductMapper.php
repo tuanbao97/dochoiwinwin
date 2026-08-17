@@ -316,7 +316,7 @@ class ProductMapper
                 $bienTheSanPham->title = $variant->ATTR4 ?: $variant->PRODUCT_COLOR;
                 $bienTheSanPham->sapoVariantId = $variant->SAPO_VARIANT_ID;
                 $bienTheSanPham->sku = $variant->SKU ?: $variant->ATTR1;
-                $bienTheSanPham->inventoryQuantity = $variant->INVENTORY_QUANTITY;
+                $bienTheSanPham->inventoryQuantity = max(0, (int) $variant->INVENTORY_QUANTITY);
                 $bienTheSanPham->optionValues = is_array($variant->OPTION_VALUES)
                     ? $variant->OPTION_VALUES
                     : array_values(array_filter([
@@ -341,7 +341,8 @@ class ProductMapper
                 $bienTheSanPham->isContactPrice = $variant->IS_CONTACT_PRICE;
                 $bienTheSanPham->productPrice = $variant->PRODUCT_PRICE;
                 $bienTheSanPham->productOriginalPrice = $variant->PRODUCT_ORIGINAL_PRICE;
-                $bienTheSanPham->isInStock = $variant->IS_IN_STOCK;
+                $bienTheSanPham->isInStock = $bienTheSanPham->inventoryQuantity > 0;
+                $bienTheSanPham->productStatus = $bienTheSanPham->isInStock ? 'CON_HANG' : 'HET_HANG';
                 $bienTheSanPham->isActive = $variant->IS_ACTIVE;
                 $bienTheSanPham->danhSachHinhAnhDaiDien = [];
 

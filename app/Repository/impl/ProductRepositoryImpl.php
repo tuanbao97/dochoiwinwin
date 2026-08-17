@@ -298,6 +298,30 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
             ]);
         }
 
+        $chiConHang = filter_var($request->input('CON_HANG', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($chiConHang === true) {
+            // Sản phẩm còn bán được: có ít nhất một biến thể còn tồn,
+            // hoặc chưa có biến thể nào thì dựa vào tồn kho ở cấp sản phẩm.
+            $query->where(function ($q) {
+                $q->whereExists(function ($subquery) {
+                    $subquery->selectRaw('1')
+                        ->from('product_variant AS pv_stock')
+                        ->whereColumn('pv_stock.PRODUCT_ID', 'p.ID')
+                        ->where('pv_stock.STATUS', '=', AppConstant::STATUS_USING)
+                        ->where('pv_stock.IS_ACTIVE', true)
+                        ->where('pv_stock.INVENTORY_QUANTITY', '>', 0);
+                })->orWhere(function ($q2) {
+                    $q2->whereNotExists(function ($subquery) {
+                        $subquery->selectRaw('1')
+                            ->from('product_variant AS pv_any')
+                            ->whereColumn('pv_any.PRODUCT_ID', 'p.ID')
+                            ->where('pv_any.STATUS', '=', AppConstant::STATUS_USING)
+                            ->where('pv_any.IS_ACTIVE', true);
+                    })->where('p.PRODUCT_QUANTITY', '>', 0);
+                });
+            });
+        }
+
         if (!is_null($trangThai)) {
             $query->where([
                 ['p.STATUS', '=', $trangThai]

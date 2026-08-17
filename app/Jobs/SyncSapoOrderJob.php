@@ -167,10 +167,16 @@ class SyncSapoOrderJob
             'financial_status' => 'pending',
             'send_receipt' => false,
             'send_fulfillment_receipt' => false,
-            'inventory_behaviour' => 'decrement_ignoring_policy',
+            // Sapo phải từ chối nếu tồn kho đã thay đổi trước khi nhận đơn.
+            'inventory_behaviour' => 'decrement_obeying_policy',
             'note' => $note,
             'tags' => 'Đồ Chơi Win Win, Website',
             'line_items' => $lineItems,
+            'shipping_lines' => [[
+                'title' => 'Phí vận chuyển',
+                'price' => (int) $transaction->SHIPPING_FEE,
+                'code' => 'WEBSITE_FIXED',
+            ]],
             'customer' => $customer,
             'shipping_address' => $address,
             'billing_address' => $address,
@@ -186,6 +192,35 @@ class SyncSapoOrderJob
         }
         if ($phone !== '') {
             $order['phone'] = $phone;
+        }
+        if ((int) $transaction->DISCOUNT_AMOUNT > 0) {
+            $snapshot = is_array($transaction->DISCOUNT_SNAPSHOT) ? $transaction->DISCOUNT_SNAPSHOT : [];
+            $parts = is_array($snapshot['vouchers'] ?? null) ? $snapshot['vouchers'] : [];
+            $discountCodes = [];
+            foreach ($parts as $part) {
+                if (! is_array($part) || (int) ($part['discount_amount'] ?? 0) <= 0) {
+                    continue;
+                }
+                $discountCodes[] = [
+                    'code' => (string) ($part['code'] ?? $transaction->DISCOUNT_CODE),
+                    'amount' => (int) $part['discount_amount'],
+                    'type' => 'fixed_amount',
+                ];
+            }
+            if ($discountCodes === [] && trim((string) $transaction->DISCOUNT_CODE) !== '') {
+                $discountCodes[] = [
+                    'code' => (string) $transaction->DISCOUNT_CODE,
+                    'amount' => (int) $transaction->DISCOUNT_AMOUNT,
+                    'type' => 'fixed_amount',
+                ];
+            }
+            if ($discountCodes !== []) {
+                $order['discount_codes'] = $discountCodes;
+                $order['note_attributes'][] = [
+                    'name' => 'website_discount_amount',
+                    'value' => (string) (int) $transaction->DISCOUNT_AMOUNT,
+                ];
+            }
         }
 
         return ['order' => $order];
