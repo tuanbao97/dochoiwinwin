@@ -18,13 +18,14 @@ class CategoryPSeeder extends Seeder
     {
         $arrCategoryP = [
             $this->row(2001, 'Đồ chơi điều khiển', 1, 0, null, sapoCollectionId: '4342369'),
-            $this->row(2002, 'Đồ chơi lắp ghép', 2, 0, null, sapoCollectionId: '4342366'),
-            $this->row(2003, 'Đồ chơi mô hình', 3, 0, null, sapoCollectionId: '4342367'),
-            $this->row(2007, 'Đồ chơi vui nhộn', 4, 0, null, sapoCollectionId: '4346809'),
-            $this->row(2005, 'Đồ chơi giáo dục', 5, 0, null, sapoCollectionId: '4342368'),
-            $this->row(2006, 'Đồ chơi bé gái', 6, 0, null, sapoCollectionId: '4346781'),
-            $this->row(2011, 'Đồ chơi vận động', 7, 0, null, sapoCollectionId: '4346844'),
-            $this->row(2004, 'Đồ chơi nước', 8, 0, null, sapoCollectionId: '4342370'),
+            $this->row(2016, 'Đồ chơi bỏ pin tự động', 2, 0, null, sapoCollectionId: '4347486'),
+            $this->row(2002, 'Đồ chơi lắp ghép', 3, 0, null, sapoCollectionId: '4342366'),
+            $this->row(2003, 'Đồ chơi mô hình', 4, 0, null, sapoCollectionId: '4342367'),
+            $this->row(2007, 'Đồ chơi vui nhộn', 5, 0, null, sapoCollectionId: '4346809'),
+            $this->row(2005, 'Đồ chơi giáo dục', 6, 0, null, sapoCollectionId: '4342368'),
+            $this->row(2006, 'Đồ chơi bé gái', 7, 0, null, sapoCollectionId: '4346781'),
+            $this->row(2011, 'Đồ chơi vận động', 8, 0, null, sapoCollectionId: '4346844'),
+            $this->row(2004, 'Đồ chơi nước', 9, 0, null, sapoCollectionId: '4342370'),
 
             $this->row(2009, 'Xe điều khiển', 1, 1, 2001, sapoCollectionId: '4346833'),
             $this->row(2008, 'Máy bay điều khiển', 2, 1, 2001, sapoCollectionId: '4346832'),
