@@ -166,6 +166,37 @@ class StorefrontAccountController extends Controller
             ->whereRaw('LOWER(USER_BUY_EMAIL) = ?', [$email]);
     }
 
+    /**
+     * Tách từng mã giảm giá của đơn để UI hiển thị chi tiết như Shopee.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function serializeOrderVouchers(Transaction $order): array
+    {
+        $snapshot = is_array($order->DISCOUNT_SNAPSHOT) ? $order->DISCOUNT_SNAPSHOT : [];
+        $parts = is_array($snapshot['vouchers'] ?? null) ? $snapshot['vouchers'] : [];
+
+        $vouchers = [];
+        foreach ($parts as $part) {
+            if (! is_array($part) || (int) ($part['discount_amount'] ?? 0) <= 0) {
+                continue;
+            }
+            $vouchers[] = [
+                'CODE' => (string) ($part['code'] ?? ''),
+                'AMOUNT' => (float) $part['discount_amount'],
+            ];
+        }
+
+        if ($vouchers === [] && (float) $order->DISCOUNT_AMOUNT > 0) {
+            $vouchers[] = [
+                'CODE' => (string) $order->DISCOUNT_CODE,
+                'AMOUNT' => (float) $order->DISCOUNT_AMOUNT,
+            ];
+        }
+
+        return $vouchers;
+    }
+
     private function serializeOrder(Transaction $order): array
     {
         $status = TransactionStatusEnum::tryFrom((string) $order->TRANSACTION_STATUS);
@@ -180,6 +211,7 @@ class StorefrontAccountController extends Controller
             'SHIPPING_FEE' => (float) $order->SHIPPING_FEE,
             'DISCOUNT_CODE' => $order->DISCOUNT_CODE,
             'DISCOUNT_AMOUNT' => (float) $order->DISCOUNT_AMOUNT,
+            'VOUCHERS' => $this->serializeOrderVouchers($order),
             'TOTAL_PRICE' => (float) $order->TOTAL_PRICE,
             'PAYMENT_METHOD' => $order->PAYMENT_METHOD,
             'CREATED_AT' => $order->CRT_DT?->toIso8601String(),

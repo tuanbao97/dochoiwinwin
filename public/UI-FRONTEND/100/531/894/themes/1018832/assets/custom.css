@@ -3756,28 +3756,67 @@ body.checkout .checkout-order-item {
 	font-weight: 500;
 	color: rgba(15, 23, 42, 0.45);
 }
-.ww-orders__total {
+.ww-orders__pay {
+	padding: 1.4rem 1.5rem 1.6rem;
+	border-top: 1px solid rgba(15, 23, 42, 0.08);
+	background: #fffdfb;
+}
+.ww-orders__pay-title {
+	margin: 0 0 1rem;
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: #0f172a;
+}
+.ww-orders__pay-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	flex-wrap: wrap;
-	gap: 1rem;
-	padding: 1.4rem 1.5rem;
-	border-top: 1px solid rgba(15, 23, 42, 0.08);
+	gap: 1.6rem;
+	padding: 0.6rem 0;
 	font-size: 1.5rem;
+	color: #475569;
 }
-.ww-orders__total-breakdown {
-	color: #64748b;
+.ww-orders__pay-row > span:last-child {
+	flex: 0 0 auto;
+	font-weight: 600;
+	color: #0f172a;
+	white-space: nowrap;
 }
-.ww-orders__grand-total {
-	display: inline-flex;
-	align-items: baseline;
-	gap: 0.8rem;
-	margin-left: auto;
+.ww-orders__pay-row .icon {
+	margin-right: 0.4rem;
+	color: #ee4d2d;
 }
-.ww-orders__total strong {
+.ww-orders__pay-row--saving > span:last-child {
+	color: #15803d;
+}
+.ww-orders__pay-row--saving strong {
+	letter-spacing: 0.04em;
+	color: #0f172a;
+}
+.ww-orders__pay-row--total {
+	margin-top: 0.6rem;
+	padding-top: 1.2rem;
+	border-top: 1px dashed rgba(15, 23, 42, 0.14);
+	font-size: 1.6rem;
+	font-weight: 600;
+	color: #0f172a;
+}
+.ww-orders__pay-row--total > span:last-child {
 	font-size: 2.1rem;
+	font-weight: 700;
 	color: #ea580c;
+}
+.ww-orders__pay-row--method {
+	margin-top: 0.4rem;
+	padding-top: 1rem;
+	border-top: 1px solid rgba(15, 23, 42, 0.06);
+	font-size: 1.4rem;
+}
+.ww-orders__pay-row--method > span:last-child {
+	font-weight: 600;
+	color: #475569;
+	white-space: normal;
+	text-align: right;
 }
 .ww-orders__pagination {
 	display: flex;
@@ -4920,11 +4959,10 @@ card-product.is-soldout .addtocart-btn {
 	padding: 0;
 }
 #ww-voucher-picker .ww-vcard__desc {
-	max-height: 36px;
-	overflow: hidden;
 	color: #333;
 	font-size: 13px;
 	line-height: 18px;
+	overflow-wrap: anywhere;
 }
 #ww-voucher-picker .ww-vcard__meta {
 	color: #888;
