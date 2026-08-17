@@ -141,13 +141,45 @@
         + '</div>';
     }
 
+    function paymentRow(label, value, modifier) {
+      return '<div class="ww-orders__pay-row' + (modifier ? ' ' + modifier : '') + '">'
+        + '<span>' + label + '</span>'
+        + '<span>' + value + '</span>'
+        + '</div>';
+    }
+
+    function renderPayment(order) {
+      var vouchers = Array.isArray(order.VOUCHERS) ? order.VOUCHERS : [];
+      if (!vouchers.length && Number(order.DISCOUNT_AMOUNT || 0) > 0) {
+        vouchers = [{ CODE: order.DISCOUNT_CODE, AMOUNT: order.DISCOUNT_AMOUNT }];
+      }
+
+      var rows = paymentRow('Tổng tiền hàng', money(order.SUBTOTAL))
+        + paymentRow('Phí vận chuyển', money(order.SHIPPING_FEE))
+        + vouchers.map(function (voucher) {
+          var code = escapeHtml(String(voucher.CODE || '').toUpperCase() || 'Mã giảm giá');
+          return paymentRow(
+            '<i class="icon icon-ticket-discount" aria-hidden="true"></i> Voucher <strong>' + code + '</strong>',
+            '-' + money(voucher.AMOUNT),
+            'ww-orders__pay-row--saving'
+          );
+        }).join('')
+        + paymentRow('Thành tiền', money(order.TOTAL_PRICE), 'ww-orders__pay-row--total')
+        + paymentRow(
+          'Phương thức thanh toán',
+          escapeHtml(order.PAYMENT_METHOD || 'Thanh toán khi nhận hàng (COD)'),
+          'ww-orders__pay-row--method'
+        );
+
+      return '<div class="ww-orders__pay">'
+        + '<h3 class="ww-orders__pay-title">Chi tiết thanh toán</h3>'
+        + rows
+        + '</div>';
+    }
+
     function renderOrder(order) {
       var buyer = order.BUYER || {};
       var items = Array.isArray(order.ITEMS) ? order.ITEMS : [];
-      var discountText = Number(order.DISCOUNT_AMOUNT || 0) > 0
-        ? ' · Giảm giá' + (order.DISCOUNT_CODE ? ' (' + escapeHtml(order.DISCOUNT_CODE) + ')' : '')
-          + ': -' + money(order.DISCOUNT_AMOUNT)
-        : '';
       var cancelReason = order.STATUS === 'CANCELLED'
         ? '<div class="ww-orders__cancel-reason">'
           + '<span class="ww-orders__cancel-icon" aria-hidden="true">!</span>'
@@ -171,8 +203,7 @@
         + renderTracking('👤', 'Nhân viên phụ trách', order.ASSIGNEE_NAME, 'Chưa phân công')
         + renderTracking('🚚', 'Ngày hẹn giao', dateTime(order.EXPECTED_DELIVERY_DATE), 'Chưa có lịch hẹn')
         + '</div>'
-        + '<div class="ww-orders__total"><span class="ww-orders__total-breakdown">Tạm tính: ' + money(order.SUBTOTAL) + ' · Phí vận chuyển: ' + money(order.SHIPPING_FEE) + discountText + '</span>'
-        + '<span class="ww-orders__grand-total">Tổng cộng <strong>' + money(order.TOTAL_PRICE) + '</strong></span></div>'
+        + renderPayment(order)
         + '</article>';
     }
 
