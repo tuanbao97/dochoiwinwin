@@ -5183,11 +5183,23 @@ html.ww-voucher-picker-open body {
 
 @media (min-width: 1024px) {
 	.ww-co__grid {
-		grid-template-columns: minmax(0, 1fr) 40rem;
+		grid-template-columns: minmax(0, 5fr) minmax(0, 5fr);
 	}
 	.ww-co__side {
 		position: sticky;
 		top: calc(var(--header-height, 8rem) + 1.6rem);
+	}
+}
+/* Chừa chỗ cho thanh liên hệ nổi (fixed, right 12px) khỏi đè lên số tiền,
+   chỉ ở các khoảng màn hình mà container không còn lề trống bên phải. */
+@media (min-width: 1024px) and (max-width: 1405px) {
+	.ww-co .container {
+		padding-right: calc(var(--container-padding) + 6rem);
+	}
+}
+@media (min-width: 1600px) and (max-width: 1735px) {
+	.ww-co .container {
+		padding-right: calc(var(--container-padding) + 6rem);
 	}
 }
 @media (max-width: 1023px) {
