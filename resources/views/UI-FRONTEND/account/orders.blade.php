@@ -59,15 +59,15 @@
     var emptyEl = document.querySelector('[data-orders-empty]');
     var errorEl = document.querySelector('[data-orders-error]');
     var paginationEl = document.querySelector('[data-orders-pagination]');
-    var accessToken = null;
 
-    try {
-      accessToken = localStorage.getItem('ACCESS_TOKEN');
-    } catch (e) {}
-
-    if (!accessToken) {
-      window.location.replace(loginUrl);
-      return;
+    // Máy chủ đã chặn khách chưa đăng nhập nên trang này luôn có chủ sở hữu.
+    function authToken() {
+      if (window.wwAuth && window.wwAuth.ensureToken) return window.wwAuth.ensureToken();
+      try {
+        return Promise.resolve(localStorage.getItem('ACCESS_TOKEN'));
+      } catch (e) {
+        return Promise.resolve(null);
+      }
     }
 
     function escapeHtml(value) {
@@ -296,6 +296,30 @@
       renderPagination(Number(data.CURRENT_PAGE || 1), Number(data.LAST_PAGE || 1));
     }
 
+    var retriedToken = false;
+
+    // Token hết hạn: xin token mới từ phiên, không được nữa mới bắt đăng nhập lại.
+    function handleExpiredToken(page, silent) {
+      try {
+        localStorage.removeItem('ACCESS_TOKEN');
+      } catch (e) {}
+
+      if (retriedToken || !window.wwAuth || !window.wwAuth.refreshToken) {
+        window.location.replace(loginUrl);
+        return;
+      }
+
+      retriedToken = true;
+      window.wwAuth.refreshToken().then(function (token) {
+        if (!token) {
+          if (window.wwAuth.logout) return window.wwAuth.logout();
+          window.location.replace(loginUrl);
+          return;
+        }
+        load(page, silent);
+      });
+    }
+
     function load(page, silent) {
       currentPage = page;
 
@@ -307,20 +331,18 @@
         paginationEl.innerHTML = '';
       }
 
-      fetch(apiUrl + '?page=' + page + '&per_page=10', {
-        headers: {
-          'Authorization': 'Bearer ' + accessToken,
-          'Accept': 'application/json'
-        }
-      })
+      authToken()
+        .then(function (token) {
+          return fetch(apiUrl + '?page=' + page + '&per_page=10', {
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Accept': 'application/json'
+            }
+          });
+        })
         .then(function (response) {
           if (response.status === 401) {
-            try {
-              localStorage.removeItem('ACCESS_TOKEN');
-              localStorage.removeItem('REFRESH_TOKEN');
-              localStorage.removeItem('AUTH_SCOPE');
-            } catch (e) {}
-            window.location.replace(loginUrl);
+            handleExpiredToken(page, silent);
             throw new Error('unauthenticated');
           }
           if (!response.ok) throw new Error('Không thể tải lịch sử mua hàng.');

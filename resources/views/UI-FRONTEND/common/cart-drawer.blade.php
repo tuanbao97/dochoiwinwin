@@ -26,7 +26,7 @@
         </related-products>
       </div>
       <div class="portal-inner w-full  bg-background animation  h-full">
-        <cart-form class="h-full">
+        <cart-form class="h-full {{ storefrontCartQuantity() <= 0 ? 'is-empty' : '' }}">
           <form class="cart-form h-full" action="/cart" method="post">
             <div class="cart grid grid-rows-[auto_1fr_auto]">
               <div class="portal-header pt-4 px-4 flex justify-between items-center border-b pb-3 border-neutral-50 px-4">
@@ -37,7 +37,10 @@
               </div>
               <div class="cart-left p-4 overflow-y-auto flex flex-col">
                 <rewards-bar> </rewards-bar>
-                <div class="cart-table"></div>
+                @include('theme.partials.cart-contents', array_merge(storefrontCartSnapshot(), [
+                  'cartSection' => 'table',
+                  'appUrl' => rtrim(url('/'), '/'),
+                ]))
                 <div class="lg:hidden w-full mt-auto">
                   <related-products class="cart-releated-products ww-product-row-carousel hidden" data-skip-search="1" data-product-type="row" data-limit="10">
                     <div class=" mb-2">
@@ -65,9 +68,15 @@
                 </div>
               </div>
               <div class="cart-right p-4 border-t border-neutral-50 bg-background">
-                <div class="cart-summary"></div>
+                @include('theme.partials.cart-contents', array_merge(storefrontCartSnapshot(), [
+                  'cartSection' => 'summary',
+                  'appUrl' => rtrim(url('/'), '/'),
+                ]))
               </div>
-              <div class="cart-empty"></div>
+              @include('theme.partials.cart-contents', array_merge(storefrontCartSnapshot(), [
+                'cartSection' => 'empty',
+                'appUrl' => rtrim(url('/'), '/'),
+              ]))
             </div>
           </form>
         </cart-form>

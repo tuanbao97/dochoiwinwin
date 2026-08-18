@@ -88,6 +88,13 @@
       });
       if (!res.ok) {
         var t = await res.text();
+        try {
+          var payload = JSON.parse(t);
+          if (payload && payload.login_required && payload.login_url) {
+            window.location.href = payload.login_url;
+            return null;
+          }
+        } catch (parseErr) {}
         throw new Error('Add to cart thất bại (HTTP ' + res.status + '): ' + t.slice(0, 120));
       }
       var data = await res.json();
@@ -95,9 +102,16 @@
       return data;
     }
 
+    function requireLogin() {
+      if (window.wwAuth && window.wwAuth.user) return false;
+      window.location.href = @json(storefrontLoginUrl(url()->current()));
+      return true;
+    }
+
     function findCartButton(e) {
       return (
         e.target.closest('.add_to_cart') ||
+        e.target.closest('.btn-addtocart-combo') ||
         e.target.closest('#add-to-cart-form button[name="addtocart"]') ||
         e.target.closest('#add-to-cart-form button[name="buynow"]')
       );
@@ -108,6 +122,13 @@
       function (e) {
         var btn = findCartButton(e);
         if (!btn) return;
+        if (requireLogin()) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+          return;
+        }
+        if (btn.classList.contains('btn-addtocart-combo')) return;
         e.preventDefault();
         e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -177,6 +198,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        if (requireLogin()) return;
 
         var submitter = e.submitter;
         var btn =
@@ -199,4 +221,4 @@
     );
   })();
 </script>
-<script src="100/531/894/themes/1018832/assets/cart.js?ww-stock-guard-1" defer fetchpriority="low"></script>
+<script src="100/531/894/themes/1018832/assets/cart.js?ww-cart-ssr-1" defer fetchpriority="low"></script>

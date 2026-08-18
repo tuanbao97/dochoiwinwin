@@ -7,6 +7,7 @@ use App\Service\CategoryNService;
 use App\Service\NewsService;
 use App\Service\ProductService;
 use App\Service\VideoService;
+use App\Support\StorefrontIdentity;
 use App\Support\StorefrontInventory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,7 @@ class ThemeStorefrontController extends Controller
         private CategoryNService $categoryNService,
         private VideoService $videoService,
         private StorefrontInventory $inventory,
+        private StorefrontIdentity $identity,
     ) {}
 
     /**
@@ -87,6 +89,10 @@ class ThemeStorefrontController extends Controller
 
     public function cartAdd(Request $request): \Illuminate\Http\JsonResponse
     {
+        if ($guest = $this->guestCartResponse($request)) {
+            return $guest;
+        }
+
         $identifier = (int) ($request->input('variantId')
             ?? $request->input('VariantId')
             ?? $request->input('id'));
@@ -187,6 +193,10 @@ class ThemeStorefrontController extends Controller
 
     public function cartChange(Request $request): Response|\Illuminate\Http\JsonResponse
     {
+        if ($guest = $this->guestCartResponse($request)) {
+            return $guest;
+        }
+
         $line = max(1, (int) $request->query('line', 0));
         $quantity = (int) $request->query('quantity', 0);
         $items = array_values($this->getCartLines());
@@ -225,32 +235,45 @@ class ThemeStorefrontController extends Controller
 
     public function cartUpdate(Request $request): \Illuminate\Http\JsonResponse
     {
+        if ($guest = $this->guestCartResponse($request)) {
+            return $guest;
+        }
+
         return response()->json(['success' => true]);
     }
 
-    public function cartClear(): \Illuminate\Http\JsonResponse
+    public function cartClear(Request $request): \Illuminate\Http\JsonResponse
     {
+        if ($guest = $this->guestCartResponse($request)) {
+            return $guest;
+        }
+
         session()->forget(self::SESSION_KEY);
 
         return response()->json(['success' => true]);
     }
 
-    public function cartPage(Request $request): BinaryFileResponse|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
+    public function cartPage(Request $request): BinaryFileResponse|\Illuminate\Contracts\View\View|\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
     {
-        if ($request->query('view') === 'data') {
-            $items = $this->getCartLines();
-
-            return response()->view('theme.cart-data', [
-                'items' => $items,
-                'totalQuantity' => $this->totalQuantity($items),
-                'totalPrice' => $this->totalPrice($items),
-                'appUrl' => rtrim(url('/'), '/'),
-            ]);
+        if ($request->query('view') !== 'data' && ! $this->identity->check()) {
+            return redirect(storefrontLoginUrl(url('/cart')));
         }
 
-        return view('UI-FRONTEND.cart.index', [
+        $items = $this->getCartLines();
+        $data = [
             'productId' => 0,
-        ]);
+            'items' => $items,
+            'totalQuantity' => $this->totalQuantity($items),
+            'totalPrice' => $this->totalPrice($items),
+            'appUrl' => rtrim(url('/'), '/'),
+            'storefrontUser' => $this->identity->payload(),
+        ];
+
+        if ($request->query('view') === 'data') {
+            return response()->view('theme.cart-data', $data);
+        }
+
+        return view('UI-FRONTEND.cart.index', $data);
     }
 
     public function checkoutPage(Request $request): View
@@ -262,6 +285,7 @@ class ThemeStorefrontController extends Controller
             'totalQuantity' => $this->totalQuantity($items),
             'totalPrice' => $this->totalPrice($items),
             'appUrl' => rtrim(url('/'), '/'),
+            'storefrontUser' => $this->identity->payload(),
         ];
 
         if ($request->query('view') === 'summary') {
@@ -1330,6 +1354,25 @@ class ThemeStorefrontController extends Controller
             'total' => (int) ($pagination['TOTAL_ITEM'] ?? 0),
             'totalPages' => (int) ($pagination['TOTAL_PAGE'] ?? 0),
         ];
+    }
+
+    /**
+     * Khách chưa đăng nhập không được thao tác giỏ hàng.
+     */
+    private function guestCartResponse(Request $request): ?\Illuminate\Http\JsonResponse
+    {
+        if ($this->identity->check()) {
+            return null;
+        }
+
+        $back = (string) ($request->headers->get('Referer') ?: url()->current() ?: url('/'));
+
+        return response()->json([
+            'success' => false,
+            'login_required' => true,
+            'login_url' => storefrontLoginUrl($back),
+            'message' => 'Vui lòng đăng nhập để thêm vào giỏ hàng.',
+        ], 401);
     }
 
     /**

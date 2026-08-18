@@ -869,6 +869,57 @@ use Illuminate\Support\Facades\DB;
     }
 
     /**
+     * Ảnh chụp giỏ hàng từ phiên — không đụng DB, dùng khi render header/drawer.
+     *
+     * @return array{items: array<int, array<string, mixed>>, totalQuantity: int, totalPrice: int}
+     */
+    if (!function_exists('storefrontCartSnapshot')) {
+        function storefrontCartSnapshot(): array
+        {
+            static $cached = null;
+            if ($cached !== null) {
+                return $cached;
+            }
+
+            $raw = session('theme_storefront_cart', []);
+            $items = is_array($raw) ? array_values($raw) : [];
+            $totalQuantity = 0;
+            $totalPrice = 0;
+            foreach ($items as $line) {
+                $qty = (int) ($line['quantity'] ?? 0);
+                $totalQuantity += $qty;
+                $totalPrice += (int) ($line['line_price'] ?? ((int) ($line['price'] ?? 0) * $qty));
+            }
+
+            return $cached = [
+                'items' => $items,
+                'totalQuantity' => $totalQuantity,
+                'totalPrice' => $totalPrice,
+            ];
+        }
+    }
+
+    /**
+     * Tổng số lượng sản phẩm trong giỏ hàng cửa hàng.
+     */
+    if (!function_exists('storefrontCartQuantity')) {
+        function storefrontCartQuantity(): int
+        {
+            return storefrontCartSnapshot()['totalQuantity'];
+        }
+    }
+
+    /**
+     * Trang đăng nhập cửa hàng, kèm URL quay lại sau khi đăng nhập.
+     */
+    if (!function_exists('storefrontLoginUrl')) {
+        function storefrontLoginUrl(?string $redirect = null): string
+        {
+            return url('/account/login').'?redirect='.urlencode($redirect ?: url('/cart'));
+        }
+    }
+
+    /**
      * Favicon / icon site (logo Win Win).
      */
     if (!function_exists('storefrontFaviconUrl')) {

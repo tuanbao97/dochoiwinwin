@@ -383,6 +383,13 @@
     return html;
   }
 
+  /** Số sản phẩm trên 1 section trang chủ: khớp số cột lưới để không bị ô trống cuối hàng. */
+  function homeCategoryProductLimit() {
+    var w = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (w >= 768 && w < 1024) return 12;
+    return 10;
+  }
+
   function getFlashSectionEl() {
     return document.getElementById('section-flashsale-0');
   }
@@ -548,7 +555,7 @@
 
     var params = new URLSearchParams();
     params.set('PAGE', '1');
-    var per = (opts && opts.perPage) || (section === 'flash' ? 12 : 10);
+    var per = (opts && opts.perPage) || (section === 'flash' ? 12 : homeCategoryProductLimit());
     el.innerHTML = buildProductGridSkeletonHtml(per, section === 'flash');
 
     params.set('PER_PAGE', String(per));
@@ -746,7 +753,7 @@
   }
 
   function buildCategorySectionHtml(cat, skeletonCount) {
-    var sk = skeletonCount == null ? 10 : skeletonCount;
+    var sk = skeletonCount == null ? homeCategoryProductLimit() : skeletonCount;
     var cid = cat && cat.ID ? String(cat.ID) : '0';
     var title = (cat && cat.TEN_DANH_MUC_SAN_PHAM) || 'Danh mục';
     var children = getCategoryChildren(cat);
@@ -809,7 +816,7 @@
     var isAllProducts = cat && cat.IS_ALL_PRODUCTS === true;
     var filterCategoryId = isAllProducts ? null : catId;
     var p = '#home-category-products-' + catId;
-    var n = perPage == null ? 10 : perPage;
+    var n = perPage == null ? homeCategoryProductLimit() : perPage;
     var children = getCategoryChildren(cat);
     // Panel 1 = Tất cả; panel 2.. = menu con; sau đó mới tới tab sắp xếp.
     var sortStartIndex = children.length + 2;
@@ -939,14 +946,15 @@
           DANH_SACH_CHILDREN: [],
           IS_ALL_PRODUCTS: true,
         };
-        wrapper.insertAdjacentHTML('beforeend', buildCategorySectionHtml(allProducts, 10));
-        loadCategorySectionTabs(allProducts, 10);
+        var n = homeCategoryProductLimit();
+        wrapper.insertAdjacentHTML('beforeend', buildCategorySectionHtml(allProducts, n));
+        loadCategorySectionTabs(allProducts, n);
 
         for (var i = 0; i < roots.length; i++) {
           var c = roots[i];
           if (!c || !c.ID) continue;
-          wrapper.insertAdjacentHTML('beforeend', buildCategorySectionHtml(c, 10));
-          loadCategorySectionTabs(c, 10);
+          wrapper.insertAdjacentHTML('beforeend', buildCategorySectionHtml(c, n));
+          loadCategorySectionTabs(c, n);
         }
       })
       .catch(function () {

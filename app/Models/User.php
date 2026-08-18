@@ -68,6 +68,11 @@ class User extends Authenticatable
         return $this->PASSWORD;
     }
 
+    public function getRememberTokenName()
+    {
+        return 'REMEMBER_TOKEN';
+    }
+
     /* Override phương thức của Passport để tìm kiếm theo username */
     public function findForPassport($username)
     {

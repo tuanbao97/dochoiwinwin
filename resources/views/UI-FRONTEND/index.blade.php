@@ -1461,14 +1461,18 @@
         </a>
       </portal-opener>
 
-      @php
-        $themeCartQty = $themeCartQty ?? collect(session('theme_storefront_cart', []))->sum(fn ($line) => (int) ($line['quantity'] ?? 0));
-      @endphp
       <portal-opener class="cro-btn-item cro-btn-item--cart w-auto flex-shrink-0 flex-grow-0 h-full py-0.5 px-0.5 text-foreground h-full flex flex-col justify-center items-center gap-0.5" style="order:2">
-        <a class="w-full h-full flex flex-col justify-center items-center gap-0.5" title="Giỏ hàng" href="{{ url('/cart') }}" data-portal="#cart-drawer" role="button">
+        @php $wwCartUser = $storefrontUser ?? null; @endphp
+        <a
+          class="w-full h-full flex flex-col justify-center items-center gap-0.5"
+          title="{{ $wwCartUser ? 'Giỏ hàng' : 'Đăng nhập để xem giỏ hàng' }}"
+          href="{{ $wwCartUser ? url('/cart') : storefrontLoginUrl(url('/cart')) }}"
+          @if($wwCartUser) data-portal="#cart-drawer" @endif
+          role="button"
+        >
           <div class="w-4 h-4 relative flex items-center justify-center">
             <i class="icon icon-cart cro-btn-cart-icon" aria-hidden="true"></i>
-            <span class="cart-count flex items-center count_item count_item_pr justify-center rounded-full absolute font-semibold"><span class="cart-count__num">{{ $themeCartQty }}</span></span>
+            <span class="cart-count flex items-center count_item count_item_pr justify-center rounded-full absolute font-semibold"><span class="cart-count__num">{{ storefrontCartQuantity() }}</span></span>
           </div>
           <div class="text-ellipsis overflow-hidden max-w-full text-xs text-center line-clamp-1">Giỏ hàng</div>
         </a>
