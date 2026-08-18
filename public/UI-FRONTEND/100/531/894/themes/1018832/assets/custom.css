@@ -3355,6 +3355,66 @@ body.checkout .checkout-order-item {
 .ww-account__login-btn:active {
 	transform: scale(0.97);
 }
+.ww-card-adding-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 24;
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.7rem;
+	padding: 1rem;
+	background: color-mix(in srgb, #ffffff 62%, transparent);
+	backdrop-filter: blur(3px);
+	-webkit-backdrop-filter: blur(3px);
+	pointer-events: none;
+}
+.ww-card-adding > .ww-card-adding-overlay,
+.ww-card-adding .card-product__top > .ww-card-adding-overlay {
+	display: flex;
+}
+.ww-card-adding-spinner {
+	width: 3.2rem;
+	height: 3.2rem;
+	border-radius: 999px;
+	border: 3px solid color-mix(in srgb, var(--color-primary) 22%, #ffffff);
+	border-top-color: var(--color-primary);
+	animation: ww-card-spin 0.7s linear infinite;
+}
+.ww-card-adding-check {
+	display: none;
+	width: 3.2rem;
+	height: 3.2rem;
+	border-radius: 999px;
+	align-items: center;
+	justify-content: center;
+	background: var(--color-primary);
+	color: #ffffff;
+	box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+.ww-card-adding-check svg {
+	width: 1.7rem;
+	height: 1.7rem;
+}
+.ww-card-adding-text {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--color-primary);
+	letter-spacing: 0.01em;
+}
+.ww-card-adding--done .ww-card-adding-spinner {
+	display: none;
+}
+.ww-card-adding--done .ww-card-adding-check {
+	display: flex;
+}
+.ww-card-adding--done .ww-card-adding-text {
+	color: #111827;
+}
+@keyframes ww-card-spin {
+	to { transform: rotate(360deg); }
+}
 .ww-login-invite {
 	text-align: center;
 	padding: 1.6rem 1.4rem 1.4rem;

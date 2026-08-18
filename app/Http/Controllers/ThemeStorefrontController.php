@@ -119,11 +119,8 @@ class ThemeStorefrontController extends Controller
         $categoryId = (int) ($request->input('category_id')
             ?? $request->input('product_category_id')
             ?? 0);
-        if ($categoryId <= 0) {
-            $categoryId = $this->resolveProductCategoryId($resolved['product_id']);
-        }
 
-        $items = array_values($this->getCartLines());
+        $items = $this->sessionCartItems();
         $existingIndex = null;
         foreach ($items as $k => $line) {
             if ((int) $line['variant_id'] === $variantId) {
@@ -199,7 +196,7 @@ class ThemeStorefrontController extends Controller
 
         $line = max(1, (int) $request->query('line', 0));
         $quantity = (int) $request->query('quantity', 0);
-        $items = array_values($this->getCartLines());
+        $items = $this->sessionCartItems();
 
         $index = $line - 1;
         if (! isset($items[$index])) {
@@ -259,7 +256,9 @@ class ThemeStorefrontController extends Controller
             return redirect(storefrontLoginUrl(url('/cart')));
         }
 
-        $items = $this->getCartLines();
+        $items = $request->query('view') === 'data'
+            ? $this->sessionCartItems()
+            : $this->getCartLines();
         $data = [
             'productId' => 0,
             'items' => $items,
@@ -297,7 +296,7 @@ class ThemeStorefrontController extends Controller
 
     public function cartRecommendations(Request $request): \Illuminate\Http\JsonResponse
     {
-        $items = array_values($this->getCartLines());
+        $items = $this->sessionCartItems();
         if ($items === []) {
             return response()->json([
                 'success' => true,
@@ -307,30 +306,17 @@ class ThemeStorefrontController extends Controller
 
         $cartProductIds = [];
         $categoryIds = [];
-        $itemsChanged = false;
 
-        foreach ($items as $index => $line) {
-            $productId = (int) ($line['variant_id'] ?? 0);
+        foreach ($items as $line) {
+            $productId = (int) ($line['product_id'] ?? $line['variant_id'] ?? 0);
             if ($productId > 0) {
                 $cartProductIds[] = $productId;
             }
 
             $categoryId = (int) ($line['category_id'] ?? 0);
-            if ($categoryId <= 0 && $productId > 0) {
-                $categoryId = $this->resolveProductCategoryId($productId);
-                if ($categoryId > 0) {
-                    $items[$index]['category_id'] = $categoryId;
-                    $itemsChanged = true;
-                }
-            }
-
             if ($categoryId > 0) {
                 $categoryIds[] = $categoryId;
             }
-        }
-
-        if ($itemsChanged) {
-            session([self::SESSION_KEY => $items]);
         }
 
         $categoryIds = array_values(array_unique($categoryIds));
@@ -1373,6 +1359,18 @@ class ThemeStorefrontController extends Controller
             'login_url' => storefrontLoginUrl($back),
             'message' => 'Vui lòng đăng nhập để thêm vào giỏ hàng.',
         ], 401);
+    }
+
+    /**
+     * Giỏ trong session, không quét tồn kho (dùng khi thêm/sửa nhanh).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function sessionCartItems(): array
+    {
+        $lines = session(self::SESSION_KEY, []) ?: [];
+
+        return is_array($lines) ? array_values($lines) : [];
     }
 
     /**

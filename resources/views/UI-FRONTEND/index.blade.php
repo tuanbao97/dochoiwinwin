@@ -1847,7 +1847,7 @@ Hẹn giờ nhận hàng
 
 @include('UI-FRONTEND.partials.home-products-ajax')
 	<script src="100/531/894/themes/1018832/assets/main.js?ww-cart-open-fix-1"></script>
-	<script src="100/531/894/themes/1018832/assets/product.js?ww-qty-hint-2" defer fetchpriority="low"></script>
+    <script src="100/531/894/themes/1018832/assets/product.js?ww-cart-fast-2" defer fetchpriority="low"></script>
 	<script src="100/531/894/themes/1018832/assets/quick-view-enhance.js?ww-qty-hint-1" defer fetchpriority="low"></script>
 	@include('UI-FRONTEND.common.cart-scripts')
 	<script src="100/531/894/themes/1018832/assets/flashsale.js?1768901692132" defer="" fetchpriority="low"></script>
