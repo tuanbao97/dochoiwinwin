@@ -24,8 +24,6 @@
         @for ($i = 0; $i < 10; $i++)
           @include('UI-FRONTEND.partials.product-card-skeleton')
         @endfor
-        <div class="dnone md:block lg:hidden">@include('UI-FRONTEND.partials.product-card-skeleton')</div>
-        <div class="dnone md:block lg:hidden">@include('UI-FRONTEND.partials.product-card-skeleton')</div>
       </div>
 
       <div class="ww-skel-section-more" aria-hidden="true">
