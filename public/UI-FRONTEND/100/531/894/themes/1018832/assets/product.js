@@ -477,6 +477,7 @@ subscribe(window.themeConfigs.firstInteraction, () => {
     }
     onSubmit(e) {
       e.preventDefault();
+      if (e.wwCartHandled || window.__wwCartScripts) return;
       this.toggleLoading(true);
       const data = serializeForm(this.form);
       const url = this.form.action;
@@ -815,11 +816,16 @@ subscribe(window.themeConfigs.firstInteraction, () => {
       }
     }
     onClick(e) {
+      if (e.wwCartHandled || window.__wwCartScripts) {
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
       this.addToCart(e);
     }
     addToCart(e) {
       e.preventDefault();
+      if (e.wwCartHandled || window.__wwCartScripts) return;
       if (!this.form) return;
       const data = serializeForm(this.form);
       const { addToCartAction, productAddEvent } = window.themeConfigs;

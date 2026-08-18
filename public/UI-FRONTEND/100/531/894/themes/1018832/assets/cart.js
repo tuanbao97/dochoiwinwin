@@ -289,7 +289,8 @@ function renderCartRecommendations(products) {
 }
 
 function loadCartRecommendations() {
-  return fetch(themeApiUrl("/cart/recommendations?limit=10"), {
+  if (loadCartRecommendations._pending) return loadCartRecommendations._pending;
+  loadCartRecommendations._pending = fetch(themeApiUrl("/cart/recommendations?limit=10"), {
     credentials: "same-origin",
     headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
   })
@@ -297,7 +298,11 @@ function loadCartRecommendations() {
     .then((data) => {
       renderCartRecommendations(data && data.products ? data.products : []);
     })
-    .catch(() => renderCartRecommendations([]));
+    .catch(() => renderCartRecommendations([]))
+    .finally(() => {
+      loadCartRecommendations._pending = null;
+    });
+  return loadCartRecommendations._pending;
 }
 
 window.__wwLoadCartRecommendations = loadCartRecommendations;
@@ -502,8 +507,23 @@ __wwBootCartComponents(() => {
         });
     }
     updateCart() {
+      if (this._cartUpdateQueued) return;
+      this._cartUpdateQueued = true;
+      var self = this;
+      clearTimeout(this._cartUpdateTimer);
+      this._cartUpdateTimer = setTimeout(function () {
+        self._cartUpdateQueued = false;
+        self._updateCartNow();
+      }, 80);
+    }
+    _updateCartNow() {
+      if (this._cartUpdating) {
+        this._cartUpdateAgain = true;
+        return;
+      }
+      this._cartUpdating = true;
       this.classList.add("loading");
-      fetch(themeApiUrl("/cart?view=data"))
+      fetch(themeApiUrl("/cart?view=data"), { credentials: "same-origin" })
         .then((response) => response.text())
         .then((res) => {
           this.renderCart(res);
@@ -511,6 +531,13 @@ __wwBootCartComponents(() => {
         })
         .catch((err) => {
           this.classList.remove("loading");
+        })
+        .finally(() => {
+          this._cartUpdating = false;
+          if (this._cartUpdateAgain) {
+            this._cartUpdateAgain = false;
+            this.updateCart();
+          }
         });
     }
     renderCart(res) {
@@ -769,12 +796,16 @@ __wwBootCartComponents(() => {
               : 0
           );
         }
-		    document.querySelectorAll("quick-view").forEach((el) => {
+        document.querySelectorAll("quick-view").forEach((el) => {
           if (el && typeof el.hide === "function") el.hide();
         });
-        document.querySelectorAll("cart-form").forEach((el) => {
-          if (el && typeof el.updateCart === "function") el.updateCart();
-        });
+        const cartForm =
+          this.cartForm ||
+          this.querySelector("cart-form") ||
+          document.querySelector("cart-drawer cart-form");
+        if (cartForm && typeof cartForm.updateCart === "function") {
+          cartForm.updateCart();
+        }
         // Đảm bảo danh sách trong drawer scroll lên đầu để thấy sp vừa thêm
         window.setTimeout(function () {
           document.querySelectorAll("cart-form").forEach(function (el) {
