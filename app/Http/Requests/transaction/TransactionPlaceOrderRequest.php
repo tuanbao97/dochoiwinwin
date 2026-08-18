@@ -4,13 +4,12 @@ namespace App\Http\Requests\transaction;
 
 use App\Enum\AppConstant;
 use App\Exceptions\BadRequestException;
+use App\Support\StorefrontCart;
 use App\Support\StorefrontVoucher;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TransactionPlaceOrderRequest extends FormRequest
 {
-    private const CART_SESSION_KEY = 'theme_storefront_cart';
-
     public function authorize(): bool
     {
         $route = $this->route();
@@ -25,8 +24,8 @@ class TransactionPlaceOrderRequest extends FormRequest
     protected function prepareForValidation()
     {
         $items = $this->input('ITEMS');
-        if ((! is_array($items) || count($items) === 0) && $this->hasSession() && $this->session()->has(self::CART_SESSION_KEY)) {
-            $items = $this->mapCartSessionToItems();
+        if (! is_array($items) || count($items) === 0) {
+            $items = app(StorefrontCart::class)->toOrderItems();
         }
 
         $normalize = static function ($value): ?string {
@@ -172,25 +171,4 @@ class TransactionPlaceOrderRequest extends FormRequest
         throw new BadRequestException($validator->errors(), 'Đặt hàng thất bại.');
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function mapCartSessionToItems(): array
-    {
-        $cartLines = $this->session()->get(self::CART_SESSION_KEY, []);
-        if (! is_array($cartLines)) {
-            return [];
-        }
-
-        return array_values(array_map(static function (array $line): array {
-            return [
-                'PRODUCT_ID' => (int) ($line['variant_id'] ?? $line['PRODUCT_ID'] ?? 0),
-                'QUANTITY' => (float) ($line['quantity'] ?? $line['QUANTITY'] ?? 0),
-                'PRICE' => (float) ($line['price'] ?? $line['PRICE'] ?? 0),
-                'TEN_SAN_PHAM' => $line['title'] ?? $line['TEN_SAN_PHAM'] ?? null,
-                'HINH_ANH' => $line['image'] ?? $line['HINH_ANH'] ?? null,
-                'HANDLE' => $line['handle'] ?? $line['HANDLE'] ?? null,
-            ];
-        }, $cartLines));
-    }
 }

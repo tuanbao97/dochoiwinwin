@@ -238,6 +238,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Nhận diện khách đăng nhập ở phía máy chủ cho giao diện cửa hàng
         $this->app->singleton(\App\Support\StorefrontIdentity::class);
+        $this->app->singleton(\App\Support\StorefrontCart::class);
 
         // Sapo Private App API
         $this->app->singleton(\App\Service\SapoService::class, \App\Service\impl\SapoServiceImpl::class);

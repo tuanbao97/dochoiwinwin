@@ -130,6 +130,7 @@ class StorefrontIdentity
         }
 
         $this->forget();
+        app(StorefrontCart::class)->absorbLegacySession($request, $fresh);
     }
 
     public function logout(Request $request): void

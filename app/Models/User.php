@@ -121,6 +121,11 @@ class User extends Authenticatable
         return $this->hasMany(UserSocialAccount::class, 'USER_ID', 'ID');
     }
 
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(UserCart::class, 'USER_ID', 'ID')->orderBy('POSITION');
+    }
+
     /**
      * Staff = role ADMIN hoặc CHUYEN_VIEN đang active. Role USER (khách) không được vào admin.
      */
