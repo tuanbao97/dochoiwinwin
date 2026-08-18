@@ -15,6 +15,8 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\TransactionRepository;
 use App\Service\TransactionService;
+use App\Support\StorefrontCart;
+use App\Support\StorefrontIdentity;
 use App\Support\StorefrontInventory;
 use App\Support\StorefrontProfileWriter;
 use App\Support\StorefrontVoucher;
@@ -30,14 +32,13 @@ use Throwable;
 
 class TransactionServiceImpl implements TransactionService
 {
-    private const CART_SESSION_KEY = 'theme_storefront_cart';
-
     private TransactionRepository $transactionRepository;
 
     public function __construct(
         TransactionRepository $transactionRepository,
         private readonly StorefrontInventory $inventory,
-        private readonly StorefrontVoucher $voucher
+        private readonly StorefrontVoucher $voucher,
+        private readonly StorefrontCart $cart,
     ) {
         $this->transactionRepository = $transactionRepository;
     }
@@ -128,6 +129,9 @@ class TransactionServiceImpl implements TransactionService
         $discountCodes = StorefrontVoucher::normalizeCodes($request->input('DISCOUNT_CODES', $discountCode));
 
         $user = Auth::user();
+        if (! $user instanceof User) {
+            $user = app(StorefrontIdentity::class)->user();
+        }
         $buyerName = $request->input('HO_TEN');
         $buyerPhone = $request->input('SO_DIEN_THOAI');
         $buyerEmail = $request->input('EMAIL');
@@ -269,8 +273,8 @@ class TransactionServiceImpl implements TransactionService
         }
         $transaction->refresh();
 
-        if ($request->hasSession() && $request->session()->has(self::CART_SESSION_KEY)) {
-            $request->session()->forget(self::CART_SESSION_KEY);
+        if ($user instanceof User) {
+            $this->cart->clear($user);
         }
 
         return response()->json(
@@ -305,25 +309,7 @@ class TransactionServiceImpl implements TransactionService
             return array_values($items);
         }
 
-        if (! $request->hasSession()) {
-            return [];
-        }
-
-        $cartLines = $request->session()->get(self::CART_SESSION_KEY, []);
-        if (! is_array($cartLines) || $cartLines === []) {
-            return [];
-        }
-
-        return array_values(array_map(static function (array $line): array {
-            return [
-                'PRODUCT_ID' => (int) ($line['variant_id'] ?? $line['PRODUCT_ID'] ?? 0),
-                'QUANTITY' => (float) ($line['quantity'] ?? $line['QUANTITY'] ?? 0),
-                'PRICE' => (float) ($line['price'] ?? $line['PRICE'] ?? 0),
-                'TEN_SAN_PHAM' => $line['title'] ?? $line['TEN_SAN_PHAM'] ?? null,
-                'HINH_ANH' => $line['image'] ?? $line['HINH_ANH'] ?? null,
-                'HANDLE' => $line['handle'] ?? $line['HANDLE'] ?? null,
-            ];
-        }, $cartLines));
+        return $this->cart->toOrderItems();
     }
 
     /**

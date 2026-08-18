@@ -7,6 +7,7 @@ use App\Service\CategoryNService;
 use App\Service\NewsService;
 use App\Service\ProductService;
 use App\Service\VideoService;
+use App\Support\StorefrontCart;
 use App\Support\StorefrontIdentity;
 use App\Support\StorefrontInventory;
 use Illuminate\Contracts\View\View;
@@ -20,8 +21,6 @@ use Throwable;
 
 class ThemeStorefrontController extends Controller
 {
-    private const SESSION_KEY = 'theme_storefront_cart';
-
     public function __construct(
         private ProductService $productService,
         private NewsService $newsService,
@@ -29,6 +28,7 @@ class ThemeStorefrontController extends Controller
         private VideoService $videoService,
         private StorefrontInventory $inventory,
         private StorefrontIdentity $identity,
+        private StorefrontCart $cart,
     ) {}
 
     /**
@@ -120,7 +120,7 @@ class ThemeStorefrontController extends Controller
             ?? $request->input('product_category_id')
             ?? 0);
 
-        $items = $this->sessionCartItems();
+        $items = $this->cart->items();
         $existingIndex = null;
         foreach ($items as $k => $line) {
             if ((int) $line['variant_id'] === $variantId) {
@@ -171,7 +171,7 @@ class ThemeStorefrontController extends Controller
             ]);
         }
 
-        session([self::SESSION_KEY => array_values($items)]);
+        $this->cart->replace(array_values($items));
 
         $detailHandle = $resolved['handle'].'-'.$resolved['product_id'];
         $url = url('san-pham/chi-tiet/'.ltrim($detailHandle, '/'));
@@ -196,7 +196,7 @@ class ThemeStorefrontController extends Controller
 
         $line = max(1, (int) $request->query('line', 0));
         $quantity = (int) $request->query('quantity', 0);
-        $items = $this->sessionCartItems();
+        $items = $this->cart->items();
 
         $index = $line - 1;
         if (! isset($items[$index])) {
@@ -225,7 +225,7 @@ class ThemeStorefrontController extends Controller
             $items[$index]['stock'] = $resolved['stock'];
         }
 
-        session([self::SESSION_KEY => $items]);
+        $this->cart->replace($items);
 
         return response('', 200);
     }
@@ -245,7 +245,7 @@ class ThemeStorefrontController extends Controller
             return $guest;
         }
 
-        session()->forget(self::SESSION_KEY);
+        $this->cart->clear();
 
         return response()->json(['success' => true]);
     }
@@ -257,7 +257,7 @@ class ThemeStorefrontController extends Controller
         }
 
         $items = $request->query('view') === 'data'
-            ? $this->sessionCartItems()
+            ? $this->cart->items()
             : $this->getCartLines();
         $data = [
             'productId' => 0,
@@ -275,8 +275,12 @@ class ThemeStorefrontController extends Controller
         return view('UI-FRONTEND.cart.index', $data);
     }
 
-    public function checkoutPage(Request $request): View
+    public function checkoutPage(Request $request): View|RedirectResponse
     {
+        if (! $this->identity->check()) {
+            return redirect(storefrontLoginUrl(url('/thanh-toan')));
+        }
+
         $items = $this->getCartLines();
         $data = [
             'productId' => 0,
@@ -296,7 +300,7 @@ class ThemeStorefrontController extends Controller
 
     public function cartRecommendations(Request $request): \Illuminate\Http\JsonResponse
     {
-        $items = $this->sessionCartItems();
+        $items = $this->cart->items();
         if ($items === []) {
             return response()->json([
                 'success' => true,
@@ -1362,27 +1366,16 @@ class ThemeStorefrontController extends Controller
     }
 
     /**
-     * Giỏ trong session, không quét tồn kho (dùng khi thêm/sửa nhanh).
+     * Giỏ trên DB, đồng bộ giá/tồn kho (trang giỏ và thanh toán).
      *
-     * @return array<int, array<string, mixed>>
-     */
-    private function sessionCartItems(): array
-    {
-        $lines = session(self::SESSION_KEY, []) ?: [];
-
-        return is_array($lines) ? array_values($lines) : [];
-    }
-
-    /**
      * @return array<int, array<string, mixed>>
      */
     private function getCartLines(): array
     {
-        $lines = session(self::SESSION_KEY, []) ?: [];
-        $result = $this->inventory->reconcileCart(is_array($lines) ? $lines : []);
+        $result = $this->inventory->reconcileCart($this->cart->items());
 
         if ($result['changed']) {
-            session([self::SESSION_KEY => $result['items']]);
+            $this->cart->replace($result['items']);
             if ($result['notices'] !== []) {
                 session()->flash('cart_stock_notices', $result['notices']);
             }
