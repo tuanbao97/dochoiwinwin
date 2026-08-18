@@ -56,7 +56,7 @@
         @else
           <div class="ww-co__grid">
             <div class="ww-co__main">
-              <div class="ww-co-card" id="ww-checkout-login-hint" hidden>
+              <div class="ww-co-card" id="ww-checkout-login-hint" @if($storefrontUser ?? null) hidden @endif>
                 <div class="ww-co-hint">
                   <span class="ww-co-hint__icon" aria-hidden="true">👋</span>
                   <div>
@@ -73,22 +73,22 @@
                   @csrf
                   <div class="ww-co-field ww-co-field--full">
                     <label for="checkout-name">Họ và tên <span class="ww-co-req">*</span></label>
-                    <input id="checkout-name" name="name" type="text" placeholder="Nhập họ tên người nhận" autocomplete="name">
+                    <input id="checkout-name" name="name" type="text" placeholder="Nhập họ tên người nhận" autocomplete="name" value="{{ $storefrontUser['FULL_NAME'] ?? '' }}">
                     <span class="ww-co-error" id="MSG_HO_TEN"></span>
                   </div>
                   <div class="ww-co-field">
                     <label for="checkout-phone">Số điện thoại <span class="ww-co-req">*</span></label>
-                    <input id="checkout-phone" name="phone" type="tel" placeholder="Ví dụ: 0909 123 456" autocomplete="tel" inputmode="tel">
+                    <input id="checkout-phone" name="phone" type="tel" placeholder="Ví dụ: 0909 123 456" autocomplete="tel" inputmode="tel" value="{{ $storefrontUser['PHONE'] ?? '' }}">
                     <span class="ww-co-error" id="MSG_SO_DIEN_THOAI"></span>
                   </div>
                   <div class="ww-co-field">
                     <label for="checkout-email">Email <span class="ww-co-optional">(không bắt buộc)</span></label>
-                    <input id="checkout-email" name="email" type="text" placeholder="email@example.com" autocomplete="email">
+                    <input id="checkout-email" name="email" type="text" placeholder="email@example.com" autocomplete="email" value="{{ $storefrontUser['EMAIL'] ?? '' }}">
                     <span class="ww-co-error" id="MSG_EMAIL"></span>
                   </div>
                   <div class="ww-co-field ww-co-field--full">
                     <label for="checkout-address">Địa chỉ nhận hàng <span class="ww-co-req">*</span></label>
-                    <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address"></textarea>
+                    <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address">{{ $storefrontUser['ADDRESS'] ?? '' }}</textarea>
                     <span class="ww-co-error" id="MSG_DIA_CHI"></span>
                   </div>
                   <div class="ww-co-field ww-co-field--full">
@@ -201,16 +201,24 @@
     var summaryUrl = @json(url('/thanh-toan')) + '?view=summary';
     var cartChangeUrl = @json(url('/cart/change'));
     var cartClearUrl = @json(url('/cart/clear'));
-    var profileUrl = @json(url('/api/auth/storefront-profile'));
     var homeUrl = @json(url('/'));
 
+    // Máy chủ đã điền sẵn thông tin khách lúc render, không fetch profile trên UI.
+    var serverUser = (window.wwAuth && window.wwAuth.user) || @json($storefrontUser ?? null);
     var accessToken = null;
     try {
       accessToken = localStorage.getItem('ACCESS_TOKEN');
     } catch (e) {}
 
-    if (!accessToken && loginHint) loginHint.hidden = false;
-    if (accessToken && successOrdersLink) successOrdersLink.hidden = false;
+    var isLoggedIn = !!(serverUser || accessToken);
+    if (loginHint) loginHint.hidden = isLoggedIn;
+    if (successOrdersLink) successOrdersLink.hidden = !isLoggedIn;
+
+    // Token có thể chưa nằm sẵn ở trình duyệt; wwAuth sẽ xin token mới từ phiên.
+    function authToken() {
+      if (window.wwAuth && window.wwAuth.ensureToken) return window.wwAuth.ensureToken();
+      return Promise.resolve(accessToken);
+    }
 
     var state = readState();
     var appliedVoucherCodes = [];
@@ -941,27 +949,6 @@
      * Form thông tin nhận hàng
      * ------------------------------------------------------------------ */
 
-    if (accessToken) {
-      fetch(profileUrl, {
-        headers: {
-          Authorization: 'Bearer ' + accessToken,
-          Accept: 'application/json'
-        }
-      })
-        .then(function (response) {
-          if (!response.ok) throw new Error('profile');
-          return response.json();
-        })
-        .then(function (payload) {
-          var profile = (payload && payload.DATAS) || {};
-          if (!form.name.value) form.name.value = profile.FULL_NAME || '';
-          if (!form.phone.value) form.phone.value = profile.PHONE || '';
-          if (!form.email.value) form.email.value = profile.EMAIL || '';
-          if (!form.address.value) form.address.value = profile.ADDRESS || '';
-        })
-        .catch(function () {});
-    }
-
     function clearFieldErrors() {
       form.querySelectorAll('.ww-co-error').forEach(function (node) {
         node.textContent = '';
@@ -1092,20 +1079,23 @@
         ITEMS: checkoutItems()
       };
 
-      var headers = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': csrfToken()
-      };
-      if (accessToken) headers.Authorization = 'Bearer ' + accessToken;
+      authToken()
+        .then(function (token) {
+          var headers = {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken()
+          };
+          if (token) headers.Authorization = 'Bearer ' + token;
 
-      fetch(accessToken ? authenticatedPlaceUrl : placeUrl, {
-        method: 'POST',
-        headers: headers,
-        credentials: 'same-origin',
-        body: JSON.stringify(payload)
-      })
+          return fetch(token ? authenticatedPlaceUrl : placeUrl, {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+          });
+        })
         .then(function (response) {
           return response.json().then(function (data) {
             return { ok: response.ok, data: data };

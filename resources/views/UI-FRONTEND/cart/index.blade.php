@@ -111,18 +111,34 @@
         <div class="bg-background rounded-lg p-3 md:p-6">
           <h1 class="text-h4 font-semibold mb-5">Giỏ hàng</h1>
 
-          <cart-form class="block">
+          <cart-form class="block {{ ($totalQuantity ?? 0) <= 0 ? 'is-empty' : '' }}">
             <form class="cart-form" action="{{ url('/cart') }}" method="post">
               <div class="cart cart-page-grid grid gap-4 lg:grid-cols-[1fr_36rem]">
                 <div class="cart-left">
-                  <div class="cart-table">
-                    <div class="p-6 rounded bg-neutral-50 animate-pulse text-neutral-300">Đang tải giỏ hàng...</div>
-                  </div>
-                  <div class="cart-empty"></div>
+                  @include('theme.partials.cart-contents', [
+                    'cartSection' => 'table',
+                    'items' => $items ?? [],
+                    'totalQuantity' => $totalQuantity ?? 0,
+                    'totalPrice' => $totalPrice ?? 0,
+                    'appUrl' => $appUrl ?? rtrim(url('/'), '/'),
+                  ])
+                  @include('theme.partials.cart-contents', [
+                    'cartSection' => 'empty',
+                    'items' => $items ?? [],
+                    'totalQuantity' => $totalQuantity ?? 0,
+                    'totalPrice' => $totalPrice ?? 0,
+                    'appUrl' => $appUrl ?? rtrim(url('/'), '/'),
+                  ])
                 </div>
 
                 <div class="cart-right">
-                  <div class="cart-summary"></div>
+                  @include('theme.partials.cart-contents', [
+                    'cartSection' => 'summary',
+                    'items' => $items ?? [],
+                    'totalQuantity' => $totalQuantity ?? 0,
+                    'totalPrice' => $totalPrice ?? 0,
+                    'appUrl' => $appUrl ?? rtrim(url('/'), '/'),
+                  ])
                 </div>
               </div>
             </form>
@@ -134,45 +150,6 @@
 
   @include('UI-FRONTEND.common.theme-portals')
 
-  <script>
-    (function () {
-      function loadCartPage() {
-        fetch(window.themeUrl('/cart?view=data'), { credentials: 'same-origin' })
-          .then(function (response) { return response.text(); })
-          .then(function (html) {
-            var doc = new DOMParser().parseFromString(html, 'text/html');
-            var root = document.querySelector('cart-form');
-            if (!root) return;
-
-            ['.cart-table', '.cart-summary', '.cart-empty'].forEach(function (selector) {
-              var from = doc.querySelector(selector);
-              var to = root.querySelector(selector);
-              if (from && to) to.innerHTML = from.innerHTML;
-            });
-
-            root.classList.toggle('is-empty', !!doc.querySelector('.is-empty'));
-            var badge = doc.querySelector('.cart-count');
-            if (badge) {
-              document.querySelectorAll('.cart-count').forEach(function (el) {
-                el.textContent = badge.textContent.trim();
-              });
-            }
-          })
-          .catch(function () {
-            var table = document.querySelector('cart-form .cart-table');
-            if (table) {
-              table.innerHTML = '<div class="p-6 rounded bg-neutral-50 text-error">Không thể tải giỏ hàng. Vui lòng thử lại.</div>';
-            }
-          });
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadCartPage);
-      } else {
-        loadCartPage();
-      }
-    })();
-  </script>
   <script src="100/531/894/themes/1018832/assets/main.js?ww-cart-page-1"></script>
   @include('UI-FRONTEND.common.cart-scripts')
   <script src="100/531/894/themes/1018832/assets/defer-scripts.js?ww-cart-page-1" defer fetchpriority="low"></script>

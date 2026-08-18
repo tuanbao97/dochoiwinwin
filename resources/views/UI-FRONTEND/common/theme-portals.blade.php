@@ -67,14 +67,32 @@
     <div class="portal-inner animation bg-background h-full grid grid-rows-[auto_1fr_auto]">
       <div class="navigation-header pt-4 flex justify-between items-center border-b pb-3 border-neutral-50 px-4">
 
-          <a href="{{ url('/account/login') }}" title="Đăng nhập" class="header-icon-group flex gap-2 items-center account-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150 px-2 py-1 rounded-sm " data-ww-drawer-account>
+          @php
+            $wwDrawerUser = $storefrontUser ?? null;
+          @endphp
+          <a
+            href="{{ $wwDrawerUser ? url('/account/orders') : url('/account/login') }}"
+            title="{{ $wwDrawerUser ? ($wwDrawerUser['EMAIL'] ?: 'Tài khoản') : 'Đăng nhập' }}"
+            class="header-icon-group flex gap-2 items-center account-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150 px-2 py-1 rounded-sm "
+            data-ww-drawer-account
+          >
             <div class="header-icon w-[3.6rem] h-[3.6rem] p-2 rounded-sm flex items-center justify-center border border-neutral-50 overflow-hidden">
-              <img class="ww-account__drawer-avatar" alt="" data-ww-drawer-avatar hidden referrerpolicy="no-referrer">
-              <i class="icon icon-user" data-ww-drawer-icon></i>
+              <img
+                class="ww-account__drawer-avatar"
+                alt=""
+                data-ww-drawer-avatar
+                referrerpolicy="no-referrer"
+                @if($wwDrawerUser && $wwDrawerUser['AVATAR_URL']) src="{{ $wwDrawerUser['AVATAR_URL'] }}" @else hidden @endif
+              >
+              <i
+                class="icon icon-user"
+                data-ww-drawer-icon
+                @if($wwDrawerUser && $wwDrawerUser['AVATAR_URL']) hidden @endif
+              ></i>
             </div>
             <div class=" ">
               <span class="text-xs">Tài khoản</span>
-              <span class="font-semibold block" data-ww-drawer-name>Đăng nhập</span>
+              <span class="font-semibold block" data-ww-drawer-name>{{ $wwDrawerUser['FULL_NAME'] ?? 'Đăng nhập' }}</span>
             </div>
           </a>
 
@@ -83,9 +101,14 @@
               href="{{ url('/admin/san-pham/danh-sach') }}"
               class="ww-account__drawer-admin"
               data-ww-drawer-admin
-              hidden
+              @unless($wwDrawerUser && $wwDrawerUser['IS_ADMIN']) hidden @endunless
             >Quản lý</a>
-            <button type="button" class="ww-account__drawer-logout" data-ww-drawer-logout hidden>Đăng xuất</button>
+            <button
+              type="button"
+              class="ww-account__drawer-logout"
+              data-ww-drawer-logout
+              @unless($wwDrawerUser) hidden @endunless
+            >Đăng xuất</button>
           </div>
 
         <button type="button" id="PortalClose-menu-crawer" class="portal-close-button w-[3.2rem] h-[3.2rem] rounded-full border border-white text-white flex items-center justify-center active:scale-95 transition-transform hover:animate-spin" title="Đóng" aria-label="Đóng">
@@ -646,14 +669,18 @@
         </a>
       </portal-opener>
 
-      @php
-        $themeCartQty = $themeCartQty ?? collect(session('theme_storefront_cart', []))->sum(fn ($line) => (int) ($line['quantity'] ?? 0));
-      @endphp
       <portal-opener class="cro-btn-item cro-btn-item--cart w-auto flex-shrink-0 flex-grow-0 h-full py-0.5 px-0.5 text-foreground h-full flex flex-col justify-center items-center gap-0.5" style="order:2">
-        <a class="w-full h-full flex flex-col justify-center items-center gap-0.5" title="Giỏ hàng" href="{{ url('/cart') }}" data-portal="#cart-drawer" role="button">
+        @php $wwCartUser = $storefrontUser ?? null; @endphp
+        <a
+          class="w-full h-full flex flex-col justify-center items-center gap-0.5"
+          title="{{ $wwCartUser ? 'Giỏ hàng' : 'Đăng nhập để xem giỏ hàng' }}"
+          href="{{ $wwCartUser ? url('/cart') : storefrontLoginUrl(url('/cart')) }}"
+          @if($wwCartUser) data-portal="#cart-drawer" @endif
+          role="button"
+        >
           <div class="w-4 h-4 relative flex items-center justify-center">
             <i class="icon icon-cart cro-btn-cart-icon" aria-hidden="true"></i>
-            <span class="cart-count flex items-center count_item count_item_pr justify-center rounded-full absolute font-semibold"><span class="cart-count__num">{{ $themeCartQty }}</span></span>
+            <span class="cart-count flex items-center count_item count_item_pr justify-center rounded-full absolute font-semibold"><span class="cart-count__num">{{ storefrontCartQuantity() }}</span></span>
           </div>
           <div class="text-ellipsis overflow-hidden max-w-full text-xs text-center line-clamp-1">Giỏ hàng</div>
         </a>

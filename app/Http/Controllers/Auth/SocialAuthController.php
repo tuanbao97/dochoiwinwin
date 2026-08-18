@@ -6,7 +6,9 @@ use App\Enum\AppConstant;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSocialAccount;
+use App\Support\StorefrontIdentity;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -18,18 +20,17 @@ class SocialAuthController extends Controller
 {
     private const PROVIDERS = ['google', 'facebook'];
 
-    public function redirect(string $provider): RedirectResponse
+    private const REDIRECT_SESSION_KEY = 'storefront_login_redirect';
+
+    public function __construct(private readonly StorefrontIdentity $identity) {}
+
+    public function redirect(string $provider, Request $request): RedirectResponse
     {
         try {
             $this->ensureProviderIsAvailable($provider);
+            $this->rememberRedirectTarget($request);
 
-            $driver = Socialite::driver($provider);
-
-            if ($provider === 'facebook') {
-                $driver->scopes(['email']);
-            }
-
-            return $driver->redirect();
+            return $this->socialiteDriver($provider)->redirect();
         } catch (Throwable $e) {
             return redirect('/account/login')->with('social_error', $e->getMessage());
         }
@@ -39,13 +40,13 @@ class SocialAuthController extends Controller
     {
         try {
             $this->ensureProviderIsAvailable($provider);
-            $socialUser = Socialite::driver($provider)->user();
+            $socialUser = $this->socialiteDriver($provider)->user();
             $providerUserId = trim((string) $socialUser->getId());
-            $email = Str::lower(trim((string) $socialUser->getEmail()));
+            $email = $this->resolveSocialEmail($provider, $socialUser, $providerUserId);
 
-            if ($providerUserId === '' || $email === '') {
+            if ($providerUserId === '') {
                 throw new RuntimeException(
-                    'Tài khoản '.$this->providerLabel($provider).' chưa cung cấp email. Vui lòng cấp quyền email và thử lại.'
+                    'Không lấy được tài khoản '.$this->providerLabel($provider).'. Vui lòng thử lại.'
                 );
             }
 
@@ -88,6 +89,8 @@ class SocialAuthController extends Controller
                     throw new RuntimeException('Tài khoản đang bị khóa. Vui lòng liên hệ Đồ Chơi Win Win.');
                 }
 
+                $this->syncStorefrontEmail($user, $email);
+
                 $roleId = $this->ensureStorefrontUserRole();
                 $this->ensureStorefrontUserTitle($user, $roleId, $provider);
 
@@ -109,9 +112,12 @@ class SocialAuthController extends Controller
 
             $accessToken = $user->createToken('Storefront '.$this->providerLabel($provider))->accessToken;
 
+            // Mở phiên ngay tại máy chủ để trang sau render sẵn thông tin đăng nhập.
+            $this->identity->login($user, request());
+
             return view('UI-FRONTEND.account.social-auth-complete', [
                 'accessToken' => $accessToken,
-                'redirectUrl' => url('/'),
+                'redirectUrl' => $this->redirectTarget(),
             ]);
         } catch (Throwable $e) {
             Log::warning('Social login failed', [
@@ -123,6 +129,36 @@ class SocialAuthController extends Controller
         }
     }
 
+    /**
+     * Ghi nhớ trang khách đang đứng để quay lại đúng chỗ sau khi đăng nhập.
+     */
+    private function rememberRedirectTarget(Request $request): void
+    {
+        $target = trim((string) ($request->query('redirect') ?: $request->headers->get('referer', '')));
+        $host = parse_url($target, PHP_URL_HOST);
+
+        if ($target === '' || ($host !== null && $host !== $request->getHost())) {
+            $request->session()->forget(self::REDIRECT_SESSION_KEY);
+
+            return;
+        }
+
+        if (str_contains($target, '/account/login')) {
+            $request->session()->forget(self::REDIRECT_SESSION_KEY);
+
+            return;
+        }
+
+        $request->session()->put(self::REDIRECT_SESSION_KEY, $target);
+    }
+
+    private function redirectTarget(): string
+    {
+        $target = (string) session()->pull(self::REDIRECT_SESSION_KEY, '');
+
+        return $target !== '' ? $target : url('/');
+    }
+
     private function ensureProviderIsAvailable(string $provider): void
     {
         if (! in_array($provider, self::PROVIDERS, true)) {
@@ -132,9 +168,71 @@ class SocialAuthController extends Controller
         $config = config('services.'.$provider, []);
         if (blank($config['client_id'] ?? null) || blank($config['client_secret'] ?? null)) {
             throw new RuntimeException(
-                'Đăng nhập '.$this->providerLabel($provider).' chưa được cấu hình trên máy chủ.'
+                'Đăng nhập '.$this->providerLabel($provider).' chưa gắn App ID/Secret trên máy chủ.'
             );
         }
+    }
+
+    /**
+     * Facebook Login: chỉ xin name/email/ảnh. Field gender/link hay làm Graph API trả lỗi.
+     */
+    private function socialiteDriver(string $provider)
+    {
+        $driver = Socialite::driver($provider);
+
+        if ($provider === 'facebook') {
+            $driver
+                ->scopes(['public_profile', 'email'])
+                ->fields(['name', 'email', 'picture.type(large)'])
+                ->reRequest();
+
+            if (app()->isLocal()) {
+                $driver->stateless();
+            }
+        }
+
+        return $driver;
+    }
+
+    private function resolveSocialEmail(string $provider, object $socialUser, string $providerUserId): string
+    {
+        $email = Str::lower(trim((string) $socialUser->getEmail()));
+        if ($email !== '') {
+            return $email;
+        }
+
+        if ($provider === 'facebook' && $providerUserId !== '') {
+            return 'fb.'.$providerUserId.'@noreply.dochoiwinwin.com';
+        }
+
+        throw new RuntimeException(
+            'Tài khoản '.$this->providerLabel($provider).' chưa cung cấp email. Vui lòng cấp quyền email và thử lại.'
+        );
+    }
+
+    private function syncStorefrontEmail(User $user, string $email): void
+    {
+        if ($email === '' || str_contains($email, '@noreply.dochoiwinwin.com')) {
+            return;
+        }
+
+        $current = Str::lower(trim((string) $user->EMAIL));
+        if ($current === $email || ! str_contains($current, '@noreply.dochoiwinwin.com')) {
+            return;
+        }
+
+        $taken = User::query()
+            ->where('ID', '!=', $user->ID)
+            ->where('STATUS', AppConstant::STATUS_USING)
+            ->whereRaw('LOWER(EMAIL) = ?', [$email])
+            ->exists();
+        if ($taken) {
+            return;
+        }
+
+        $user->EMAIL = $email;
+        $user->USERNAME = $email;
+        $user->save();
     }
 
     private function ensureStorefrontUserRole(): int

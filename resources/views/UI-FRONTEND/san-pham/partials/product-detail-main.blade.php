@@ -766,6 +766,10 @@
   }
 
   function submitDealCombo(elem) {
+    if (window.wwAuth && !window.wwAuth.user) {
+      window.location.href = @json(storefrontLoginUrl(url()->current()));
+      return;
+    }
     $(elem).prop("disabled", true);
     var success = false;
     var variantIds = [];

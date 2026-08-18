@@ -32,7 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Middleware toàn cục cho web và các route khác
         $middleware->web(append: [
             \App\Http\Middleware\Cors::class,
-            \App\Http\Middleware\ForceJsonResponse::class
+            \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\ShareStorefrontIdentityMiddleware::class,
         ]);
 
         $middleware->group('api', [

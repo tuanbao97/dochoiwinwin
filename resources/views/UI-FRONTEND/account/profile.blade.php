@@ -28,30 +28,29 @@
             <p class="text-neutral-200 mb-0">Thông tin này sẽ tự động điền khi bạn đặt hàng lần sau.</p>
           </div>
 
-          <div class="ww-profile__loading" data-profile-loading>Đang tải thông tin…</div>
           <div class="ww-profile__message" data-profile-message hidden></div>
 
-          <form class="ww-profile__form" data-profile-form hidden>
+          <form class="ww-profile__form" data-profile-form>
             <div>
               <label for="profile-full-name">Họ và tên <span class="text-error">*</span></label>
-              <input id="profile-full-name" name="FULL_NAME" class="form-input w-full rounded border-neutral-50" autocomplete="name" required>
+              <input id="profile-full-name" name="FULL_NAME" class="form-input w-full rounded border-neutral-50" autocomplete="name" required value="{{ $storefrontUser['FULL_NAME'] ?? '' }}">
               <span class="ww-profile__error" data-error="FULL_NAME"></span>
             </div>
             <div class="ww-profile__grid">
               <div>
                 <label for="profile-phone">Số điện thoại <span class="text-error">*</span></label>
-                <input id="profile-phone" name="PHONE" class="form-input w-full rounded border-neutral-50" autocomplete="tel" inputmode="tel" required>
+                <input id="profile-phone" name="PHONE" class="form-input w-full rounded border-neutral-50" autocomplete="tel" inputmode="tel" required value="{{ $storefrontUser['PHONE'] ?? '' }}">
                 <span class="ww-profile__error" data-error="PHONE"></span>
               </div>
               <div>
                 <label for="profile-email">Email</label>
-                <input id="profile-email" name="EMAIL" type="email" class="form-input w-full rounded border-neutral-50" readonly>
+                <input id="profile-email" name="EMAIL" type="email" class="form-input w-full rounded border-neutral-50" readonly value="{{ $storefrontUser['EMAIL'] ?? '' }}">
                 <small>Email đăng nhập không thể thay đổi tại đây.</small>
               </div>
             </div>
             <div>
               <label for="profile-address">Địa chỉ nhận hàng <span class="text-error">*</span></label>
-              <textarea id="profile-address" name="ADDRESS" rows="4" class="form-textarea w-full rounded border-neutral-50" autocomplete="street-address" required></textarea>
+              <textarea id="profile-address" name="ADDRESS" rows="4" class="form-textarea w-full rounded border-neutral-50" autocomplete="street-address" required>{{ $storefrontUser['ADDRESS'] ?? '' }}</textarea>
               <span class="ww-profile__error" data-error="ADDRESS"></span>
             </div>
             <button type="submit" class="btn bg-primary text-white font-semibold" data-profile-submit>Lưu thông tin</button>
@@ -81,20 +80,22 @@
 
   <script>
   (function () {
-    var loginUrl = @json(url('/account/login'));
     var apiUrl = @json(url('/api/auth/storefront-profile'));
     var form = document.querySelector('[data-profile-form]');
-    var loading = document.querySelector('[data-profile-loading]');
     var message = document.querySelector('[data-profile-message]');
     var submit = document.querySelector('[data-profile-submit]');
-    var token = null;
-    try { token = localStorage.getItem('ACCESS_TOKEN'); } catch (e) {}
-    if (!token) {
-      window.location.replace(loginUrl);
-      return;
+
+    // Máy chủ đã chặn khách chưa đăng nhập, ở đây chỉ cần token để gọi API lưu.
+    function authToken() {
+      if (window.wwAuth && window.wwAuth.ensureToken) return window.wwAuth.ensureToken();
+      try {
+        return Promise.resolve(localStorage.getItem('ACCESS_TOKEN'));
+      } catch (e) {
+        return Promise.resolve(null);
+      }
     }
 
-    function headers() {
+    function headers(token) {
       return {
         'Authorization': 'Bearer ' + token,
         'Accept': 'application/json',
@@ -115,26 +116,6 @@
       form.ADDRESS.value = user.ADDRESS || '';
     }
 
-    fetch(apiUrl, { headers: headers() })
-      .then(function (response) {
-        if (response.status === 401) {
-          window.location.replace(loginUrl);
-          throw new Error('unauthenticated');
-        }
-        if (!response.ok) throw new Error('Không thể tải thông tin cá nhân.');
-        return response.json();
-      })
-      .then(function (payload) {
-        fill(payload.DATAS || {});
-        loading.hidden = true;
-        form.hidden = false;
-      })
-      .catch(function (error) {
-        if (error.message === 'unauthenticated') return;
-        loading.hidden = true;
-        showMessage(error.message, false);
-      });
-
     form.addEventListener('submit', function (event) {
       event.preventDefault();
       message.hidden = true;
@@ -142,15 +123,18 @@
       submit.disabled = true;
       submit.textContent = 'Đang lưu…';
 
-      fetch(apiUrl, {
-        method: 'PUT',
-        headers: headers(),
-        body: JSON.stringify({
-          FULL_NAME: form.FULL_NAME.value,
-          PHONE: form.PHONE.value,
-          ADDRESS: form.ADDRESS.value
+      authToken()
+        .then(function (token) {
+          return fetch(apiUrl, {
+            method: 'PUT',
+            headers: headers(token),
+            body: JSON.stringify({
+              FULL_NAME: form.FULL_NAME.value,
+              PHONE: form.PHONE.value,
+              ADDRESS: form.ADDRESS.value
+            })
+          });
         })
-      })
         .then(function (response) {
           return response.json().then(function (payload) {
             return { ok: response.ok, payload: payload };
@@ -168,6 +152,10 @@
           }
           fill(result.payload.DATAS || {});
           showMessage('Đã lưu thông tin cá nhân.', true);
+          if (window.wwAuth && window.wwAuth.paint && result.payload.DATAS) {
+            window.wwAuth.user = Object.assign({}, window.wwAuth.user || {}, result.payload.DATAS);
+            window.wwAuth.paint(window.wwAuth.user);
+          }
         })
         .catch(function (error) {
           showMessage(error.message || 'Không thể lưu thông tin.', false);

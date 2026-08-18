@@ -302,10 +302,17 @@ function loadCartRecommendations() {
 
 window.__wwLoadCartRecommendations = loadCartRecommendations;
 
+function syncCartBadgeFromDom() {
+  const el = document.querySelector(".cart-count__num") || document.querySelector(".cart-count");
+  if (!el) return;
+  const qty = String(el.textContent || "").trim();
+  if (qty !== "") syncCartBadge(qty);
+}
+
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => syncCartBadge());
+  document.addEventListener("DOMContentLoaded", syncCartBadgeFromDom);
 } else {
-  syncCartBadge();
+  syncCartBadgeFromDom();
 }
 
 function isCartPathname() {
@@ -835,8 +842,11 @@ __wwBootCartComponents(() => {
     show(opener) {
       try {
         if (!this.inited) {
-          if (this.cartForm && typeof this.cartForm.updateCart === "function") {
+          const alreadyRendered = !!this.querySelector(".cart-item, .cart-empty img");
+          if (!alreadyRendered && this.cartForm && typeof this.cartForm.updateCart === "function") {
             this.cartForm.updateCart();
+          } else if (typeof window.__wwLoadCartRecommendations === "function") {
+            window.__wwLoadCartRecommendations();
           }
           this.inited = true;
         } else if (typeof window.__wwLoadCartRecommendations === "function") {

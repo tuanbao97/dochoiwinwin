@@ -1,5 +1,7 @@
 <?php
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\Auth\StorefrontAccountPageController;
+use App\Http\Controllers\Auth\StorefrontSessionController;
 use App\Http\Controllers\ThemeStorefrontController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\Cors;
@@ -8,6 +10,11 @@ use App\Service\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+
+Route::post('/account/login', [StorefrontSessionController::class, 'login'])->name('storefront.session.login');
+Route::post('/account/session', [StorefrontSessionController::class, 'store'])->name('storefront.session.store');
+Route::post('/account/session/token', [StorefrontSessionController::class, 'token'])->name('storefront.session.token');
+Route::post('/account/logout', [StorefrontSessionController::class, 'destroy'])->name('storefront.session.destroy');
 
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])
     ->whereIn('provider', ['google', 'facebook'])
@@ -59,15 +66,10 @@ Route::middleware(['count-client-view-website'])->group(function() {
     Route::get('video', [ThemeStorefrontController::class, 'videoList']);
 
     // Account
-    Route::get('account/login', function () {
-        return view('UI-FRONTEND/account/login', ['productId' => 0]);
-    });
-    Route::get('account/orders', function () {
-        return view('UI-FRONTEND/account/orders', ['productId' => 0]);
-    });
-    Route::get('account/profile', function () {
-        return view('UI-FRONTEND/account/profile', ['productId' => 0]);
-    });
+    Route::get('account/login', [StorefrontAccountPageController::class, 'login']);
+    Route::get('account/login/quan-tri', [StorefrontAccountPageController::class, 'staffLogin']);
+    Route::get('account/orders', [StorefrontAccountPageController::class, 'orders']);
+    Route::get('account/profile', [StorefrontAccountPageController::class, 'profile']);
 
     // API giỏ hàng & sản phẩm theme UI-FRONTEND
     // Dùng /cart/add (không .js) vì nginx production thường trả 404 cho URL dạng *.js như file tĩnh.
