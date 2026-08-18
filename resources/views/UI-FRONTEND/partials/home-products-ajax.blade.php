@@ -399,10 +399,7 @@
     return html;
   }
 
-  /** Số sản phẩm trên 1 section trang chủ: khớp số cột lưới để không bị ô trống cuối hàng. */
   function homeCategoryProductLimit() {
-    var w = window.innerWidth || document.documentElement.clientWidth || 0;
-    if (w >= 768 && w < 1024) return 12;
     return 10;
   }
 
