@@ -50,13 +50,13 @@
             @if ($query !== '')
               <p class="text-neutral-400 text-sm md:text-base">
                 Từ khóa: <strong class="text-foreground">&ldquo;{{ $query }}&rdquo;</strong>
-                @if ($total > 0)
-                  — <span id="search-total-count">{{ number_format($total, 0, ',', '.') }}</span> sản phẩm
-                @endif
+                <span data-search-total-wrap class="{{ $total > 0 ? '' : 'hidden' }}">
+                  — <span id="search-total-count">{{ $total > 0 ? number_format($total, 0, ',', '.') : '' }}</span> sản phẩm
+                </span>
               </p>
-            @elseif ($total > 0)
-              <p class="text-neutral-400 text-sm md:text-base">
-                <span id="search-total-count">{{ number_format($total, 0, ',', '.') }}</span> sản phẩm
+            @else
+              <p class="text-neutral-400 text-sm md:text-base {{ $total > 0 ? '' : 'hidden' }}" data-search-total-wrap>
+                <span id="search-total-count">{{ $total > 0 ? number_format($total, 0, ',', '.') : '' }}</span> sản phẩm
               </p>
             @endif
           </div>

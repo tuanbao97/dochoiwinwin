@@ -12,9 +12,23 @@
     return digits || '';
   }
 
+  function toCardThumb(url, size) {
+    if (!url) return '';
+    var u = String(url);
+    if (!/dktcdn\.net/i.test(u)) return u;
+    var s = size || 'large';
+    if (!/^(small|compact|medium|large|grande)$/.test(s)) s = 'large';
+    if (/\/thumb\/[a-z]+\//i.test(u)) {
+      return u.replace(/\/thumb\/[a-z]+\//i, '/thumb/' + s + '/');
+    }
+    return u.replace(/(https?:)?(\/\/)?([^/]*dktcdn\.net)\//i, function (_, proto, slashes, host) {
+      return (proto || 'https:') + (slashes || '//') + host + '/thumb/' + s + '/';
+    });
+  }
+
   function appendUpdTime(url, updDt) {
     if (!url) return '';
-    if (/^https?:\/\//i.test(String(url)) && String(url).indexOf('bizweb.dktcdn.net') !== -1) {
+    if (/^https?:\/\//i.test(String(url)) && /dktcdn\.net/i.test(String(url))) {
       return url; // CDN Sapo đã có ?v= — không gắn upd_time
     }
     var bust = toUpdTime(updDt);
@@ -33,6 +47,86 @@
     var base = (appUrl != null && appUrl !== '') ? String(appUrl).replace(/\/+$/, '') : '';
     var url = base ? (base + '/' + p.replace(/^\/+/, '')) : p;
     return appendUpdTime(url, updDt);
+  }
+
+  /** URL ảnh card: CDN thumb/large, local giữ nguyên */
+  function cardMediaUrl(pathRel, updDt, appUrl) {
+    return toCardThumb(resolveMediaUrl(pathRel, updDt, appUrl), 'large');
+  }
+
+  var cardImgIo = null;
+
+  function activateLazyCardImages(root) {
+    var scope = root || document;
+    var imgs = scope.querySelectorAll
+      ? scope.querySelectorAll('img.ww-card-img-lazy[data-src]:not([data-img-loaded])')
+      : [];
+    if (!imgs.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      imgs.forEach(function (img) {
+        var url = img.getAttribute('data-src');
+        if (url) img.src = url;
+        var srcset = img.getAttribute('data-srcset');
+        if (srcset) img.setAttribute('srcset', srcset);
+        var source = img.parentNode && img.parentNode.querySelector
+          ? img.parentNode.querySelector('source[data-srcset]')
+          : null;
+        if (source) {
+          source.setAttribute('srcset', source.getAttribute('data-srcset'));
+        }
+        img.setAttribute('data-img-loaded', '1');
+      });
+      return;
+    }
+
+    if (!cardImgIo) {
+      cardImgIo = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            var img = entry.target;
+            var url = img.getAttribute('data-src');
+            if (url) img.src = url;
+            var picture = img.parentNode;
+            var source = picture && picture.querySelector
+              ? picture.querySelector('source[data-srcset]')
+              : null;
+            if (source) {
+              source.setAttribute('srcset', source.getAttribute('data-srcset') || '');
+            }
+            img.setAttribute('data-img-loaded', '1');
+            cardImgIo.unobserve(img);
+          });
+        },
+        { rootMargin: '400px 0px', threshold: 0.01 }
+      );
+    }
+
+    imgs.forEach(function (img) {
+      if (img.getAttribute('data-img-watching') === '1') return;
+      img.setAttribute('data-img-watching', '1');
+      cardImgIo.observe(img);
+    });
+  }
+
+  function bindHoverCardImages() {
+    if (w.__wwCardHoverBound) return;
+    w.__wwCardHoverBound = true;
+    document.addEventListener(
+      'mouseover',
+      function (e) {
+        var t = e.target;
+        if (!t || !t.closest) return;
+        var card = t.closest('card-product');
+        if (!card) return;
+        var img = card.querySelector('img.ww-card-hover-img[data-hover-src]');
+        if (!img) return;
+        img.src = img.getAttribute('data-hover-src');
+        img.removeAttribute('data-hover-src');
+      },
+      true
+    );
   }
 
   /** Ưu tiên UPD_DT entity (sản phẩm/tin), fallback UPD_DT ảnh */
@@ -159,12 +253,17 @@
     toUpdTime: toUpdTime,
     appendUpdTime: appendUpdTime,
     resolveMediaUrl: resolveMediaUrl,
+    cardMediaUrl: cardMediaUrl,
+    toCardThumb: toCardThumb,
+    activateLazyCardImages: activateLazyCardImages,
+    bindHoverCardImages: bindHoverCardImages,
     pickUpdTime: pickUpdTime,
     basenameFromUrl: basenameFromUrl,
     downloadImageFile: downloadImageFile,
     patchSpotlightDownload: patchSpotlightDownload,
   };
 
+  bindHoverCardImages();
   ensureSpotlightDownloadPatched();
   if (typeof w.loadDefer === 'function') {
     var _loadDefer = w.loadDefer;

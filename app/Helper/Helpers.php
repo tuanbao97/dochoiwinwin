@@ -665,6 +665,39 @@ use Illuminate\Support\Facades\DB;
     }
 
     /**
+     * Ảnh card cửa hàng: dùng bản thumb CDN (Sapo/Bizweb) thay vì file gốc.
+     * size: small | compact | medium | large | grande — large (~480px) đủ cho lưới 2–5 cột.
+     */
+    if (!function_exists('storefrontCdnCardThumb')) {
+        function storefrontCdnCardThumb(?string $url, string $size = 'large'): string
+        {
+            if ($url === null || $url === '') {
+                return '';
+            }
+
+            $allowed = ['small', 'compact', 'medium', 'large', 'grande'];
+            if (! in_array($size, $allowed, true)) {
+                $size = 'large';
+            }
+
+            if (! preg_match('#dktcdn\.net#i', $url)) {
+                return $url;
+            }
+
+            if (preg_match('#/thumb/[a-z]+/#i', $url)) {
+                return (string) preg_replace('#/thumb/[a-z]+/#i', '/thumb/'.$size.'/', $url, 1);
+            }
+
+            return (string) preg_replace(
+                '#(https?:)?(//)?([^/]*dktcdn\.net)/#i',
+                '$1$2$3/thumb/'.$size.'/',
+                $url,
+                1
+            );
+        }
+    }
+
+    /**
      * URL ảnh storefront + ?upd_time= từ UPD_DT (bust cache khi BE lưu).
      */
     if (!function_exists('storefrontImageUrl')) {

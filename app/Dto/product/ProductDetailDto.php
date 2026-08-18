@@ -39,6 +39,9 @@ class ProductDetailDto implements \JsonSerializable
     public ?bool $isProductVip;
     public ?string $productTags;
 
+    /** List API cửa hàng: JSON gọn cho card, không gửi mô tả/ATTR. */
+    public bool $storefrontCardList = false;
+
     /* @var array<DocumentStorageDetailDto>|null */
     public ?array $danhSachHinhAnhDaiDien;
 
@@ -284,6 +287,10 @@ class ProductDetailDto implements \JsonSerializable
     }
     
     public function jsonSerialize(): mixed {
+        if ($this->storefrontCardList) {
+            return $this->jsonSerializeStorefrontCard();
+        }
+
         return [
             'ID' => $this->id
             , 'UUID' => $this->uuid
@@ -394,6 +401,95 @@ class ProductDetailDto implements \JsonSerializable
             , 'ATTR49' => $this->attr49
             , 'ATTR50' => $this->attr50
         ];
+    }
+
+    /**
+     * Payload card: id, tên, giá, 2 ảnh, biến thể tối thiểu.
+     *
+     * @return array<string, mixed>
+     */
+    private function jsonSerializeStorefrontCard(): array
+    {
+        $category = null;
+        if ($this->danhMucSanPham instanceof CategoryPDetailDto) {
+            $category = ['ID' => $this->danhMucSanPham->id];
+        } elseif (is_array($this->danhMucSanPham) && isset($this->danhMucSanPham['ID'])) {
+            $category = ['ID' => $this->danhMucSanPham['ID']];
+        }
+
+        $variants = [];
+        foreach ($this->danhSachBienThe ?? [] as $variant) {
+            if ($variant instanceof \App\Dto\productVariant\ProductVariantDetailDto) {
+                $variants[] = [
+                    'ID' => $variant->id,
+                    'GIA_BAN' => $variant->productPrice,
+                    'GIA_GOC' => $variant->productOriginalPrice,
+                    'SO_LUONG_TON' => $variant->inventoryQuantity,
+                    'CON_HANG' => $variant->isInStock,
+                ];
+                continue;
+            }
+            if (is_array($variant)) {
+                $variants[] = [
+                    'ID' => $variant['ID'] ?? null,
+                    'GIA_BAN' => $variant['GIA_BAN'] ?? null,
+                    'GIA_GOC' => $variant['GIA_GOC'] ?? null,
+                    'SO_LUONG_TON' => $variant['SO_LUONG_TON'] ?? null,
+                    'CON_HANG' => $variant['CON_HANG'] ?? null,
+                ];
+            }
+        }
+
+        return [
+            'ID' => $this->id,
+            'TEN_SAN_PHAM' => $this->name,
+            'TEN_SAN_PHAM_SLUG' => $this->nameSlug,
+            'GIA_CA' => $this->giaCa,
+            'GIA_HIEN_THI' => $this->giaHienThi,
+            'GIA_GOC' => $this->giaGoc,
+            'IS_GIA_CA_LIEN_HE' => $this->isGiaCaLienHe,
+            'UPD_DT' => $this->updDt,
+            'DANH_SACH_HINH_ANH_DAI_DIEN' => $this->slimCardImages($this->danhSachHinhAnhDaiDien, 1),
+            'DANH_SACH_HINH_ANH' => $this->slimCardImages($this->danhSachHinhAnh, 1),
+            'DANH_MUC_SAN_PHAM' => $category,
+            'DANH_SACH_BIEN_THE' => $variants,
+        ];
+    }
+
+    /**
+     * @param  array<int, mixed>|null  $images
+     * @return array<int, array<string, mixed>>
+     */
+    private function slimCardImages(?array $images, int $limit): array
+    {
+        $out = [];
+        foreach (array_slice($images ?? [], 0, $limit) as $img) {
+            if ($img instanceof DocumentStorageDetailDto) {
+                $path = storefrontCdnCardThumb((string) ($img->path ?? ''));
+                $out[] = [
+                    'PATH' => $path !== '' ? $path : $img->path,
+                    'DIRECTORY' => $img->directory,
+                    'NAME' => $img->name,
+                    'IMAGE_THUMNAIL' => $img->imageThumnail,
+                    'ASPECT_RATIO' => $img->aspectRatio ?: '1x1',
+                    'UPD_DT' => $img->updDt,
+                ];
+                continue;
+            }
+            if (is_array($img)) {
+                $path = storefrontCdnCardThumb((string) ($img['PATH'] ?? ''));
+                $out[] = [
+                    'PATH' => $path !== '' ? $path : ($img['PATH'] ?? null),
+                    'DIRECTORY' => $img['DIRECTORY'] ?? null,
+                    'NAME' => $img['NAME'] ?? null,
+                    'IMAGE_THUMNAIL' => $img['IMAGE_THUMNAIL'] ?? null,
+                    'ASPECT_RATIO' => $img['ASPECT_RATIO'] ?? '1x1',
+                    'UPD_DT' => $img['UPD_DT'] ?? null,
+                ];
+            }
+        }
+
+        return $out;
     }
 
 }
