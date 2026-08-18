@@ -33,11 +33,9 @@
         <section class="section section-main-search" style="--section-margin: 0px 0px 40px; --section-margin-mb: 0px 0px 20px">
           <div class="bg-background rounded-lg px-3 py-4 md:p-6 mb-4 text-center">
             <h1 class="text-h4 font-semibold mb-2">Tất cả sản phẩm</h1>
-            @if ($total > 0)
-              <p class="text-neutral-400 text-sm md:text-base">
-                <span id="search-total-count">{{ number_format($total, 0, ',', '.') }}</span> sản phẩm
-              </p>
-            @endif
+            <p class="text-neutral-400 text-sm md:text-base {{ $total > 0 ? '' : 'hidden' }}" data-search-total-wrap>
+              <span id="search-total-count">{{ $total > 0 ? number_format($total, 0, ',', '.') : '' }}</span> sản phẩm
+            </p>
           </div>
 
           <div class="ww-search-layout">

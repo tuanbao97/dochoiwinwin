@@ -27,68 +27,24 @@
   var canHover =
     window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  var cardImgIo = null;
-
-  function activateLazyCardImages(root) {
-    var scope = root || document;
-    if (root && root.nodeType === 1 && root.matches && root.matches('card-product')) {
-      activateLazyCardImagesInScope(root);
-      return;
-    }
-    activateLazyCardImagesInScope(scope);
-  }
-
-  function activateLazyCardImagesInScope(scope) {
-    var imgs = scope.querySelectorAll
-      ? scope.querySelectorAll('img.ww-card-img-lazy[data-src]:not([data-img-loaded])')
-      : [];
-    if (!imgs.length) return;
-
-    if (!('IntersectionObserver' in window)) {
-      imgs.forEach(function (img) {
-        var url = img.getAttribute('data-src');
-        if (url) img.src = url;
-        img.setAttribute('data-img-loaded', '1');
-      });
-      return;
-    }
-
-    if (!cardImgIo) {
-      cardImgIo = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (entry) {
-            if (!entry.isIntersecting) return;
-            var img = entry.target;
-            var url = img.getAttribute('data-src');
-            if (url) img.src = url;
-            img.setAttribute('data-img-loaded', '1');
-            cardImgIo.unobserve(img);
-          });
-        },
-        { rootMargin: '400px 0px', threshold: 0.01 }
-      );
-    }
-
-    imgs.forEach(function (img) {
-      if (img.getAttribute('data-img-watching') === '1') return;
-      img.setAttribute('data-img-watching', '1');
-      cardImgIo.observe(img);
-    });
-  }
-
   function renderProductList(container, rows) {
     var html = '';
     for (var i = 0; i < rows.length; i++) {
-      html += buildCardHtml(rows[i]);
+      html += buildCardHtml(rows[i], { eager: i < 4 });
     }
     container.innerHTML = html;
-    activateLazyCardImages(container);
+    if (window.wwStorefrontImage && window.wwStorefrontImage.activateLazyCardImages) {
+      window.wwStorefrontImage.activateLazyCardImages(container);
+    }
   }
 
   if (!cfg.query && !cfg.categoryId && !cfg.listAll && !cfg.productHot && !cfg.productVip) return;
 
   function joinAppUrl(pathRel, updDt) {
     if (!pathRel) return '';
+    if (window.wwStorefrontImage && window.wwStorefrontImage.cardMediaUrl) {
+      return window.wwStorefrontImage.cardMediaUrl(pathRel, updDt, cfg.appUrl);
+    }
     if (window.wwStorefrontImage && window.wwStorefrontImage.resolveMediaUrl) {
       return window.wwStorefrontImage.resolveMediaUrl(pathRel, updDt, cfg.appUrl);
     }
@@ -235,7 +191,7 @@
     return '<input type="hidden" name="_token" value="' + escapeHtml(m.content) + '">';
   }
 
-  function buildCardHtml(p) {
+  function buildCardHtml(p, opts) {
     var title = p.TEN_SAN_PHAM || 'Sản phẩm';
     var href = detailUrl(p);
     var pref = prefetchPath(href);
@@ -289,13 +245,9 @@
       : '<div class="ww-card-soldout" aria-hidden="true"><span>Hết hàng</span></div>';
 
     var hoverPictures = hasHover
-      ? '<picture><source media="(max-width: 600px)" srcset="' +
+      ? '<img class="card-product__image-2 ww-card-hover-img max-h-full w-auto object-contain opacity-0 scale-[var(--image-scale)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[0] group-hover/card:opacity-100 transition duration-300 ease-out" width="480" height="480" decoding="async" alt="" style="--image-scale:1" data-hover-src="' +
         escapeHtml(hov) +
-        '"><img class="card-product__image-2 max-h-full w-auto object-contain opacity-0 scale-[var(--image-scale)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[0] group-hover/card:opacity-100 transition duration-300 ease-out" width="480" height="480" loading="lazy" style="--image-scale:1" src="' +
-        escapeHtml(hov) +
-        '" alt="' +
-        escapeHtml(title) +
-        '"></picture>'
+        '">'
       : '';
 
     return (
@@ -338,16 +290,30 @@
       escapeHtml(title) +
       '">' +
       '<div class="card-product__badges absolute top-2 left-2 z-10 flex items-center gap-2"></div>' +
-      '<picture><source media="(max-width: 600px)" data-srcset="' +
-      escapeHtml(avatarUrl(p)) +
-      '">' +
-      '<img class="' +
-      imgMainClass +
-      ' ww-card-img-lazy" width="480" height="480" decoding="async" style="--image-scale:1" data-src="' +
-      escapeHtml(avatarUrl(p)) +
-      '" alt="' +
-      escapeHtml(title) +
-      '"></picture>' +
+      (function () {
+        var imgUrl = avatarUrl(p);
+        var eager = !!(opts && opts.eager);
+        if (eager) {
+          return (
+            '<img class="' +
+            imgMainClass +
+            '" width="480" height="480" decoding="async" loading="eager" fetchpriority="high" sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw" style="--image-scale:1" src="' +
+            escapeHtml(imgUrl) +
+            '" alt="' +
+            escapeHtml(title) +
+            '">'
+          );
+        }
+        return (
+          '<img class="' +
+          imgMainClass +
+          ' ww-card-img-lazy" width="480" height="480" decoding="async" loading="lazy" sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 25vw" style="--image-scale:1" data-src="' +
+          escapeHtml(imgUrl) +
+          '" alt="' +
+          escapeHtml(title) +
+          '">'
+        );
+      })() +
       hoverPictures +
       soldOutOverlay +
       '</a>' +
@@ -633,6 +599,9 @@
     var el = document.getElementById('search-total-count');
     if (!el) return;
     el.textContent = formatIntViDots(total);
+    el.classList.remove('hidden');
+    var wrap = el.closest ? el.closest('[data-search-total-wrap]') : null;
+    if (wrap) wrap.classList.remove('hidden');
   }
 
   function loadSearchResults(page, shouldScroll) {

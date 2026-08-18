@@ -43,6 +43,9 @@
 
   function joinAppUrl(pathRel, updDt) {
     if (!pathRel) return '';
+    if (window.wwStorefrontImage && window.wwStorefrontImage.cardMediaUrl) {
+      return window.wwStorefrontImage.cardMediaUrl(pathRel, updDt, cfg.appUrl);
+    }
     if (window.wwStorefrontImage && window.wwStorefrontImage.resolveMediaUrl) {
       return window.wwStorefrontImage.resolveMediaUrl(pathRel, updDt, cfg.appUrl);
     }

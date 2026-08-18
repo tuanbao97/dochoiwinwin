@@ -498,18 +498,6 @@ class ThemeStorefrontController extends Controller
         $productVip = ! empty($params['productVip']);
         $listAll = ! empty($params['listAll']) || (($params['mode'] ?? '') === 'all');
 
-        $result = $this->searchProducts(
-            $query,
-            $categoryId > 0 ? [$categoryId] : [],
-            $page,
-            $perPage,
-            $boLoc,
-            $mucGia,
-            $listAll,
-            $productHot,
-            $productVip,
-            false
-        );
         $appUrl = rtrim(url('/'), '/');
         $categoryName = $categoryId > 0 ? $this->resolveCategoryName($categoryId) : '';
         if ($categoryKey === '' && $categoryId > 0) {
@@ -522,6 +510,18 @@ class ThemeStorefrontController extends Controller
         }
 
         if ($view === 'quick-search') {
+            $result = $this->searchProducts(
+                $query,
+                $categoryId > 0 ? [$categoryId] : [],
+                $page,
+                $perPage,
+                $boLoc,
+                $mucGia,
+                $listAll,
+                $productHot,
+                $productVip,
+                false
+            );
             return response()->view('UI-FRONTEND.tim-kiem.partials.quick-search-results', [
                 'query' => $query,
                 'products' => $result['products'],
@@ -531,6 +531,9 @@ class ThemeStorefrontController extends Controller
                 'categoryKey' => $categoryKey,
             ]);
         }
+
+        // Lưới sản phẩm do AJAX vẽ — không fetch list lần nữa lúc render HTML.
+        $result = ['products' => [], 'total' => -1, 'totalPages' => 0];
 
         $mode = (string) ($params['mode'] ?? '');
         if ($mode === '') {

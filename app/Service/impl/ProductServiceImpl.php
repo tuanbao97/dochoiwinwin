@@ -319,6 +319,9 @@ class ProductServiceImpl implements ProductService
         $productVip = filter_var($request->query('PRODUCT_VIP', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     
         $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($isApiPublic) {
+            $perPage = min(max(1, $perPage), 48);
+        }
 
         if ($isApiPublic && $this->useSapoStorefront()) {
             return $this->getListSanPhamFromSapo($request, $draw, $page, $perPage, $tuKhoa, $arrDanhMucSanPhamId, $arrNotInId);
@@ -339,6 +342,7 @@ class ProductServiceImpl implements ProductService
         $listProductDto = ProductMapper::mapListProductDetailFromPaginator($resultPagination->getCollection());
         if ($isApiPublic) {
             $this->attachInventoryVariants($listProductDto);
+            $this->markStorefrontCardList($listProductDto);
         }
         $resultPagination->setCollection($listProductDto);
 
@@ -392,6 +396,7 @@ class ProductServiceImpl implements ProductService
             $collectionIds = $this->resolveSapoCollectionIds($categoryIds);
             $result = $this->sapoCatalogCache->listProducts($page, $perPage, $productType, $collectionIds, $keyword);
             $mapped = SapoMapper::mapProducts($result['products']);
+            $this->markStorefrontCardList($mapped);
 
             if (is_array($arrNotInId) && $arrNotInId !== []) {
                 $exclude = array_map('intval', $arrNotInId);
@@ -623,6 +628,31 @@ class ProductServiceImpl implements ProductService
         }
 
         return false;
+    }
+
+    /**
+     * List cửa hàng chỉ cần field card — bỏ mô tả HTML / ATTR / gallery đầy đủ.
+     *
+     * @param  iterable<mixed>  $products
+     */
+    private function markStorefrontCardList(iterable $products): void
+    {
+        foreach ($products as $product) {
+            if ($product instanceof ProductDetailDto) {
+                $product->storefrontCardList = true;
+                $product->descriptionDetail = null;
+                $product->descriptionDetailOnlyText = null;
+                $product->shortDescription = null;
+                $product->danhSachVideo = [];
+                $product->danhSachFileDinhKem = [];
+                if (is_array($product->danhSachHinhAnh) && count($product->danhSachHinhAnh) > 1) {
+                    $product->danhSachHinhAnh = array_slice($product->danhSachHinhAnh, 0, 1);
+                }
+                if (is_array($product->danhSachHinhAnhDaiDien) && count($product->danhSachHinhAnhDaiDien) > 1) {
+                    $product->danhSachHinhAnhDaiDien = array_slice($product->danhSachHinhAnhDaiDien, 0, 1);
+                }
+            }
+        }
     }
 
     private function useSapoStorefront(): bool
