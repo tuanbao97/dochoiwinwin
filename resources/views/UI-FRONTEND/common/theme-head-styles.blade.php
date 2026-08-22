@@ -28,31 +28,31 @@
         font-display: swap;
       }
     </style>
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/vendors.css?1768901692132">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/vendors.css?1768901692132" media="all">
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/components.css?1768901692132">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/components.css?1768901692132" media="all">
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/icon.css?1768901692132">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/icon.css?1768901692132" media="all">
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/global.css?ww-scroll-mid-1">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/global.css?ww-scroll-mid-1" media="all">
-    <link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/custom.css?ww-grid-fill-2">
-    <link rel="stylesheet" href="100/531/894/themes/1018832/assets/custom.css?ww-grid-fill-2" media="all">
+    <link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('vendors.css') }}">
+    <link rel="stylesheet" href="{{ storefrontThemeAsset('vendors.css') }}" media="all">
+    <link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('components.css') }}">
+    <link rel="stylesheet" href="{{ storefrontThemeAsset('components.css') }}" media="all">
+    <link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('icon.css') }}">
+    <link rel="stylesheet" href="{{ storefrontThemeAsset('icon.css') }}" media="all">
+    <link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('global.css') }}">
+    <link rel="stylesheet" href="{{ storefrontThemeAsset('global.css') }}" media="all">
+    <link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('custom.css') }}">
+    <link rel="stylesheet" href="{{ storefrontThemeAsset('custom.css') }}" media="all">
     <link
       rel="stylesheet"
-      href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-variant-warn-1"
+      href="{{ storefrontThemeAsset('quickview.css') }}"
       media="print"
       onload="this.media='all'"
     >
     <link
       rel="stylesheet"
-      href="100/531/894/themes/1018832/assets/cart-drawer.css?ww-cart-suggest-4-1"
+      href="{{ storefrontThemeAsset('cart-drawer.css') }}"
       media="print"
       onload="this.media='all'"
     >
     <noscript>
       <link
-        href="100/531/894/themes/1018832/assets/quickview.css?ww-qv-variant-warn-1"
+        href="{{ storefrontThemeAsset('quickview.css') }}"
         rel="stylesheet"
         type="text/css"
         media="all"
@@ -60,7 +60,7 @@
     </noscript>
     <noscript>
       <link
-        href="100/531/894/themes/1018832/assets/cart-drawer.css?ww-cart-suggest-4-1"
+        href="{{ storefrontThemeAsset('cart-drawer.css') }}"
         rel="stylesheet"
         type="text/css"
         media="all"
@@ -339,7 +339,7 @@
       Giao diện: Đồ Chơi Win Win (tùy biến từ theme Sapo)
     -->
     <link
-      href="100/531/894/themes/1018832/assets/appcombo.css?1768901692132"
+      href="{{ storefrontThemeAsset('appcombo.css') }}"
       rel="stylesheet"
       type="text/css"
       media="all"

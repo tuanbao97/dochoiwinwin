@@ -2406,14 +2406,16 @@ top: auto!important;
 .btn--soldout:not(.hidden){
 	display:flex;
 	justify-content: center;
-	align-items: center
+	align-items: center;
+	color: #dc2626;
 }
 
 .ww-pd-stock #ww-pd-stock-label.text-success {
 	color: #16a34a;
 }
 
-.ww-pd-stock #ww-pd-stock-label.text-error {
+.ww-pd-stock #ww-pd-stock-label.text-error,
+#ww-qv-stock.text-danger {
 	color: #dc2626;
 }
 
@@ -4007,8 +4009,8 @@ body.checkout .checkout-order-item {
 .ww-card-soldout span {
 	padding: 0.5rem 1.4rem;
 	border-radius: 999px;
-	background: rgba(15, 23, 42, 0.82);
-	color: #ffffff;
+	background: rgba(255, 255, 255, 0.94);
+	color: #dc2626;
 	font-size: 1.3rem;
 	font-weight: 700;
 	letter-spacing: 0.04em;

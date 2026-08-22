@@ -64,8 +64,8 @@
 
   @include('UI-FRONTEND.video.partials.video-player-modal')
   @include('UI-FRONTEND.common.theme-portals')
-  <script src="100/531/894/themes/1018832/assets/main.js?ww-video-1" defer fetchpriority="low"></script>
+  <script src="{{ storefrontThemeAsset('main.js') }}" defer fetchpriority="low"></script>
   @include('UI-FRONTEND.common.cart-scripts')
-  <script src="100/531/894/themes/1018832/assets/defer-scripts.js?ww-video-1" defer fetchpriority="low"></script>
+  <script src="{{ storefrontThemeAsset('defer-scripts.js') }}" defer fetchpriority="low"></script>
 </body>
 </html>

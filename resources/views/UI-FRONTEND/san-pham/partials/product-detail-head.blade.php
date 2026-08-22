@@ -55,9 +55,9 @@
     >
     <link rel="preconnect" href="https://bizweb.dktcdn.net">
     <link rel="preconnect" href="https://egany.com" crossorigin="">
-    <link rel="preload" as="script" href="100/531/894/themes/1018832/assets/vendors.js?1768901692132">
-    <script src="100/531/894/themes/1018832/assets/vendors.js?1768901692132"></script>
-    <script src="100/531/894/themes/1018832/assets/jquery.js?1768901692132"></script>
+    <link rel="preload" as="script" href="{{ storefrontThemeAsset('vendors.js') }}">
+    <script src="{{ storefrontThemeAsset('vendors.js') }}"></script>
+    <script src="{{ storefrontThemeAsset('jquery.js') }}"></script>
     <script src="assets/themes_support/api.jquery.js"></script>
 
     <script>
@@ -140,7 +140,7 @@
     @include('UI-FRONTEND.common.theme-head-styles')
     <link
       rel="stylesheet"
-      href="100/531/894/themes/1018832/assets/product-detail.css?ww-pd-variants-5"
+      href="{{ storefrontThemeAsset('product-detail.css') }}"
       media="all"
     >
   </head>

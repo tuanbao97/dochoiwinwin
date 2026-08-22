@@ -1,6 +1,3 @@
-<?php 
-   $timeUpdate = config('app.cache_version'); 
-?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,39 +16,39 @@
 <meta name="keywords" content="Đồ Chơi Win Win, quản trị cửa hàng, quản lý sản phẩm, đồ chơi trẻ em">
 <!-- base:css -->
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/vendors/typicons/typicons.css') }}?v={{ $timeUpdate }}">
+	href="{{ versionedAsset('css/UI-BACKEND/vendors/typicons/typicons.css') }}">
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/vendors/css/vendor.bundle.base.css') }}?v={{ $timeUpdate }}">
+	href="{{ versionedAsset('css/UI-BACKEND/vendors/css/vendor.bundle.base.css') }}">
 <!-- endinject -->
 <!-- plugin css for this page -->
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/font-awesome/css/font-awesome.min.css') }}?v={{ $timeUpdate }}"/>
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/simple-line-icons/css/simple-line-icons.css') }}?v={{ $timeUpdate }}">
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/ti-icons/css/themify-icons.css') }}?v={{ $timeUpdate }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/font-awesome/css/font-awesome.min.css') }}"/>
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/simple-line-icons/css/simple-line-icons.css') }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/ti-icons/css/themify-icons.css') }}">
 
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/jquery-toast-plugin/jquery.toast.min.css') }}?v={{ $timeUpdate }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/jquery-toast-plugin/jquery.toast.min.css') }}">
 
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/select2/select2.min.css') }}?v={{ $timeUpdate }}">
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/select2/select2totree.css') }}?v={{ $timeUpdate }}">
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/select2-bootstrap-theme/select2-bootstrap.min.css') }}?v={{ $timeUpdate }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/select2/select2.min.css') }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/select2/select2totree.css') }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/select2-bootstrap-theme/select2-bootstrap.min.css') }}">
 
 <!-- START thư viện cropper.js -->
-<link rel="stylesheet" href="{{ asset('js/UI-BACKEND/vendors/jquery-cropper-js/dist/cropper.css') }}?v={{ $timeUpdate }}">
+<link rel="stylesheet" href="{{ versionedAsset('js/UI-BACKEND/vendors/jquery-cropper-js/dist/cropper.css') }}">
 <!-- END thư viện cropper.js -->
 
 <!-- START thư viện Datatables -->
-<link href="{{ asset('css/UI-BACKEND/vendors/datatables/datatables.min.css') }}?v={{ $timeUpdate }}" rel="stylesheet">
-<link href="{{ asset('css/UI-BACKEND/vendors/datatables/custom-datatables.css') }}?v={{ $timeUpdate }}" rel="stylesheet">
+<link href="{{ versionedAsset('css/UI-BACKEND/vendors/datatables/datatables.min.css') }}" rel="stylesheet">
+<link href="{{ versionedAsset('css/UI-BACKEND/vendors/datatables/custom-datatables.css') }}" rel="stylesheet">
 <!-- START thư viện Datatables -->
 
 @yield('plugin-css-for-this-page')
 <!-- End plugin css for this page -->
 <!-- inject:css -->
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/vertical-layout-light/style.css') }}?v={{ $timeUpdate }}">
+	href="{{ versionedAsset('css/UI-BACKEND/vertical-layout-light/style.css') }}">
 <!-- endinject -->
 <!-- Menu highlighting CSS -->
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/menu-highlighting.css') }}?v={{ $timeUpdate }}">
+	href="{{ versionedAsset('css/UI-BACKEND/menu-highlighting.css') }}">
 <!-- endinject -->
 <link rel="shortcut icon"
 	href="{{ storefrontFaviconUrl() }}" />
@@ -1064,12 +1061,12 @@
 	<!-- container-scroller -->
 
 	<!-- inject:js -->
-	<script src="{{ asset('js/UI-BACKEND/off-canvas.js') }}?v={{ $timeUpdate }}"></script>
-	<script src="{{ asset('js/UI-BACKEND/hoverable-collapse.js') }}?v={{ $timeUpdate }}"></script>
-	<script src="{{ asset('js/UI-BACKEND/template.js') }}?v={{ $timeUpdate }}"></script>
-	<script src="{{ asset('js/UI-BACKEND/settings.js') }}?v={{ $timeUpdate }}"></script>
-	<script src="{{ asset('js/UI-BACKEND/todolist.js') }}?v={{ $timeUpdate }}"></script>
-	<script src="{{ asset('js/UI-BACKEND/admin-list-url.js') }}?v={{ $timeUpdate }}"></script>
+	<script src="{{ versionedAsset('js/UI-BACKEND/off-canvas.js') }}"></script>
+	<script src="{{ versionedAsset('js/UI-BACKEND/hoverable-collapse.js') }}"></script>
+	<script src="{{ versionedAsset('js/UI-BACKEND/template.js') }}"></script>
+	<script src="{{ versionedAsset('js/UI-BACKEND/settings.js') }}"></script>
+	<script src="{{ versionedAsset('js/UI-BACKEND/todolist.js') }}"></script>
+	<script src="{{ versionedAsset('js/UI-BACKEND/admin-list-url.js') }}"></script>
 
 	@yield('plugin-js-for-this-page')
 	<!-- End plugin js for this page-->

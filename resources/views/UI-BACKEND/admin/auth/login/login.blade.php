@@ -11,20 +11,20 @@
 <title>Đồ Chơi Win Win - Đăng nhập quản trị</title>
 <!-- base:css -->
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/vendors/typicons/typicons.css') }}">
+	href="{{ versionedAsset('css/UI-BACKEND/vendors/typicons/typicons.css') }}">
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/vendors/css/vendor.bundle.base.css') }}">
+	href="{{ versionedAsset('css/UI-BACKEND/vendors/css/vendor.bundle.base.css') }}">
 <!-- endinject -->
 <!-- plugin css for this page -->
 <!-- End plugin css for this page -->
 <!-- inject:css -->
 <link rel="stylesheet"
-	href="{{ asset('css/UI-BACKEND/vertical-layout-light/style.css') }}">
+	href="{{ versionedAsset('css/UI-BACKEND/vertical-layout-light/style.css') }}">
 <!-- endinject -->
 <link rel="shortcut icon"
 	href="{{ storefrontFaviconUrl() }}" />
 
-<link rel="stylesheet" href="{{ asset('css/UI-BACKEND/vendors/jquery-toast-plugin/jquery.toast.min.css') }}">
+<link rel="stylesheet" href="{{ versionedAsset('css/UI-BACKEND/vendors/jquery-toast-plugin/jquery.toast.min.css') }}">
 </head>
 
 @include('common')

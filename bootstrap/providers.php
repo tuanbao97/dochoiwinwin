@@ -1,6 +1,6 @@
 <?php
 
 return [
+    Laravel\Passport\PassportServiceProvider::class,
     App\Providers\AppServiceProvider::class,
-    Laravel\Passport\PassportServiceProvider::class
 ];
