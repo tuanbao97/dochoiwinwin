@@ -65,11 +65,11 @@
     <link rel="preconnect" href="https://egany.com" crossorigin="">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="preload" as="script" media="all" href="100/531/894/themes/1018832/assets/vendors.js?1768901692132">
+    <link rel="preload" as="script" media="all" href="{{ storefrontThemeAsset('vendors.js') }}">
 
-    <script src="100/531/894/themes/1018832/assets/vendors.js?1768901692132" type="text/javascript"></script>
-    <link rel="preload" as="script" media="all" href="100/531/894/themes/1018832/assets/jquery.js?1768901692132">
-    <script src="100/531/894/themes/1018832/assets/jquery.js?1768901692132" type="text/javascript"></script>
+    <script src="{{ storefrontThemeAsset('vendors.js') }}" type="text/javascript"></script>
+    <link rel="preload" as="script" media="all" href="{{ storefrontThemeAsset('jquery.js') }}">
+    <script src="{{ storefrontThemeAsset('jquery.js') }}" type="text/javascript"></script>
     <script src="assets/themes_support/api.jquery.js" type="text/javascript"></script>
 
     <!-- Bizweb javascript customer -->
@@ -907,7 +907,7 @@
 	  </main>
 
 
-<link href="100/531/894/themes/1018832/assets/bpr-products-module.css?1768901692132" rel="stylesheet" type="text/css" media="all">
+<link href="{{ storefrontThemeAsset('bpr-products-module.css') }}" rel="stylesheet" type="text/css" media="all">
 <div class="sapo-product-reviews-module"></div>
 @php
   $ww = wwWebContact();
@@ -920,8 +920,8 @@
 
 @if(false)
 			{{-- Popup Sapo gợi ý ứng dụng (tắt) --}}
-			<link rel="preload" as="style" media="all" href="100/531/894/themes/1018832/assets/sapo-popup.css?1768901692132">
-<link rel="stylesheet" href="100/531/894/themes/1018832/assets/sapo-popup.css?1768901692132" media="all">
+			<link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('sapo-popup.css') }}">
+<link rel="stylesheet" href="{{ storefrontThemeAsset('sapo-popup.css') }}" media="all">
 <div class="popup-sapo active">
 	<div class="icon">
 		<svg xmlns="http://www.w3.org/2000/svg" height="1em" viewbox="0 0 448 512"><!--! Font Awesome Free 6.4.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M224 0c-17.7 0-32 14.3-32 32V51.2C119 66 64 130.6 64 208v18.8c0 47-17.3 92.4-48.5 127.6l-7.4 8.3c-8.4 9.4-10.4 22.9-5.3 34.4S19.4 416 32 416H416c12.6 0 24-7.4 29.2-18.9s3.1-25-5.3-34.4l-7.4-8.3C401.3 319.2 384 273.9 384 226.8V208c0-77.4-55-142-128-156.8V32c0-17.7-14.3-32-32-32zm45.3 493.3c12-12 18.7-28.3 18.7-45.3H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7z"></path></svg>
@@ -1026,9 +1026,9 @@
 
 @if(false)
 {{-- Popup ega-sale-pop / sales-pop (tắt) --}}
-<link rel="stylesheet" href="100/531/894/themes/1018832/assets/sales-pop.css?1768901692132" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ storefrontThemeAsset('sales-pop.css') }}" media="print" onload="this.media='all'">
 
-<noscript><link href="100/531/894/themes/1018832/assets/sales-pop.css?1768901692132" rel="stylesheet" type="text/css" media="all"></noscript>
+<noscript><link href="{{ storefrontThemeAsset('sales-pop.css') }}" rel="stylesheet" type="text/css" media="all"></noscript>
 <div id="ega-sale-pop" class="sales-pop hidden" style="--sale-pop-color: #0284c7">
 	<div class="sale-pop-wrap">
 
@@ -1323,9 +1323,9 @@
 @endif
 
 
-	<link rel="stylesheet" href="100/531/894/themes/1018832/assets/addthis-sharing.css?1768901692132" media="print" onload="this.media='all'">
+	<link rel="stylesheet" href="{{ storefrontThemeAsset('addthis-sharing.css') }}" media="print" onload="this.media='all'">
 
-<noscript><link href="100/531/894/themes/1018832/assets/addthis-sharing.css?1768901692132" rel="stylesheet" type="text/css" media="all"></noscript>
+<noscript><link href="{{ storefrontThemeAsset('addthis-sharing.css') }}" rel="stylesheet" type="text/css" media="all"></noscript>
 <div class="addThis_listSharing">
 			{{--
 			<div class="floating_banner relative">
@@ -1846,14 +1846,14 @@ Hẹn giờ nhận hàng
 
 
 @include('UI-FRONTEND.partials.home-products-ajax')
-	<script src="100/531/894/themes/1018832/assets/main.js?ww-cart-open-fix-1"></script>
-    <script src="100/531/894/themes/1018832/assets/product.js?ww-cart-fast-2" defer fetchpriority="low"></script>
-	<script src="100/531/894/themes/1018832/assets/quick-view-enhance.js?ww-qty-hint-1" defer fetchpriority="low"></script>
+	<script src="{{ storefrontThemeAsset('main.js') }}"></script>
+    <script src="{{ storefrontThemeAsset('product.js') }}" defer fetchpriority="low"></script>
+	<script src="{{ storefrontThemeAsset('quick-view-enhance.js') }}" defer fetchpriority="low"></script>
 	@include('UI-FRONTEND.common.cart-scripts')
-	<script src="100/531/894/themes/1018832/assets/flashsale.js?1768901692132" defer="" fetchpriority="low"></script>
-	<script src="100/531/894/themes/1018832/assets/coupon.js?1768901692132" defer="" fetchpriority="low"></script>
+	<script src="{{ storefrontThemeAsset('flashsale.js') }}" defer="" fetchpriority="low"></script>
+	<script src="{{ storefrontThemeAsset('coupon.js') }}" defer="" fetchpriority="low"></script>
 
-	<script src="100/531/894/themes/1018832/assets/defer-scripts.js?ww-cart-boot-immediate-1" defer="" fetchpriority="low"></script>
+	<script src="{{ storefrontThemeAsset('defer-scripts.js') }}" defer="" fetchpriority="low"></script>
 
   @if (!app()->environment('local'))
     <script defer="" src="beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"6c92bbc133584e029f09e826272d3606","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>

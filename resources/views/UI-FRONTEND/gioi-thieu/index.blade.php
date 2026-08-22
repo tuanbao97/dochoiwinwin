@@ -5,7 +5,7 @@
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
 <body class="ega-theme page">
-  <link rel="stylesheet" href="100/531/894/themes/1018832/assets/about-page.css?ww-about-4" media="all">
+  <link rel="stylesheet" href="{{ storefrontThemeAsset('about-page.css') }}" media="all">
   @include('UI-FRONTEND.common.header')
 
   <main>
@@ -104,8 +104,8 @@
   </main>
 
   @include('UI-FRONTEND.common.theme-portals')
-  <script src="100/531/894/themes/1018832/assets/main.js?ww-page-1" defer fetchpriority="low"></script>
+  <script src="{{ storefrontThemeAsset('main.js') }}" defer fetchpriority="low"></script>
   @include('UI-FRONTEND.common.cart-scripts')
-  <script src="100/531/894/themes/1018832/assets/defer-scripts.js?ww-page-1" defer fetchpriority="low"></script>
+  <script src="{{ storefrontThemeAsset('defer-scripts.js') }}" defer fetchpriority="low"></script>
 </body>
 </html>

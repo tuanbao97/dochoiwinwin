@@ -15,8 +15,14 @@ echo "==> Seed dữ liệu nền (tài khoản, phân quyền, cấu hình, danh
 php artisan deploy:seed --no-interaction
 
 echo "==> Kiểm tra Passport key"
-if [ ! -f storage/oauth-private.key ]; then
-  php artisan passport:keys --force
+if [ ! -f storage/oauth-private.key ] || [ ! -f storage/oauth-public.key ]; then
+  php artisan passport:keys --force || {
+    echo "artisan passport:keys không chạy được, tạo key bằng openssl"
+    openssl genrsa -out storage/oauth-private.key 4096
+    openssl rsa -in storage/oauth-private.key -pubout -out storage/oauth-public.key
+    chmod 600 storage/oauth-private.key 2>/dev/null || true
+    chmod 660 storage/oauth-public.key 2>/dev/null || true
+  }
 fi
 
 echo "==> Xóa cache"

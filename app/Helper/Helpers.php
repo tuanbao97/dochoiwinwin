@@ -639,6 +639,56 @@ use Illuminate\Support\Facades\DB;
     }
 
     /**
+     * CSS/JS trong public/: thêm ?v=filemtime để trình duyệt lấy bản mới khi file đổi.
+     */
+    if (!function_exists('versionedAsset')) {
+        function versionedAsset(string $path): string
+        {
+            static $versions = [];
+
+            $path = ltrim(str_replace('\\', '/', $path), '/');
+            $path = preg_replace('#\?.*$#', '', $path) ?? $path;
+
+            if (! isset($versions[$path])) {
+                $full = public_path($path);
+                $mtime = is_file($full) ? (int) filemtime($full) : 0;
+                $versions[$path] = $mtime > 0
+                    ? (string) $mtime
+                    : (string) config('app.cache_version', '1');
+            }
+
+            return asset($path).'?v='.$versions[$path];
+        }
+    }
+
+    /**
+     * CSS/JS theme cửa hàng: thêm ?v=filemtime để trình duyệt lấy bản mới, không cần Ctrl+F5.
+     */
+    if (!function_exists('storefrontThemeAsset')) {
+        function storefrontThemeAsset(string $file): string
+        {
+            static $versions = [];
+
+            $file = ltrim(str_replace('\\', '/', $file), '/');
+            $file = preg_replace('#^UI-FRONTEND/#i', '', $file) ?? $file;
+            $file = preg_replace('#^100/531/894/themes/1018832/assets/#i', '', $file) ?? $file;
+            $file = preg_replace('#\?.*$#', '', $file) ?? $file;
+            $file = ltrim($file, '/');
+
+            $relUrl = '100/531/894/themes/1018832/assets/'.$file;
+            if (! isset($versions[$file])) {
+                $path = public_path('UI-FRONTEND/'.$relUrl);
+                $mtime = is_file($path) ? (int) filemtime($path) : 0;
+                $versions[$file] = $mtime > 0
+                    ? (string) $mtime
+                    : (string) config('app.cache_version', '1');
+            }
+
+            return $relUrl.'?v='.$versions[$file];
+        }
+    }
+
+    /**
      * Chuẩn hóa UPD_DT → timestamp dùng cho ?upd_time= (cache bust ảnh).
      */
     if (!function_exists('storefrontImageUpdTime')) {

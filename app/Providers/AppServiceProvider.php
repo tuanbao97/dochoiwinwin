@@ -51,14 +51,12 @@ use App\Service\RoleService;
 use App\Service\SettingService;
 use App\Service\TitleService;
 use App\Service\UserService;
+use App\Support\PassportKeys;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
-use Laravel\Passport\Bridge\AccessTokenRepository;
 use Laravel\Passport\Passport;
-use League\OAuth2\Server\ResourceServer;
 use App\Service\NewsService;
 use App\Repository\NewsRepository;
 use App\Repository\NewsDocumentStorageRepository;
@@ -86,26 +84,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(ResourceServer::class, function () {
-            $accessTokenRepository = app(AccessTokenRepository::class);
-            $publicKeyPath = Passport::keyPath('oauth-public.key');
-            $privateKeyPath = Passport::keyPath('oauth-private.key');
-
-            if (! is_file($publicKeyPath) || ! is_file($privateKeyPath)) {
-                Artisan::call('passport:keys', ['--force' => true]);
-            }
-
-            if (! is_file($publicKeyPath)) {
-                throw new \RuntimeException(
-                    'OAuth public key file not found. Run: php artisan passport:keys'
-                );
-            }
-
-            $publicKey = file_get_contents($publicKeyPath);
-
-            return new ResourceServer($accessTokenRepository, $publicKey);
-        });
-        
         // Đăng ký bean AppService
         $this->app->singleton(\App\Service\AppService::class, \App\Service\impl\AppServiceImpl::class);
 
@@ -266,6 +244,14 @@ class AppServiceProvider extends ServiceProvider
                     'time' => $query->time,
                 ]);
             });
+        }
+
+        if (! $this->app->runningInConsole()) {
+            try {
+                PassportKeys::ensure();
+            } catch (\Throwable $e) {
+                Log::warning('Không tạo được Passport OAuth keys', ['message' => $e->getMessage()]);
+            }
         }
 
         /* PHẦN PASSPORT SECURITY */

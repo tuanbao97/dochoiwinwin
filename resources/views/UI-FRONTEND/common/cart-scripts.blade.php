@@ -328,4 +328,4 @@
     );
   })();
 </script>
-<script src="100/531/894/themes/1018832/assets/cart.js?ww-cart-fast-2" defer fetchpriority="low"></script>
+<script src="{{ storefrontThemeAsset('cart.js') }}" defer fetchpriority="low"></script>

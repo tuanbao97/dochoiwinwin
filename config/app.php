@@ -72,9 +72,8 @@ return [
     | Cache Version
     |--------------------------------------------------------------------------
     |
-    | This value is used for cache busting of CSS/JS files.
-    | Change this value when deploying new version to force browser reload.
-    | Format: YYYYMMDD-HHMMSS (e.g., 20251003-222100)
+    | Fallback cache-bust token when a public CSS/JS file is missing.
+    | Live assets use filemtime via versionedAsset() / storefrontThemeAsset().
     |
     */
 

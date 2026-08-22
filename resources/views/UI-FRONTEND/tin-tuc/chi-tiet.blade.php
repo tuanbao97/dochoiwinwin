@@ -40,7 +40,7 @@
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
 <body class="ega-theme blog">
-  <link rel="stylesheet" href="100/531/894/themes/1018832/assets/article-style.css?ww-news-3" media="all">
+  <link rel="stylesheet" href="{{ storefrontThemeAsset('article-style.css') }}" media="all">
   @include('UI-FRONTEND.common.header')
 
   <main>
@@ -155,9 +155,9 @@
     </section>
   </main>
 
-  <script src="100/531/894/themes/1018832/assets/main.js?ww-news-detail-1"></script>
+  <script src="{{ storefrontThemeAsset('main.js') }}"></script>
   @include('UI-FRONTEND.common.theme-portals')
   @include('UI-FRONTEND.common.cart-scripts')
-  <script src="100/531/894/themes/1018832/assets/defer-scripts.js?ww-news-detail-1" defer fetchpriority="low"></script>
+  <script src="{{ storefrontThemeAsset('defer-scripts.js') }}" defer fetchpriority="low"></script>
 </body>
 </html>
