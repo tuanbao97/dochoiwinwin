@@ -48,6 +48,10 @@ class TransactionPlaceOrderRequest extends FormRequest
             'EMAIL' => $normalize($this->input('EMAIL', $this->input('email'))),
             'DIA_CHI' => $normalize($this->input('DIA_CHI', $this->input('address'))),
             'GHI_CHU' => $normalize($this->input('GHI_CHU', $this->input('note'))),
+            'NHAN_TAI_CUA_HANG' => filter_var(
+                $this->input('NHAN_TAI_CUA_HANG', $this->input('pickup', false)),
+                FILTER_VALIDATE_BOOLEAN
+            ),
             'DISCOUNT_CODE' => $normalize($this->input('DISCOUNT_CODE', $this->input('discount_code'))),
             'DISCOUNT_CODES' => StorefrontVoucher::normalizeCodes(array_merge(
                 (array) $this->input('DISCOUNT_CODES', $this->input('discount_codes', [])),
@@ -90,6 +94,10 @@ class TransactionPlaceOrderRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:2000',
+            ],
+            'NHAN_TAI_CUA_HANG' => [
+                'bail',
+                'boolean',
             ],
             'DISCOUNT_CODE' => [
                 'bail',

@@ -1,6 +1,10 @@
 @php
   $seoTitle = 'Thanh toán — Win Win';
   $seoDescription = 'Thanh toán đơn hàng tại Đồ Chơi Win Win.';
+  $wwCheckout = wwWebContact();
+  $storePickupAddress = $wwCheckout['address'] !== ''
+    ? ('Nhận tại cửa hàng: ' . $wwCheckout['address'])
+    : ('Nhận tại cửa hàng ' . ($wwCheckout['storeName'] ?? 'Đồ Chơi Win Win'));
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -87,10 +91,46 @@
                     <span class="ww-co-error" id="MSG_EMAIL"></span>
                   </div>
                   <div class="ww-co-field ww-co-field--full">
-                    <label for="checkout-address">Địa chỉ nhận hàng <span class="ww-co-req">*</span></label>
+                    <span class="ww-co-field__label">Hình thức nhận hàng <span class="ww-co-req">*</span></span>
+                    <div class="ww-co-ship" role="radiogroup" aria-label="Hình thức nhận hàng">
+                      <label class="ww-co-ship__option is-active">
+                        <input type="radio" name="delivery_method" value="ship" checked>
+                        <span class="ww-co-ship__check" aria-hidden="true"></span>
+                        <span class="ww-co-ship__head">
+                          <span class="ww-co-ship__icon" aria-hidden="true">
+                            <i class="icon icon-truck-fast"></i>
+                          </span>
+                          <strong class="ww-co-ship__title">Giao hàng tận nơi</strong>
+                        </span>
+                        <span class="ww-co-ship__body">
+                          <em>Ship đến địa chỉ của bạn</em>
+                        </span>
+                      </label>
+                      <label class="ww-co-ship__option ww-co-ship__option--pickup">
+                        <input type="radio" name="delivery_method" value="pickup">
+                        <span class="ww-co-ship__check" aria-hidden="true"></span>
+                        <span class="ww-co-ship__head">
+                          <span class="ww-co-ship__icon" aria-hidden="true">
+                            <i class="icon icon-location"></i>
+                          </span>
+                          <strong class="ww-co-ship__title">Nhận tại cửa hàng</strong>
+                        </span>
+                        <span class="ww-co-ship__body">
+                          <em>Đến lấy tại shop</em>
+                          <span class="ww-co-ship__badge">FREESHIP</span>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="ww-co-field ww-co-field--full" id="ww-checkout-address-field">
+                    <label for="checkout-address" id="ww-checkout-address-label">Địa chỉ nhận hàng <span class="ww-co-req">*</span></label>
                     <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address">{{ $storefrontUser['ADDRESS'] ?? '' }}</textarea>
+                    <p class="ww-co-ship__hint" id="ww-checkout-pickup-hint" hidden>
+                      Bạn đến nhận tại cửa hàng — miễn phí vận chuyển.
+                    </p>
                     <span class="ww-co-error" id="MSG_DIA_CHI"></span>
                   </div>
+                  <input type="hidden" name="pickup" id="checkout-pickup" value="0">
                   <div class="ww-co-field ww-co-field--full">
                     <label for="checkout-note">Ghi chú đơn hàng <span class="ww-co-optional">(không bắt buộc)</span></label>
                     <textarea id="checkout-note" name="note" rows="2" placeholder="Thời gian muốn nhận hàng, lời nhắn cho shop..."></textarea>
@@ -106,8 +146,8 @@
                 <div class="ww-co-pay is-active">
                   <span class="ww-co-pay__check" aria-hidden="true">✓</span>
                   <div>
-                    <strong>Thanh toán khi nhận hàng (COD)</strong>
-                    <p>Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.</p>
+                    <strong id="ww-checkout-pay-title">Thanh toán khi nhận hàng (COD)</strong>
+                    <p id="ww-checkout-pay-desc">Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.</p>
                   </div>
                 </div>
                 <p class="ww-co-pay__note">Cần chuyển khoản trước hoặc xuất hóa đơn VAT? Ghi chú giúp shop ở mục Ghi chú đơn hàng, nhân viên sẽ liên hệ xác nhận.</p>
@@ -221,11 +261,19 @@
     }
 
     var state = readState();
+    var baseShipping = state.shipping;
     var appliedVoucherCodes = [];
     var pendingVoucherCodes = [];
     var voucherCache = null;
     var voucherProgressTimer = null;
     var submitting = false;
+    var storePickupAddress = @json($storePickupAddress);
+    var savedShipAddress = form.address ? String(form.address.value || '') : '';
+    var addressLabelEl = document.getElementById('ww-checkout-address-label');
+    var pickupHintEl = document.getElementById('ww-checkout-pickup-hint');
+    var pickupInput = document.getElementById('checkout-pickup');
+    var payTitleEl = document.getElementById('ww-checkout-pay-title');
+    var payDescEl = document.getElementById('ww-checkout-pay-desc');
 
     var fieldMap = {
       HO_TEN: 'name',
@@ -272,6 +320,84 @@
     function el(id) {
       return document.getElementById(id);
     }
+
+    function isPickup() {
+      var checked = form.querySelector('input[name="delivery_method"]:checked');
+      return !!(checked && checked.value === 'pickup');
+    }
+
+    function updateShippingDisplay() {
+      var shippingEl = el('ww-checkout-shipping');
+      if (!shippingEl) return;
+      if (state.shipping <= 0) {
+        shippingEl.textContent = 'Miễn phí';
+        shippingEl.classList.add('is-free');
+      } else {
+        shippingEl.textContent = money(state.shipping);
+        shippingEl.classList.remove('is-free');
+      }
+    }
+
+    function refreshTotalsWithoutVoucher() {
+      var totalEl = el('ww-checkout-total');
+      if (totalEl) totalEl.textContent = money(state.subtotal + state.shipping);
+      updateShippingDisplay();
+      syncBar();
+    }
+
+    function applyDeliveryMethod() {
+      var pickup = isPickup();
+      if (pickupInput) pickupInput.value = pickup ? '1' : '0';
+
+      form.querySelectorAll('.ww-co-ship__option').forEach(function (option) {
+        var input = option.querySelector('input[name="delivery_method"]');
+        option.classList.toggle('is-active', !!(input && input.checked));
+      });
+
+      if (pickup) {
+        if (form.address && !form.address.readOnly) {
+          savedShipAddress = String(form.address.value || '');
+        }
+        if (form.address) {
+          form.address.value = storePickupAddress;
+          form.address.readOnly = true;
+          form.address.classList.remove('is-invalid');
+        }
+        if (addressLabelEl) {
+          addressLabelEl.innerHTML = 'Địa chỉ cửa hàng <span class="ww-co-req">*</span>';
+        }
+        if (pickupHintEl) pickupHintEl.hidden = false;
+        if (payTitleEl) payTitleEl.textContent = 'Thanh toán tại cửa hàng';
+        if (payDescEl) payDescEl.textContent = 'Bạn đến nhận hàng và thanh toán trực tiếp tại cửa hàng.';
+        state.shipping = 0;
+      } else {
+        if (form.address) {
+          form.address.readOnly = false;
+          if (String(form.address.value || '') === storePickupAddress) {
+            form.address.value = savedShipAddress;
+          }
+        }
+        if (addressLabelEl) {
+          addressLabelEl.innerHTML = 'Địa chỉ nhận hàng <span class="ww-co-req">*</span>';
+        }
+        if (pickupHintEl) pickupHintEl.hidden = true;
+        if (payTitleEl) payTitleEl.textContent = 'Thanh toán khi nhận hàng (COD)';
+        if (payDescEl) payDescEl.textContent = 'Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.';
+        state.shipping = baseShipping;
+      }
+
+      updateShippingDisplay();
+      if (appliedVoucherCodes.length) {
+        applyVoucherCodes(appliedVoucherCodes, true);
+      } else {
+        refreshTotalsWithoutVoucher();
+      }
+      refreshVoucherHighlight();
+    }
+
+    form.querySelectorAll('input[name="delivery_method"]').forEach(function (input) {
+      input.addEventListener('change', applyDeliveryMethod);
+    });
 
     function syncBar() {
       var totalEl = el('ww-checkout-total');
@@ -334,6 +460,9 @@
           if (!summaryRoot) return;
           summaryRoot.innerHTML = html;
           state = readState();
+          baseShipping = state.shipping;
+          if (isPickup()) state.shipping = 0;
+          updateShippingDisplay();
           syncCartBadges(state.quantity);
           if (state.quantity <= 0) {
             window.location.reload();
@@ -343,6 +472,8 @@
           updateVoucherHighlight();
           if (appliedVoucherCodes.length) {
             applyVoucherCodes(appliedVoucherCodes, true);
+          } else {
+            refreshTotalsWithoutVoucher();
           }
           syncBar();
           refreshVoucherHighlight();
@@ -587,6 +718,7 @@
         body: JSON.stringify({
           EMAIL: form.email.value.trim() || null,
           SO_DIEN_THOAI: form.phone.value.trim() || null,
+          NHAN_TAI_CUA_HANG: isPickup(),
           ITEMS: checkoutItems()
         })
       })
@@ -819,12 +951,10 @@
       appliedVoucherCodes = [];
       pendingVoucherCodes = [];
       var rows = el('ww-checkout-discount-rows');
-      var totalEl = el('ww-checkout-total');
       if (rows) rows.innerHTML = '';
-      if (totalEl) totalEl.textContent = money(state.subtotal + state.shipping);
       setAppliedVoucherUi([]);
       setVoucherMessage(message, message ? 'error' : '');
-      syncBar();
+      refreshTotalsWithoutVoucher();
     }
 
     function applyVoucher(rawCode, silent) {
@@ -868,6 +998,7 @@
           DISCOUNT_CODES: codes,
           EMAIL: form.email.value,
           SO_DIEN_THOAI: form.phone.value,
+          NHAN_TAI_CUA_HANG: isPickup(),
           ITEMS: checkoutItems()
         })
       })
@@ -897,6 +1028,7 @@
           setAppliedVoucherUi(appliedVoucherCodes);
           setVoucherMessage('Đã áp dụng ' + appliedVoucherCodes.join(' + ') +
             ', giảm ' + money(quote.discount_amount) + '.', 'success');
+          updateShippingDisplay();
           syncBar();
         })
         .catch(function (error) {
@@ -1016,7 +1148,11 @@
       }
 
       if (!form.address.value.trim()) {
-        firstInvalid = firstInvalid || markField('DIA_CHI', 'address', 'Vui lòng nhập địa chỉ nhận hàng.');
+        firstInvalid = firstInvalid || markField(
+          'DIA_CHI',
+          'address',
+          isPickup() ? 'Chưa có địa chỉ cửa hàng. Vui lòng liên hệ shop.' : 'Vui lòng nhập địa chỉ nhận hàng.'
+        );
       }
 
       var email = form.email.value.trim();
@@ -1075,6 +1211,8 @@
         email: form.email.value,
         address: form.address.value,
         note: form.note.value,
+        pickup: isPickup(),
+        NHAN_TAI_CUA_HANG: isPickup(),
         discount_codes: appliedVoucherCodes,
         ITEMS: checkoutItems()
       };
@@ -1144,6 +1282,7 @@
     });
 
     bindVoucherPicker();
+    applyDeliveryMethod();
     syncBar();
     refreshVoucherHighlight();
   })();

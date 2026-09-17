@@ -124,7 +124,13 @@ class TransactionServiceImpl implements TransactionService
     public function placeOrder(Request $request)
     {
         $requestedItems = $this->aggregateOrderItems($this->resolveOrderItems($request));
-        $shippingFee = max(0, (int) config('storefront.shipping_fee', 30000));
+        $pickupAtStore = filter_var(
+            $request->input('NHAN_TAI_CUA_HANG', $request->input('pickup', false)),
+            FILTER_VALIDATE_BOOLEAN
+        );
+        $shippingFee = $pickupAtStore
+            ? 0
+            : max(0, (int) config('storefront.shipping_fee', 30000));
         $discountCode = StorefrontVoucher::normalizeCode($request->input('DISCOUNT_CODE'));
         $discountCodes = StorefrontVoucher::normalizeCodes($request->input('DISCOUNT_CODES', $discountCode));
 
@@ -137,6 +143,30 @@ class TransactionServiceImpl implements TransactionService
         $buyerEmail = $request->input('EMAIL');
         $buyerAddress = $request->input('DIA_CHI');
         $buyerNote = $request->input('GHI_CHU');
+
+        if ($pickupAtStore) {
+            $storeAddress = '';
+            if (function_exists('wwWebContact')) {
+                $contact = wwWebContact();
+                $storeAddress = trim((string) ($contact['address'] ?? ''));
+                if ($storeAddress === '') {
+                    $storeAddress = 'Nhận tại cửa hàng ' . trim((string) ($contact['storeName'] ?? 'Đồ Chơi Win Win'));
+                } else {
+                    $storeAddress = 'Nhận tại cửa hàng: ' . $storeAddress;
+                }
+            }
+            if ($storeAddress !== '') {
+                $buyerAddress = $storeAddress;
+            }
+            $pickupNote = 'Nhận hàng tại cửa hàng (FREESHIP).';
+            $buyerNote = trim((string) $buyerNote);
+            if ($buyerNote === '') {
+                $buyerNote = $pickupNote;
+            } elseif (! str_contains(mb_strtolower($buyerNote), 'nhận tại cửa hàng')
+                && ! str_contains(mb_strtolower($buyerNote), 'nhan tai cua hang')) {
+                $buyerNote = $pickupNote . ' ' . $buyerNote;
+            }
+        }
 
         try {
             $transaction = DB::transaction(function () use (
