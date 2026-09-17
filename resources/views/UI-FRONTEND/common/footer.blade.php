@@ -163,6 +163,32 @@
           @endif
         </div>
         @endif
+
+        {{-- Biểu tượng Đã thông báo Bộ Công Thương (dưới Tổng đài hỗ trợ) --}}
+        @php
+          $moitUrl = $ww['moitNoticeUrl'] !== '' ? $ww['moitNoticeUrl'] : 'https://online.gov.vn/nen-tang';
+        @endphp
+        <div class="mt-4">
+          <a
+            href="{{ $moitUrl }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Đã thông báo Bộ Công Thương"
+            aria-label="Đã thông báo Bộ Công Thương"
+            data-ww-contact="moit-notice"
+          >
+            <img
+              class="object-contain"
+              src="{{ asset('UI-FRONTEND/images/logo-bo-cong-thuong.png') }}"
+              alt="Đã thông báo Bộ Công Thương"
+              width="150"
+              height="57"
+              loading="lazy"
+              decoding="async"
+              style="max-width: 150px; height: auto;"
+            >
+          </a>
+        </div>
       </div>
       <div class="footer-col min-w-0 md:col-span-2 lg:col-span-1">
 

@@ -25,6 +25,7 @@ enum SettingEnum : string
     case SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG = 'SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG';
     case SETTING_DUONG_DAN_TIKTOK_CUA_HANG = 'SETTING_DUONG_DAN_TIKTOK_CUA_HANG';
     case SETTING_DUONG_DAN_YOUTUBE_CUA_HANG = 'SETTING_DUONG_DAN_YOUTUBE_CUA_HANG';
+    case SETTING_DUONG_DAN_BO_CONG_THUONG = 'SETTING_DUONG_DAN_BO_CONG_THUONG';
     case SETTING_DUONG_DAN_SHOPPE_CUA_HANG = 'SETTING_DUONG_DAN_SHOPPE_CUA_HANG';
     case SETTING_DUONG_DAN_LAZADA_CUA_HANG = 'SETTING_DUONG_DAN_LAZADA_CUA_HANG';
     case SETTING_DUONG_DAN_TIKI_CUA_HANG = 'SETTING_DUONG_DAN_TIKI_CUA_HANG';
@@ -66,6 +67,7 @@ enum SettingEnum : string
             self::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG => 'Setting đường dẫn Trang website',
             self::SETTING_DUONG_DAN_TIKTOK_CUA_HANG => 'Setting đường dẫn Tiktok cửa hàng',
             self::SETTING_DUONG_DAN_YOUTUBE_CUA_HANG => 'Setting đường dẫn Youtube cửa hàng',
+            self::SETTING_DUONG_DAN_BO_CONG_THUONG => 'Setting đường dẫn xác thực Bộ Công Thương (online.gov.vn)',
             self::SETTING_DUONG_DAN_SHOPPE_CUA_HANG => 'Setting đường dẫn Shoppe cửa hàng',
             self::SETTING_DUONG_DAN_LAZADA_CUA_HANG => 'Setting đường dẫn Lazada cửa hàng',
             self::SETTING_DUONG_DAN_TIKI_CUA_HANG => 'Setting đường dẫn Tiki cửa hàng',
@@ -108,6 +110,7 @@ enum SettingEnum : string
             self::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG => null,
             self::SETTING_DUONG_DAN_TIKTOK_CUA_HANG => null,
             self::SETTING_DUONG_DAN_YOUTUBE_CUA_HANG => null,
+            self::SETTING_DUONG_DAN_BO_CONG_THUONG => null,
             self::SETTING_DUONG_DAN_SHOPPE_CUA_HANG => null,
             self::SETTING_DUONG_DAN_LAZADA_CUA_HANG => null,
             self::SETTING_DUONG_DAN_TIKI_CUA_HANG => null,
@@ -150,6 +153,7 @@ enum SettingEnum : string
             self::SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_TIKTOK_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_YOUTUBE_CUA_HANG => 'SETTING_WEB',
+            self::SETTING_DUONG_DAN_BO_CONG_THUONG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_SHOPPE_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_LAZADA_CUA_HANG => 'SETTING_WEB',
             self::SETTING_DUONG_DAN_TIKI_CUA_HANG => 'SETTING_WEB',
