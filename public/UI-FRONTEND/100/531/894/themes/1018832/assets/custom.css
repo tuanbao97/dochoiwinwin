@@ -146,7 +146,7 @@ details[open] > summary > .icon-carret-right {
   animation: fade-in 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
 }
 
-/* Thanh header dính cao 6.4rem nên logo ph?i nh? l?i ?? không tràn */
+/* Thanh header dï¿½nh cao 6.4rem nï¿½n logo ph?i nh? l?i ?? khï¿½ng trï¿½n */
 .header.active .logo-wrapper img {
   max-height: var(--logo-height);
 }
@@ -1027,24 +1027,27 @@ product-form.loading .product-cta .btn .loading-icon {
   display: block;
 }
 .card-product__title {
-  min-height: calc(var(--font-size-body) * 1.5 * 3);
+  min-height: calc(var(--font-size-body) * 1.5 * 2);
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   text-overflow: ellipsis;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-/* Title card trong danh s?ch s?n ph?m */
+/* Title card: max 2 dong, font nhu cu */
 .product-list .card-product__title,
 .card-product--vertical .card-product__title {
   font-size: 1.4rem !important;
   font-weight: 400 !important;
   line-height: 1.45;
-  min-height: calc(1.4rem * 1.45 * 3);
+  min-height: calc(1.4rem * 1.45 * 2);
+  max-height: calc(1.4rem * 1.45 * 2);
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .cro-btns {
@@ -1302,7 +1305,7 @@ product-form.loading .product-cta .btn .loading-icon {
 .card-product--vertical .card-product__top .card-product__image,
 .card-product--vertical .card-product__top .card-product__image-2 {
 	--image-scale: 1;
-	/* Fill sát mép card ? bo góc ch? do form overflow, tránh góc h?t */
+	/* Fill sï¿½t mï¿½p card ? bo gï¿½c ch? do form overflow, trï¿½nh gï¿½c h?t */
 	position: absolute !important;
 	inset: 0 !important;
 	top: 0 !important;
@@ -3614,7 +3617,7 @@ body.checkout .checkout-order-item {
 	display: none;
 }
 
-/* Trang l?ch s? mua hàng */
+/* Trang l?ch s? mua hï¿½ng */
 .ww-orders {
 	max-width: 100rem;
 	margin: 0 auto 4rem;
@@ -3656,7 +3659,7 @@ body.checkout .checkout-order-item {
 		white-space: nowrap;
 	}
 }
-/* Anchor .btn c?a theme là inline nên padding d?c ?è lên dòng trên */
+/* Anchor .btn c?a theme lï¿½ inline nï¿½n padding d?c ?ï¿½ lï¿½n dï¿½ng trï¿½n */
 .ww-orders a.btn {
 	display: inline-flex;
 	align-items: center;
@@ -3996,7 +3999,7 @@ body.checkout .checkout-order-item {
 	}
 }
 
-/* Tr?ng thái h?t hàng c?a card s?n ph?m ngoài danh sách */
+/* Tr?ng thï¿½i h?t hï¿½ng c?a card s?n ph?m ngoï¿½i danh sï¿½ch */
 .ww-card-soldout {
 	position: absolute;
 	inset: 0;
@@ -4027,7 +4030,7 @@ card-product.is-soldout .addtocart-btn {
 	}
 }
 
-/* ===== Trang thanh toán ===== */
+/* ===== Trang thanh toï¿½n ===== */
 .ww-co {
 	--co-border: rgba(15, 23, 42, 0.09);
 	--co-muted: rgba(15, 23, 42, 0.58);
@@ -4444,7 +4447,7 @@ card-product.is-soldout .addtocart-btn {
 	color: var(--co-muted);
 }
 
-/* Tóm t?t ??n hàng */
+/* Tï¿½m t?t ??n hï¿½ng */
 .ww-sum {
 	padding: 1.8rem;
 	border: 1px solid var(--co-border);
@@ -4773,7 +4776,7 @@ card-product.is-soldout .addtocart-btn {
 	}
 }
 
-/* Popup ch?n mã gi?m giá ? layout table, không grid, không co chi?u cao */
+/* Popup ch?n mï¿½ gi?m giï¿½ ? layout table, khï¿½ng grid, khï¿½ng co chi?u cao */
 #ww-voucher-picker.ww-voucher-picker {
 	position: fixed !important;
 	inset: 0 !important;
@@ -5429,7 +5432,7 @@ html.ww-voucher-picker-open body {
 	font-size: 1.6rem;
 }
 
-/* Thanh ??t hàng c? ??nh trên mobile */
+/* Thanh ??t hï¿½ng c? ??nh trï¿½n mobile */
 .ww-co-bar {
 	display: none;
 	position: fixed;
@@ -5482,8 +5485,8 @@ html.ww-voucher-picker-open body {
 		top: calc(var(--header-height, 8rem) + 1.6rem);
 	}
 }
-/* Ch?a ch? cho thanh liên h? n?i (fixed, right 12px) kh?i ?è lên s? ti?n,
-   ch? ? các kho?ng màn hình mà container không còn l? tr?ng bên ph?i. */
+/* Ch?a ch? cho thanh liï¿½n h? n?i (fixed, right 12px) kh?i ?ï¿½ lï¿½n s? ti?n,
+   ch? ? cï¿½c kho?ng mï¿½n hï¿½nh mï¿½ container khï¿½ng cï¿½n l? tr?ng bï¿½n ph?i. */
 @media (min-width: 1024px) and (max-width: 1405px) {
 	.ww-co .container {
 		padding-right: calc(var(--container-padding) + 6rem);
@@ -5544,7 +5547,7 @@ html.ww-voucher-picker-open body {
 	}
 }
 
-/* Popup ??t hàng thành công */
+/* Popup ??t hï¿½ng thï¿½nh cï¿½ng */
 .ww-order-success {
 	position: fixed;
 	inset: 0;
@@ -5648,7 +5651,7 @@ html.ww-order-success-open body {
 	overflow: hidden;
 }
 
-/* C?nh báo v??t t?n kho c?nh ô s? l??ng */
+/* C?nh bï¿½o v??t t?n kho c?nh ï¿½ s? l??ng */
 .ww-qty-stock-msg {
 	display: none;
 	color: #dc2626;
@@ -5665,7 +5668,7 @@ html.ww-order-success-open body {
 		font-size: 1.2rem;
 	}
 }
-/* Trong gi? hàng c?t s? l??ng h?p nên c?nh báo xu?ng dòng riêng */
+/* Trong gi? hï¿½ng c?t s? l??ng h?p nï¿½n c?nh bï¿½o xu?ng dï¿½ng riï¿½ng */
 .cart-quantity-col {
 	flex-wrap: wrap;
 }

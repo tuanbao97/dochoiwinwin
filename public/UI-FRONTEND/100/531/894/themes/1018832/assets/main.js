@@ -34,6 +34,34 @@ class TabsComponent extends HTMLElement {
 }
 defineElement("tabs-component", TabsComponent);
 
+/** Khóa scroll body khi mở modal/drawer — bù padding để tránh nhảy layout khi ẩn/hiện scrollbar */
+(function () {
+  function scrollbarWidth() {
+    return Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+  }
+
+  window.__wwLockBodyScroll = function () {
+    var pad = scrollbarWidth();
+    document.documentElement.style.setProperty("--ww-scroll-lock-pad", pad + "px");
+    document.body.classList.add("overflow-hidden");
+    document.documentElement.classList.add("overflow-hidden");
+  };
+
+  window.__wwUnlockBodyScroll = function (force) {
+    if (
+      !force &&
+      document.querySelector(".portal.active, quick-view.active, quick-view.ww-open")
+    ) {
+      return;
+    }
+    document.body.classList.remove("overflow-hidden");
+    document.documentElement.classList.remove("overflow-hidden");
+    document.body.style.removeProperty("overflow");
+    document.documentElement.style.removeProperty("overflow");
+    document.documentElement.style.removeProperty("--ww-scroll-lock-pad");
+  };
+})();
+
 class PortalComponent extends HTMLElement {
   constructor() {
     super();
@@ -67,7 +95,11 @@ class PortalComponent extends HTMLElement {
       animation: this.dataset.animation,
       time: this.animationTime,
     });
-    document.body.classList.add("overflow-hidden");
+    if (typeof window.__wwLockBodyScroll === "function") {
+      window.__wwLockBodyScroll();
+    } else {
+      document.body.classList.add("overflow-hidden");
+    }
     this.popup.setAttribute("open", "");
     this.classList.add("active");
   }
@@ -91,7 +123,9 @@ class PortalComponent extends HTMLElement {
           this.popup.removeAttribute("open");
         }
         this.classList.remove("active", "ww-open");
-        if (!document.querySelector(".portal.active, quick-view.active, quick-view.ww-open")) {
+        if (typeof window.__wwUnlockBodyScroll === "function") {
+          window.__wwUnlockBodyScroll(false);
+        } else if (!document.querySelector(".portal.active, quick-view.active, quick-view.ww-open")) {
           document.body.classList.remove("overflow-hidden");
           document.documentElement.classList.remove("overflow-hidden");
         }

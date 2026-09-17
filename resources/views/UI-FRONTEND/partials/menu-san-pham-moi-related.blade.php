@@ -27,7 +27,7 @@
 
       <div class="card-product__body ">
         <a href="/ta-dan-merries-size-l-54-mieng-9-14-kg" title="Tã dán Merries size L 54 miếng (9 - 14 kg)" class="flex link flex-col gap-2 md:gap-2 px-3 py-2 md:p-4 md:pb-3">
-          <div class="card-product__title text-base font-semibold line-clamp-2 ">
+          <div class="card-product__title text-sm font-normal line-clamp-2 ">
             Tã dán Merries size L 54 miếng (9 - 14 kg)
           </div>
                       <div class="sapo-product-reviews-badge" data-id="37996902"><div class="sapo-product-reviews-star" data-score="0" data-number="5" style="color: #ffbe00" title="Not rated yet!"><i data-alt="1" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="2" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="3" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="4" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="5" class="star-off-png" title="Not rated yet!"></i><input name="score" type="hidden" readonly></div></div>
@@ -76,7 +76,7 @@
 
       <div class="card-product__body ">
         <a href="/goi-cao-su-non-size-to-cho-be" title="Gối Cao Su Non Size To Cho Bé" class="flex link flex-col gap-2 md:gap-2 px-3 py-2 md:p-4 md:pb-3">
-          <div class="card-product__title text-base font-semibold line-clamp-2 ">
+          <div class="card-product__title text-sm font-normal line-clamp-2 ">
             Gối Cao Su Non Size To Cho Bé
           </div>
                       <div class="sapo-product-reviews-badge" data-id="37996901"><div class="sapo-product-reviews-star" data-score="0" data-number="5" style="color: #ffbe00" title="Not rated yet!"><i data-alt="1" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="2" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="3" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="4" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="5" class="star-off-png" title="Not rated yet!"></i><input name="score" type="hidden" readonly></div></div>
@@ -119,7 +119,7 @@
 
       <div class="card-product__body ">
         <a href="/chieu-dieu-hoa-cao-su-non-cho-be-so-sinh-5-tuoi" title="Chiếu điều hoà cao su non cho bé sơ sinh - 5 tuối" class="flex link flex-col gap-2 md:gap-2 px-3 py-2 md:p-4 md:pb-3">
-          <div class="card-product__title text-base font-semibold line-clamp-2 ">
+          <div class="card-product__title text-sm font-normal line-clamp-2 ">
             Chiếu điều hoà cao su non cho bé sơ sinh - 5 tuối
           </div>
                       <div class="sapo-product-reviews-badge" data-id="37996900"><div class="sapo-product-reviews-star" data-score="0" data-number="5" style="color: #ffbe00" title="Not rated yet!"><i data-alt="1" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="2" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="3" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="4" class="star-off-png" title="Not rated yet!"></i>&nbsp;<i data-alt="5" class="star-off-png" title="Not rated yet!"></i><input name="score" type="hidden" readonly></div></div>
