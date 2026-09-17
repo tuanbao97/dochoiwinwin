@@ -28,6 +28,7 @@ class StorefrontVoucherController extends Controller
         $validated = $request->validate([
             'EMAIL' => ['nullable', 'email', 'max:1000'],
             'SO_DIEN_THOAI' => ['nullable', 'string', 'max:50'],
+            'NHAN_TAI_CUA_HANG' => ['nullable', 'boolean'],
             'ITEMS' => ['required', 'array', 'min:1'],
             'ITEMS.*.PRODUCT_ID' => ['required', 'integer'],
             'ITEMS.*.QUANTITY' => ['required', 'integer', 'min:1'],
@@ -35,9 +36,11 @@ class StorefrontVoucherController extends Controller
 
         $this->synchronizer->syncIfStale();
         $subtotal = $this->subtotal($validated['ITEMS']);
+        $pickupAtStore = filter_var($validated['NHAN_TAI_CUA_HANG'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $shippingFee = $pickupAtStore ? 0 : max(0, (int) config('storefront.shipping_fee', 30000));
         $vouchers = $this->voucher->availableList(
             $subtotal,
-            max(0, (int) config('storefront.shipping_fee', 30000)),
+            $shippingFee,
             Auth::user()?->ID ? (int) Auth::user()->ID : null,
             $validated['EMAIL'] ?? null,
             $validated['SO_DIEN_THOAI'] ?? null
@@ -56,10 +59,12 @@ class StorefrontVoucherController extends Controller
         $subtotal = $this->subtotal($request->input('ITEMS', []));
 
         $user = Auth::user();
+        $pickupAtStore = filter_var($request->input('NHAN_TAI_CUA_HANG', false), FILTER_VALIDATE_BOOLEAN);
+        $shippingFee = $pickupAtStore ? 0 : max(0, (int) config('storefront.shipping_fee', 30000));
         $quote = $this->voucher->quoteMany(
             (array) $request->input('DISCOUNT_CODES', []),
             $subtotal,
-            max(0, (int) config('storefront.shipping_fee', 30000)),
+            $shippingFee,
             $user?->ID ? (int) $user->ID : null,
             $request->input('EMAIL'),
             $request->input('SO_DIEN_THOAI')

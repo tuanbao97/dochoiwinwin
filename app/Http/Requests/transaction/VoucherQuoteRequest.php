@@ -24,6 +24,10 @@ class VoucherQuoteRequest extends FormRequest
             'DISCOUNT_CODE' => implode(',', $codes),
             'EMAIL' => trim((string) $this->input('EMAIL', $this->input('email', ''))),
             'SO_DIEN_THOAI' => trim((string) $this->input('SO_DIEN_THOAI', $this->input('phone', ''))),
+            'NHAN_TAI_CUA_HANG' => filter_var(
+                $this->input('NHAN_TAI_CUA_HANG', $this->input('pickup', false)),
+                FILTER_VALIDATE_BOOLEAN
+            ),
         ]);
     }
 
@@ -34,6 +38,7 @@ class VoucherQuoteRequest extends FormRequest
             'DISCOUNT_CODES.*' => ['required', 'string', 'max:255'],
             'EMAIL' => ['nullable', 'email', 'max:1000'],
             'SO_DIEN_THOAI' => ['nullable', 'string', 'max:50'],
+            'NHAN_TAI_CUA_HANG' => ['boolean'],
             'ITEMS' => ['required', 'array', 'min:1'],
             'ITEMS.*.PRODUCT_ID' => ['required', 'integer'],
             'ITEMS.*.QUANTITY' => ['required', 'integer', 'min:1'],

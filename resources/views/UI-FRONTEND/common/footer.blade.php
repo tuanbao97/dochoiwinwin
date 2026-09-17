@@ -2,232 +2,256 @@
   $ww = wwWebContact();
   $wwZalo = $ww['zaloUrl'] ?: $ww['zaloPageUrl'];
   $wwMessenger = $ww['messengerUrl'] ?: $ww['facebookUrl'];
+  $hasSocial = $ww['facebookUrl'] !== '' || $wwMessenger !== '' || $wwZalo !== '' || $ww['tiktokUrl'] !== '' || $ww['youtubeUrl'] !== '';
 @endphp
-<footer class="bg-white">
-  <div class="container">
-    <div class="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-x-gutter gap-y-6 pt-6 pb-3  md:pt-[var(--spacing-10)] md:pb-[var(--spacing-12)]">
-      <div class="footer-col min-w-0">
-
-
-          <a class="footer-logo mb-3 block" href="{{ url('/') }}" title="{{ $ww['storeName'] }}">
-            <img class="object-contain" loading="lazy" src="{{ storefrontLogoUrl() }}" alt="{{ $ww['storeName'] }}" width="120" height="120" style="max-width: 120px;">
-          </a>
-
-
-		  	<div class="text-base font-semibold mb-2" data-ww-contact-slot="store-name">
-				{{ $ww['storeName'] }}
-		  </div>
-
-
-		  @if($ww['description'] !== '')
-		  <div class="mb-3 ww-store-description" data-ww-contact-slot="store-description">{{ $ww['description'] }}</div>
-		  @endif
-
-
-		  @if($ww['taxCode'] !== '')
-		  <div class="mb-3">
-			Mã số thuế: <span data-ww-contact-slot="tax-code">{{ $ww['taxCode'] }}</span>
-		  </div>
-		  @endif
-
-
-          <div class="contact-group mb-5">
-            @if($ww['address'] !== '')
-            <div class="flex gap-1 items-start mb-3">
-              <i class="icon icon-location text-neutral-200"></i>
-              <div class="">
-                <p class="leading-snug">
-                  <span class="text-forground">Địa chỉ</span>
-                  <span class="font-semibold" data-ww-contact-slot="address"> {{ $ww['address'] }}</span>
-                </p>
-              </div>
-            </div>
+<footer class="ww-ft">
+  <div class="container ww-ft__inner">
+    <div class="ww-ft__grid">
+      {{-- Brand + liên hệ --}}
+      <div class="ww-ft__col ww-ft__col--brand">
+        <a class="ww-ft__brand" href="{{ url('/') }}" title="{{ $ww['storeName'] }}">
+          <img
+            class="ww-ft__logo"
+            loading="lazy"
+            src="{{ storefrontLogoUrl() }}"
+            alt="{{ $ww['storeName'] }}"
+            width="72"
+            height="72"
+          >
+          <span class="ww-ft__brand-text">
+            <strong class="ww-ft__name" data-ww-contact-slot="store-name">{{ $ww['storeName'] }}</strong>
+            @if($ww['taxCode'] !== '')
+              <span class="ww-ft__tax">MST: <span data-ww-contact-slot="tax-code">{{ $ww['taxCode'] }}</span></span>
             @endif
-            <div class="xl:flex flex-wrap grid gap-2" style="column-gap: var(--spacing-8);">
-              @if(count($ww['hotlines']) > 0)
-              <div class="flex gap-1 items-start">
-                <i class="icon icon-call text-neutral-200"></i>
-                <div class="">
-                  <p class="text-forground">Hotline</p>
-                  <div class="font-semibold text-primary" data-ww-contact-slot="hotline-list">
-                    @foreach($ww['hotlines'] as $i => $hl)
-                      @if($i > 0)<span> · </span>@endif
-                      <a class="link text-primary font-semibold" href="{{ $hl['tel'] }}" @if($i === 0) data-ww-contact="hotline" @endif title="{{ $hl['display'] }}">{{ $hl['display'] }}</a>
-                    @endforeach
-                  </div>
-                </div>
-              </div>
-              @endif
-              @if($ww['email'] !== '')
-              <div class="flex gap-1 items-start">
-                <i class="icon icon-sms text-neutral-200"></i>
-                <div class="">
-                  <p class="text-forground">Email</p>
-                  <a class="font-semibold link" href="mailto:{{ $ww['email'] }}" data-ww-contact="email" data-ww-contact-fill-text title="{{ $ww['email'] }}">{{ $ww['email'] }}</a>
-                </div>
-              </div>
-              @endif
-            </div>
-          </div>
+          </span>
+        </a>
 
-
-          <div class="social-icons">
-            <p class="font-semibold mb-3">Mạng xã hội</p>
-            <div class="flex gap-3">
-
-	@if($ww['facebookUrl'] !== '')
-	<div class="facebook" data-ww-social>
-		<a href="{{ $ww['facebookUrl'] }}" target="_blank" rel="noopener noreferrer" data-ww-contact="facebook" aria-label="Facebook" title="Facebook" class="border border-neutral-50 rounded-sm flex items-center justify-center w-20 h-20 hover:bg-neutral-50">
-		  <img src="100/531/894/themes/1018832/assets/social-facebook.svg" class="w-10 h-10 object-contain" width="30" height="30" alt="" decoding="async" loading="lazy">
-		</a>
-	</div>
-	@endif
-
-	@if($wwMessenger !== '')
-	<div class="messenger" data-ww-social>
-		<a href="{{ $wwMessenger }}" target="_blank" rel="noopener noreferrer" data-ww-contact="messenger" aria-label="Messenger" title="Messenger" class="border border-neutral-50 rounded-sm flex items-center justify-center w-20 h-20 hover:bg-neutral-50">
-		  <img src="100/531/894/themes/1018832/assets/addthis-messenger.svg" class="w-10 h-10 object-contain" width="30" height="30" alt="" decoding="async" loading="lazy">
-		</a>
-	</div>
-	@endif
-
-  @if($wwZalo !== '')
-  <div class="zalo" data-ww-social>
-    <a href="{{ $wwZalo }}" target="_blank" rel="noopener noreferrer" data-ww-contact="zalo" title="Zalo" aria-label="Zalo" class="border border-neutral-50 rounded-sm flex items-center justify-center w-20 h-20 hover:bg-neutral-50">
-      <img src="100/531/894/themes/1018832/assets/addthis-zalo.svg" class="w-10 h-10 object-contain" width="30" height="30" alt="" decoding="async" loading="lazy">
-    </a>
-  </div>
-  @endif
-
-  @if($ww['tiktokUrl'] !== '')
-  <div class="tiktok" data-ww-social>
-    <a href="{{ $ww['tiktokUrl'] }}" target="_blank" rel="noopener noreferrer" data-ww-contact="tiktok" title="TikTok" aria-label="TikTok" class="border border-neutral-50 rounded-sm flex items-center justify-center w-20 h-20 hover:bg-neutral-50">
-      <img src="100/531/894/themes/1018832/assets/social-tiktok.svg" class="w-10 h-10 object-contain" width="30" height="30" alt="" decoding="async" loading="lazy">
-    </a>
-  </div>
-  @endif
-
-	  @if($ww['youtubeUrl'] !== '')
-	  <div class="youtube" data-ww-social>
-		<a href="{{ $ww['youtubeUrl'] }}" target="_blank" rel="noopener noreferrer" data-ww-contact="youtube" title="YouTube" aria-label="YouTube" class="border border-neutral-50 rounded-sm flex items-center justify-center w-20 h-20 hover:bg-neutral-50">
-		  <img src="100/531/894/themes/1018832/assets/social-youtube.svg" class="w-10 h-10 object-contain" width="30" height="30" alt="" decoding="async" loading="lazy">
-		</a>
-	  </div>
-	  @endif
-
-</div>
-          </div>
-
-      </div>
-      <div class="footer-col min-w-0">
-		  <details open="" class="footer-details">
-		  	<summary class="text-base font-semibold mb-2 flex items-center justify-between">
-			    Chính sách
-
-           		  <i class="icon icon-carret-right inline-block md:hidden"></i>
-
-
-			 </summary>
-
-
-            <ul class="list-menu space-y-4  list-disc pl-5">
-
-                <li class="li_menu">
-                  <a class="link" href="{{ url('/chinh-sach-bao-hanh') }}" title="Chính sách bảo hành">Chính sách bảo hành</a>
-                </li>
-
-                <li class="li_menu">
-                  <a class="link" href="{{ url('/chinh-sach-thanh-toan') }}" title="Chính sách thanh toán">Chính sách thanh toán</a>
-                </li>
-
-            </ul>
-
-		  </details>
-
-        @if(count($ww['hotlines']) > 0)
-        <div class="mt-6">
-          <p class="text-base font-semibold mb-2">
-            Tổng đài hỗ trợ
-          </p>
-          <ul class="list-menu space-y-2 list-disc pl-5">
-              @foreach($ww['hotlines'] as $i => $hl)
-              <li>
-                <a class="link font-semibold" href="{{ $hl['tel'] }}" @if($i === 0) data-ww-contact="hotline" @endif title="{{ $hl['display'] }}">
-                  <span @if($i === 0) data-ww-contact-slot="hotline-number" @endif>{{ $hl['display'] }}</span>
-                </a>
-              </li>
-              @endforeach
-          </ul>
-          @if($ww['workingHours'] !== '')
-          <p class="text-sm text-neutral-200 mt-2 mb-0" data-ww-contact-slot="working-hours">{{ $ww['workingHours'] }}</p>
-          @endif
-        </div>
+        @if($ww['description'] !== '')
+          <div class="ww-ft__desc ww-store-description" data-ww-contact-slot="store-description">{{ $ww['description'] }}</div>
         @endif
 
-        {{-- Biểu tượng Đã thông báo Bộ Công Thương (dưới Tổng đài hỗ trợ) --}}
-        @php
-          $moitUrl = $ww['moitNoticeUrl'] !== '' ? $ww['moitNoticeUrl'] : 'https://online.gov.vn/nen-tang';
-        @endphp
-        <div class="mt-4">
-          <a
-            href="{{ $moitUrl }}"
-            target="_blank"
-            rel="noopener noreferrer"
+        <ul class="ww-ft__contacts">
+          @if($ww['address'] !== '')
+            <li>
+              <span class="ww-ft__ico" aria-hidden="true"><i class="icon icon-location"></i></span>
+              <div>
+                <span class="ww-ft__label">Địa chỉ</span>
+                <p class="ww-ft__value" data-ww-contact-slot="address">{{ $ww['address'] }}</p>
+              </div>
+            </li>
+          @endif
+
+          @if(count($ww['hotlines']) > 0)
+            <li>
+              <span class="ww-ft__ico" aria-hidden="true"><i class="icon icon-call"></i></span>
+              <div>
+                <span class="ww-ft__label">Hotline</span>
+                <div class="ww-ft__phones" data-ww-contact-slot="hotline-list">
+                  @foreach($ww['hotlines'] as $i => $hl)
+                    <a
+                      class="ww-ft__phone"
+                      href="{{ $hl['tel'] }}"
+                      @if($i === 0) data-ww-contact="hotline" @endif
+                      title="{{ $hl['display'] }}"
+                    >{{ $hl['display'] }}</a>
+                  @endforeach
+                </div>
+              </div>
+            </li>
+          @endif
+
+          @if($ww['email'] !== '')
+            <li>
+              <span class="ww-ft__ico" aria-hidden="true"><i class="icon icon-sms"></i></span>
+              <div>
+                <span class="ww-ft__label">Email</span>
+                <a
+                  class="ww-ft__value ww-ft__link"
+                  href="mailto:{{ $ww['email'] }}"
+                  data-ww-contact="email"
+                  data-ww-contact-fill-text
+                  title="{{ $ww['email'] }}"
+                >{{ $ww['email'] }}</a>
+              </div>
+            </li>
+          @endif
+        </ul>
+
+        @if($hasSocial)
+          <div class="ww-ft__social">
+            <p class="ww-ft__heading">Mạng xã hội</p>
+            <div class="ww-ft__social-list">
+              @if($ww['facebookUrl'] !== '')
+                <a
+                  href="{{ $ww['facebookUrl'] }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ww-contact="facebook"
+                  data-ww-social
+                  class="ww-ft__social-btn"
+                  aria-label="Facebook"
+                  title="Facebook"
+                >
+                  <img src="100/531/894/themes/1018832/assets/social-facebook.svg" width="22" height="22" alt="" decoding="async" loading="lazy">
+                </a>
+              @endif
+
+              @if($wwMessenger !== '')
+                <a
+                  href="{{ $wwMessenger }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ww-contact="messenger"
+                  data-ww-social
+                  class="ww-ft__social-btn"
+                  aria-label="Messenger"
+                  title="Messenger"
+                >
+                  <img src="100/531/894/themes/1018832/assets/addthis-messenger.svg" width="22" height="22" alt="" decoding="async" loading="lazy">
+                </a>
+              @endif
+
+              @if($wwZalo !== '')
+                <a
+                  href="{{ $wwZalo }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ww-contact="zalo"
+                  data-ww-social
+                  class="ww-ft__social-btn"
+                  aria-label="Zalo"
+                  title="Zalo"
+                >
+                  <img src="100/531/894/themes/1018832/assets/addthis-zalo.svg" width="22" height="22" alt="" decoding="async" loading="lazy">
+                </a>
+              @endif
+
+              @if($ww['tiktokUrl'] !== '')
+                <a
+                  href="{{ $ww['tiktokUrl'] }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ww-contact="tiktok"
+                  data-ww-social
+                  class="ww-ft__social-btn"
+                  aria-label="TikTok"
+                  title="TikTok"
+                >
+                  <img src="100/531/894/themes/1018832/assets/social-tiktok.svg" width="22" height="22" alt="" decoding="async" loading="lazy">
+                </a>
+              @endif
+
+              @if($ww['youtubeUrl'] !== '')
+                <a
+                  href="{{ $ww['youtubeUrl'] }}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-ww-contact="youtube"
+                  data-ww-social
+                  class="ww-ft__social-btn"
+                  aria-label="YouTube"
+                  title="YouTube"
+                >
+                  <img src="100/531/894/themes/1018832/assets/social-youtube.svg" width="22" height="22" alt="" decoding="async" loading="lazy">
+                </a>
+              @endif
+            </div>
+          </div>
+        @endif
+      </div>
+
+      {{-- Chính sách + hỗ trợ --}}
+      <div class="ww-ft__col ww-ft__col--links">
+        <details open class="ww-ft__details footer-details">
+          <summary class="ww-ft__heading">
+            Chính sách
+            <i class="icon icon-carret-right ww-ft__caret md:hidden" aria-hidden="true"></i>
+          </summary>
+          <ul class="ww-ft__menu">
+            <li>
+              <a class="ww-ft__menu-link" href="{{ url('/chinh-sach-bao-hanh') }}" title="Chính sách bảo hành">Chính sách bảo hành</a>
+            </li>
+            <li>
+              <a class="ww-ft__menu-link" href="{{ url('/chinh-sach-thanh-toan') }}" title="Chính sách thanh toán">Chính sách thanh toán</a>
+            </li>
+          </ul>
+        </details>
+
+        @if(count($ww['hotlines']) > 0)
+          <div class="ww-ft__support">
+            <p class="ww-ft__heading">Tổng đài hỗ trợ</p>
+            <div class="ww-ft__support-phones">
+              @foreach($ww['hotlines'] as $i => $hl)
+                <a
+                  class="ww-ft__support-phone"
+                  href="{{ $hl['tel'] }}"
+                  @if($i === 0) data-ww-contact="hotline" @endif
+                  title="{{ $hl['display'] }}"
+                >
+                  <i class="icon icon-call" aria-hidden="true"></i>
+                  <span @if($i === 0) data-ww-contact-slot="hotline-number" @endif>{{ $hl['display'] }}</span>
+                </a>
+              @endforeach
+            </div>
+            @if($ww['workingHours'] !== '')
+              <p class="ww-ft__hours" data-ww-contact-slot="working-hours">{{ $ww['workingHours'] }}</p>
+            @endif
+          </div>
+        @endif
+
+        <div class="ww-ft__moit">
+          <span
+            class="ww-ft__moit-link"
             title="Đã thông báo Bộ Công Thương"
             aria-label="Đã thông báo Bộ Công Thương"
-            data-ww-contact="moit-notice"
           >
             <img
-              class="object-contain"
               src="{{ asset('UI-FRONTEND/images/logo-bo-cong-thuong.png') }}"
               alt="Đã thông báo Bộ Công Thương"
               width="150"
               height="57"
               loading="lazy"
               decoding="async"
-              style="max-width: 150px; height: auto;"
             >
-          </a>
+          </span>
         </div>
       </div>
-      <div class="footer-col min-w-0 md:col-span-2 lg:col-span-1">
 
-          <p class="font-semibold mb-2">Bản đồ cửa hàng</p>
-          @if($ww['mapUrl'] !== '')
-          <div class="w-full overflow-hidden rounded border border-neutral-50 bg-neutral-50 ww-footer-map" style="min-height:200px">
+      {{-- Bản đồ --}}
+      <div class="ww-ft__col ww-ft__col--map">
+        <p class="ww-ft__heading">Bản đồ cửa hàng</p>
+        @if($ww['mapUrl'] !== '')
+          <div class="ww-ft__map ww-footer-map">
             <iframe
-              class="block w-full h-[200px] sm:h-[240px] md:h-[200px]"
               data-ww-contact="map"
               src="{{ $ww['mapUrl'] }}"
               width="600"
               height="300"
-              style="border:0;display:block;min-height:200px;background:#f1f5f9;"
               allowfullscreen=""
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
               title="{{ $ww['storeName'] }} — Google Maps"
             ></iframe>
           </div>
-          @endif
+        @endif
 
-          @if($ww['address'] !== '')
-          <div class="flex gap-1 items-start mt-4">
-            <i class="icon icon-location text-neutral-200 shrink-0 mt-0.5"></i>
-            <div class="min-w-0">
-              <p class="leading-snug">
-                <span class="text-forground">Địa chỉ: </span><span class="font-semibold" data-ww-contact-slot="address">{{ $ww['address'] }}</span>
-              </p>
-            </div>
+        @if($ww['address'] !== '')
+          <div class="ww-ft__map-address">
+            <span class="ww-ft__ico" aria-hidden="true"><i class="icon icon-location"></i></span>
+            <p>
+              <span class="ww-ft__label">Địa chỉ</span>
+              <span class="ww-ft__value" data-ww-contact-slot="address">{{ $ww['address'] }}</span>
+            </p>
           </div>
-          @endif
-
+        @endif
       </div>
     </div>
-    <div class="footer-copyright border-t border-neutral-50 py-3 text-center gap-2 grid gird-cols-1 md:grid-cols-[1fr_auto] items-center">
-      <span class="wsp font-semibold" data-ww-contact-slot="commitment-text">
+
+    <div class="ww-ft__bottom footer-copyright">
+      <span class="ww-ft__commitment" data-ww-contact-slot="commitment-text">
         {{ $ww['commitmentText'] !== '' ? $ww['commitmentText'] : $ww['storeName'] }}
       </span>
-		    </div>
-	</div>
+    </div>
+  </div>
 </footer>
 @include('UI-FRONTEND.common.winwin-contact-settings')
