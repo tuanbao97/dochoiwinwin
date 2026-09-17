@@ -196,6 +196,16 @@ TEXT;
                 'ORDER' => 13,
             ],
             [
+                // Dán URL hồ sơ trên online.gov.vn (dạng https://online.gov.vn/nen-tang/{uuid})
+                'CODE' => SettingEnum::SETTING_DUONG_DAN_BO_CONG_THUONG->value,
+                'NAME' => SettingEnum::SETTING_DUONG_DAN_BO_CONG_THUONG->description(),
+                'TYPE' => SettingEnum::SETTING_DUONG_DAN_BO_CONG_THUONG->type(),
+                'DESCRIPTION' => SettingEnum::SETTING_DUONG_DAN_BO_CONG_THUONG->description(),
+                'UNIT' => SettingEnum::SETTING_DUONG_DAN_BO_CONG_THUONG->unit(),
+                'VALUE' => '',
+                'ORDER' => 13,
+            ],
+            [
                 'CODE' => SettingEnum::SETTING_GIOI_THIEU_CUA_HANG->value,
                 'NAME' => SettingEnum::SETTING_GIOI_THIEU_CUA_HANG->description(),
                 'TYPE' => SettingEnum::SETTING_GIOI_THIEU_CUA_HANG->type(),
@@ -269,6 +279,7 @@ TEXT;
                 SettingEnum::SETTING_DUONG_DAN_FACEBOOK_MESSENGER_CUA_HANG->value,
                 SettingEnum::SETTING_DUONG_DAN_TIKTOK_CUA_HANG->value,
                 SettingEnum::SETTING_DUONG_DAN_YOUTUBE_CUA_HANG->value,
+                SettingEnum::SETTING_DUONG_DAN_BO_CONG_THUONG->value,
             ];
             if (in_array($row['CODE'], $socialCodes, true)) {
                 $current = trim((string) DB::table('setting')->where('CODE', $row['CODE'])->value('VALUE'));

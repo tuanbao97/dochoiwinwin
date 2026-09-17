@@ -869,6 +869,7 @@ use Illuminate\Support\Facades\DB;
                 'websiteUrl' => $val('SETTING_DUONG_DAN_TRANG_WEBSITE_CUA_HANG'),
                 'tiktokUrl' => $val('SETTING_DUONG_DAN_TIKTOK_CUA_HANG'),
                 'youtubeUrl' => $val('SETTING_DUONG_DAN_YOUTUBE_CUA_HANG'),
+                'moitNoticeUrl' => $val('SETTING_DUONG_DAN_BO_CONG_THUONG'),
                 'commitmentText' => $val('SETTING_CAM_KET_BAN_HANG_ONLY_TEXT'),
                 'hotline' => $hotlines[0] ?? null,
                 'hotlines' => $hotlines,
