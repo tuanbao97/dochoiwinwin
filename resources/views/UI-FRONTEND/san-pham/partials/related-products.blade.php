@@ -258,7 +258,7 @@
       '</div>' +
       '<div class="card-product__body flex flex-col gap-2 px-2 pb-2 md:gap-1 md:px-2 md:pb-2">' +
       '<a class="link block" href="' + escapeHtml(href) + '" title="' + escapeHtml(title) + '">' +
-      '<div class="card-product__title text-sm font-normal line-clamp-3">' + escapeHtml(title) + '</div>' +
+      '<div class="card-product__title text-sm font-normal line-clamp-2">' + escapeHtml(title) + '</div>' +
       '</a>' +
       '<div class="card-product__price-row flex justify-between gap-3 w-full min-w-0">' +
       '<a class="link flex-1 min-w-0" href="' + escapeHtml(href) + '" title="' + escapeHtml(title) + '">' +

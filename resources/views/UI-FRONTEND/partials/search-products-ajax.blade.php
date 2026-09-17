@@ -324,7 +324,7 @@
       '" title="' +
       escapeHtml(title) +
       '">' +
-      '<div class="card-product__title text-sm font-normal line-clamp-3">' +
+      '<div class="card-product__title text-sm font-normal line-clamp-2">' +
       escapeHtml(title) +
       '</div>' +
       '<div class="sapo-product-reviews-badge" data-id="' +

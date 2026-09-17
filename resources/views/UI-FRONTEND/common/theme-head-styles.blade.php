@@ -429,6 +429,13 @@
       html:has(body.overflow-hidden),
       body.overflow-hidden {
         overflow: hidden !important;
+        padding-right: var(--ww-scroll-lock-pad, 0px) !important;
+      }
+      /* Nút nổi bên phải (Zalo/Messenger/back-to-top) cũng bù khoảng scrollbar */
+      html.overflow-hidden .addThis_listSharing,
+      html:has(body.overflow-hidden) .addThis_listSharing,
+      body.overflow-hidden .addThis_listSharing {
+        right: calc(12px + var(--ww-scroll-lock-pad, 0px)) !important;
       }
     </style>
 

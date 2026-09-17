@@ -85,10 +85,15 @@
 
   function unlockPageInteraction(force) {
     if (!force && hasActivePortal()) return;
+    if (typeof window.__wwUnlockBodyScroll === "function") {
+      window.__wwUnlockBodyScroll(true);
+      return;
+    }
     document.body.classList.remove("overflow-hidden");
     document.documentElement.classList.remove("overflow-hidden");
     document.body.style.removeProperty("overflow");
     document.documentElement.style.removeProperty("overflow");
+    document.documentElement.style.removeProperty("--ww-scroll-lock-pad");
   }
 
   window.__wwUnlockPageIfIdle = function () {
@@ -145,8 +150,12 @@
     }
 
     modal.classList.add("active", "ww-open");
-    document.body.classList.add("overflow-hidden");
-    document.documentElement.classList.add("overflow-hidden");
+    if (typeof window.__wwLockBodyScroll === "function") {
+      window.__wwLockBodyScroll();
+    } else {
+      document.body.classList.add("overflow-hidden");
+      document.documentElement.classList.add("overflow-hidden");
+    }
     if (!dialog) return;
     dialog.setAttribute("open", "");
   }
