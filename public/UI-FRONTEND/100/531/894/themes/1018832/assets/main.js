@@ -527,6 +527,30 @@ subscribe(window.themeConfigs.firstInteraction, () => {
 
   defineElement("promo-popup", PromoPopup);
 
+  /** Popup mời đăng nhập khi khách mới vào (chưa có phiên đăng nhập). */
+  class LoginInvitePopup extends PortalComponent {
+    constructor() {
+      super();
+      this.storageKey = this.dataset.storageKey || "wwLoginInviteSeen";
+      this._shown = false;
+    }
+    connectedCallback() {
+      if (this._shown) return;
+      this._shown = true;
+      try {
+        if (sessionStorage.getItem(this.storageKey)) return;
+        sessionStorage.setItem(this.storageKey, "1");
+      } catch (e) {
+        /* private mode: vẫn hiện 1 lần trong lần load này */
+      }
+      window.setTimeout(() => {
+        if (typeof this.show === "function") this.show();
+      }, 500);
+    }
+  }
+
+  defineElement("login-invite-popup", LoginInvitePopup);
+
   class VideoReview extends HTMLElement {
     constructor() {
       super();

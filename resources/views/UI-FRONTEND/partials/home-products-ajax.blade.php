@@ -498,9 +498,22 @@
   function sortProductsByBoLoc(rows, boLoc) {
     var list = Array.isArray(rows) ? rows.slice() : [];
     var mode = boLoc || 'default';
-    if (mode === 'default') return list;
+    if (mode === 'default') {
+      // Giữ hết hàng ở cuối (API đã sort; vẫn bảo vệ khi gộp nhiều page/section)
+      list.sort(function (a, b) {
+        var aOut = productInStock(a) ? 0 : 1;
+        var bOut = productInStock(b) ? 0 : 1;
+        if (aOut !== bOut) return aOut - bOut;
+        return 0;
+      });
+      return list;
+    }
 
     list.sort(function (a, b) {
+      var aOut = productInStock(a) ? 0 : 1;
+      var bOut = productInStock(b) ? 0 : 1;
+      if (aOut !== bOut) return aOut - bOut;
+
       if (mode === 'gia-tang' || mode === 'gia-giam') {
         var pa = productSellPrice(a);
         var pb = productSellPrice(b);
@@ -539,25 +552,27 @@
     }
   }
 
-  function loadProducts(section, containerSelector, opts) {
+    function loadProducts(section, containerSelector, opts) {
     var el = document.querySelector(containerSelector);
     if (!el) {
       if (opts && typeof opts.onDone === 'function') opts.onDone();
       return Promise.resolve();
     }
 
+    if (section === 'flash') {
+      return loadFlashSaleProducts(el, opts);
+    }
+
     var params = new URLSearchParams();
     params.set('PAGE', '1');
-    var per = (opts && opts.perPage) || (section === 'flash' ? 12 : homeCategoryProductLimit());
-    el.innerHTML = buildProductGridSkeletonHtml(per, section === 'flash');
+    var per = (opts && opts.perPage) || homeCategoryProductLimit();
+    el.innerHTML = buildProductGridSkeletonHtml(per, false);
 
     params.set('PER_PAGE', String(per));
     params.set('BO_LOC', (opts && opts.boLoc) || 'default');
     params.set('TRANG_THAI_HOAT_DONG', 'true');
     params.set('IS_API_PUBLIC', 'true');
-    if (section === 'flash') {
-      params.set('PRODUCT_VIP', 'true');
-    } else if (opts && opts.productVip) {
+    if (opts && opts.productVip) {
       params.set('PRODUCT_VIP', 'true');
     } else if (opts && opts.productHot) {
       params.set('PRODUCT_HOT', 'true');
@@ -583,35 +598,71 @@
         }
         var rows = data.DATAS.PRODUCT.DATA || [];
         if (!rows.length) {
-          if (section === 'flash') {
-            el.innerHTML = '';
-            hideHomeBlock(getFlashSectionEl());
-          } else {
-            el.innerHTML = buildEmptyProductsHtml();
-            if (categoryId) {
-              noteCategoryLoadResult(categoryId, false);
-            }
+          el.innerHTML = buildEmptyProductsHtml();
+          if (categoryId) {
+            noteCategoryLoadResult(categoryId, false);
           }
           return;
         }
         renderProductsInto(el, rows, section);
-        if (section === 'flash') {
-          showHomeBlock(getFlashSectionEl());
-        } else if (categoryId) {
+        if (categoryId) {
           noteCategoryLoadResult(categoryId, true);
         }
         window.dispatchEvent(new CustomEvent('home-product-cards-loaded', { detail: { section: section } }));
       })
       .catch(function () {
-        if (section === 'flash') {
+        el.innerHTML = buildEmptyProductsHtml();
+        if (categoryId) {
+          noteCategoryLoadResult(categoryId, false);
+        }
+      })
+      .finally(function () {
+        if (opts && typeof opts.onDone === 'function') opts.onDone();
+      });
+  }
+
+  function loadFlashSaleProducts(el, opts) {
+    var per = (opts && opts.perPage) || 12;
+    el.innerHTML = buildProductGridSkeletonHtml(per, true);
+
+    var params = new URLSearchParams();
+    params.set('PAGE', '1');
+    params.set('PER_PAGE', String(per));
+    params.set('BO_LOC', 'default');
+    params.set('TRANG_THAI_HOAT_DONG', 'true');
+    params.set('IS_API_PUBLIC', 'true');
+    // Sapo "Giá so sánh" (compare_at_price) → GIA_GOC > GIA_CA
+    params.set('CO_GIA_SO_SANH', 'true');
+    params.set('CON_HANG', 'true');
+    // Chỉ hiện sản phẩm còn hàng (có biến thể tồn > 0)
+    params.set('CON_HANG', 'true');
+
+    return fetch(cfg.apiUrl + '?' + params.toString(), {
+      method: 'GET',
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      credentials: 'same-origin',
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || data.STATUS !== true || !data.DATAS || !data.DATAS.PRODUCT) {
+          throw new Error((data && data.STATUS_DETAIL) || 'Phản hồi không hợp lệ');
+        }
+        var rows = data.DATAS.PRODUCT.DATA || [];
+        if (!rows.length) {
           el.innerHTML = '';
           hideHomeBlock(getFlashSectionEl());
-        } else {
-          el.innerHTML = buildEmptyProductsHtml();
-          if (categoryId) {
-            noteCategoryLoadResult(categoryId, false);
-          }
+          return;
         }
+        renderProductsInto(el, rows, 'flash');
+        showHomeBlock(getFlashSectionEl());
+        window.dispatchEvent(new CustomEvent('home-product-cards-loaded', { detail: { section: 'flash' } }));
+      })
+      .catch(function () {
+        el.innerHTML = '';
+        hideHomeBlock(getFlashSectionEl());
       })
       .finally(function () {
         if (opts && typeof opts.onDone === 'function') opts.onDone();

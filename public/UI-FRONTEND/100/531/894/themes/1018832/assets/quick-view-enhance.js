@@ -2,6 +2,69 @@
   if (window.__wwQuickViewEnhanceLoaded) return;
   window.__wwQuickViewEnhanceLoaded = true;
 
+  /** Scroll-lock cho drawer/portal khác — tự cài nếu main.js chưa kịp.
+   *  Quick-view KHÔNG dùng overflow-hidden (ẩn scrollbar → nhảy layout). */
+  (function ensureScrollLockHelpers() {
+    function scrollbarWidth() {
+      return Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    }
+    if (typeof window.__wwLockBodyScroll !== "function") {
+      window.__wwLockBodyScroll = function () {
+        var pad = scrollbarWidth();
+        document.documentElement.style.setProperty("--ww-scroll-lock-pad", pad + "px");
+        document.body.classList.add("overflow-hidden");
+        document.documentElement.classList.add("overflow-hidden");
+      };
+    }
+    if (typeof window.__wwUnlockBodyScroll !== "function") {
+      window.__wwUnlockBodyScroll = function (force) {
+        if (
+          !force &&
+          document.querySelector(".portal.active, quick-view.active, quick-view.ww-open")
+        ) {
+          return;
+        }
+        document.body.classList.remove("overflow-hidden");
+        document.documentElement.classList.remove("overflow-hidden");
+        document.body.style.removeProperty("overflow");
+        document.documentElement.style.removeProperty("overflow");
+        document.documentElement.style.removeProperty("--ww-scroll-lock-pad");
+      };
+    }
+  })();
+
+  /** Giữ đúng scrollY khi mở QV — không ẩn scrollbar / không bù padding */
+  var wwQvScrollY = null;
+  var wwQvScrollGuardBound = false;
+
+  function wwQvScrollGuard() {
+    if (wwQvScrollY == null) return;
+    if ((window.scrollY || window.pageYOffset || 0) !== wwQvScrollY) {
+      window.scrollTo(0, wwQvScrollY);
+    }
+  }
+
+  function freezePageScrollForQuickView() {
+    wwQvScrollY = window.scrollY || window.pageYOffset || 0;
+    if (!wwQvScrollGuardBound) {
+      wwQvScrollGuardBound = true;
+      window.addEventListener("scroll", wwQvScrollGuard, { passive: true });
+    }
+  }
+
+  function unfreezePageScrollForQuickView() {
+    if (wwQvScrollY == null && !wwQvScrollGuardBound) return;
+    var y = wwQvScrollY;
+    wwQvScrollY = null;
+    if (wwQvScrollGuardBound) {
+      window.removeEventListener("scroll", wwQvScrollGuard);
+      wwQvScrollGuardBound = false;
+    }
+    if (y != null) {
+      window.scrollTo(0, y);
+    }
+  }
+
   function themeApiUrl(path) {
     return typeof window.themeUrl === "function"
       ? window.themeUrl(path)
@@ -59,6 +122,15 @@
     if (modal && modal.parentElement !== document.body) {
       document.body.appendChild(modal);
     }
+    // Khóa --dialog-max-width sớm (components.css mặc định 400px)
+    if (modal) {
+      if (!modal.style.getPropertyValue("--dialog-max-width")) {
+        modal.style.setProperty("--dialog-max-width", "920px");
+      }
+      if (!modal.style.getPropertyValue("--ww-qv-modal-width")) {
+        modal.style.setProperty("--ww-qv-modal-width", "min(920px, 100%)");
+      }
+    }
     return modal;
   }
 
@@ -85,15 +157,11 @@
 
   function unlockPageInteraction(force) {
     if (!force && hasActivePortal()) return;
+    unfreezePageScrollForQuickView();
+    // QV không còn gọi __wwLockBodyScroll; vẫn unlock phòng trường hợp portal khác / legacy
     if (typeof window.__wwUnlockBodyScroll === "function") {
       window.__wwUnlockBodyScroll(true);
-      return;
     }
-    document.body.classList.remove("overflow-hidden");
-    document.documentElement.classList.remove("overflow-hidden");
-    document.body.style.removeProperty("overflow");
-    document.documentElement.style.removeProperty("overflow");
-    document.documentElement.style.removeProperty("--ww-scroll-lock-pad");
   }
 
   window.__wwUnlockPageIfIdle = function () {
@@ -117,6 +185,8 @@
   function releasePageInteraction() {
     const modal = document.getElementById("quick-view-product");
     forceCloseQuickViewDialog(modal);
+    // Luôn bỏ freeze scroll của QV (kể cả khi drawer khác vẫn mở)
+    unfreezePageScrollForQuickView();
     const otherBlocker = document.querySelector(
       ".portal.active:not(#quick-view-product), quick-view.active:not(#quick-view-product), quick-view.ww-open:not(#quick-view-product)"
     );
@@ -147,18 +217,96 @@
     resetQuickViewAnimation(modal);
     if (isMobile) {
       modal.dataset.animation = "slide-in-bottom";
+    } else {
+      // Desktop: không dùng scale-in để tránh modal nhấp nhô khi load xong
+      modal.dataset.animation = "";
+    }
+
+    // Giữ scrollY; không overflow-hidden / không --ww-scroll-lock-pad (tránh nhảy trang)
+    freezePageScrollForQuickView();
+    if (document.activeElement && typeof document.activeElement.blur === "function") {
+      try {
+        document.activeElement.blur();
+      } catch (e) {
+        /* ignore */
+      }
     }
 
     modal.classList.add("active", "ww-open");
-    if (typeof window.__wwLockBodyScroll === "function") {
-      window.__wwLockBodyScroll();
-    } else {
-      document.body.classList.add("overflow-hidden");
-      document.documentElement.classList.add("overflow-hidden");
-    }
     if (!dialog) return;
     dialog.setAttribute("open", "");
+    // Khôi phục ngay nếu mở dialog/focus làm lệch scroll
+    window.requestAnimationFrame(function () {
+      wwQvScrollGuard();
+    });
   }
+
+  function markQuickViewImageReady(img) {
+    if (!img) return;
+    img.classList.add("ww-qv-img-ready");
+  }
+
+  function prepareQuickViewImages(root) {
+    const scope = root || document;
+    const selector =
+      scope === document || (scope.id && scope.id === "quick-view-product")
+        ? "#quick-view-product .gallery-main-img, #quick-view-product .embla-thumbs img, #quick-view-product .ww-qv-variant-thumb img"
+        : ".gallery-main-img, .embla-thumbs img, .ww-qv-variant-thumb img";
+    scope.querySelectorAll(selector).forEach(function (img) {
+      if (img.dataset.wwQvFadeBound === "1") return;
+      img.dataset.wwQvFadeBound = "1";
+      img.classList.remove("ww-qv-img-ready");
+      if (img.complete && img.naturalWidth > 0) {
+        markQuickViewImageReady(img);
+        return;
+      }
+      img.addEventListener(
+        "load",
+        function () {
+          markQuickViewImageReady(img);
+        },
+        { once: true }
+      );
+      img.addEventListener(
+        "error",
+        function () {
+          markQuickViewImageReady(img);
+        },
+        { once: true }
+      );
+    });
+  }
+
+  function swapQuickViewImage(img, nextSrc) {
+    if (!img || !nextSrc) return;
+    const current = img.getAttribute("src") || "";
+    if (current === nextSrc) {
+      markQuickViewImageReady(img);
+      return;
+    }
+    img.classList.remove("ww-qv-img-ready");
+    img.addEventListener(
+      "load",
+      function () {
+        markQuickViewImageReady(img);
+      },
+      { once: true }
+    );
+    img.addEventListener(
+      "error",
+      function () {
+        markQuickViewImageReady(img);
+      },
+      { once: true }
+    );
+    img.src = nextSrc;
+  }
+
+  window.__wwAfterQuickViewInject = function (root) {
+    initQuickViewGallery(root);
+    bindQuickViewVariants(root);
+    prepareQuickViewImages(root);
+  };
 
   function closeModal() {
     const modal = document.getElementById("quick-view-product");
@@ -391,14 +539,13 @@
     wrapper.replaceChildren();
     wrapper.appendChild(document.importNode(content, true));
     setQuickViewLoading(false);
-    wrapper.classList.remove("is-ready");
-    void wrapper.offsetWidth;
-    wrapper.classList.add("is-ready");
-    window.setTimeout(function () {
-      wrapper.classList.remove("is-ready");
-    }, 320);
-    initQuickViewGallery(wrapper);
-    bindQuickViewVariants(wrapper);
+    if (typeof window.__wwAfterQuickViewInject === "function") {
+      window.__wwAfterQuickViewInject(wrapper);
+    } else {
+      initQuickViewGallery(wrapper);
+      bindQuickViewVariants(wrapper);
+      prepareQuickViewImages(wrapper);
+    }
 
     if (options.promptVariant) {
       window.setTimeout(function () {
@@ -731,7 +878,7 @@
     if (idx < 0 && image) {
       const mainImg = shell.querySelector("#ww-qv-gallery-main .embla__slide img.gallery-main-img");
       if (mainImg) {
-        mainImg.src = image;
+        swapQuickViewImage(mainImg, image);
         const slide = mainImg.closest(".embla__slide");
         if (slide) {
           slide.setAttribute("data-src", image);
@@ -912,6 +1059,42 @@
   document.addEventListener("home-product-cards-loaded", initQuickViewButtons);
   if (window.EGATheme && window.EGATheme.subscribe && window.themeConfigs) {
     window.EGATheme.subscribe(window.themeConfigs.productLoaded, initQuickViewButtons);
+  }
+
+  // Đồng bộ entry point theme: luôn đi qua enhance (mọi trang UI)
+  function productIdFromHandle(handle) {
+    const text = String(handle == null ? "" : handle);
+    const sp = text.match(/(?:^|[\/\-])sp-(\d+)(?:[\/?#]|$)/i);
+    if (sp) return parseInt(sp[1], 10) || 0;
+    const trailing = text.match(/-(\d+)(?:\/?$|[?#])/);
+    if (trailing) return parseInt(trailing[1], 10) || 0;
+    const digits = text.match(/(\d{3,})/);
+    return digits ? parseInt(digits[1], 10) || 0 : 0;
+  }
+
+  function syncShowQuickViewBridge() {
+    if (!window.EGATheme) window.EGATheme = {};
+    window.EGATheme.showQuickView = function (productHandle) {
+      const id = productIdFromHandle(productHandle);
+      if (id) {
+        loadProduct(id);
+        return;
+      }
+      const modal = document.getElementById("quick-view-product");
+      if (modal && typeof modal.show === "function") {
+        modal.show({ dataset: { product: productHandle } });
+      }
+    };
+  }
+  syncShowQuickViewBridge();
+
+  // Xử lý click sớm trước khi enhance load xong
+  if (window.__wwQvQueue && window.__wwQvQueue.length) {
+    const queued = window.__wwQvQueue.slice();
+    window.__wwQvQueue = [];
+    queued.forEach(function (id) {
+      if (id) loadProduct(parseInt(id, 10) || 0);
+    });
   }
 
   new MutationObserver(function (mutations) {

@@ -4,6 +4,10 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// XAMPP thường bật display_errors — notice/warning sẽ dính sau JSON và làm
+// frontend lỗi "Unexpected non-whitespace character after JSON".
+ini_set('display_errors', '0');
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;

@@ -65,55 +65,14 @@
   <dialog class="portal-dialog">
     <div class="portal-overlay"></div>
     <div class="portal-inner animation bg-background h-full grid grid-rows-[auto_1fr_auto]">
-      <div class="navigation-header pt-4 flex justify-between items-center border-b pb-3 border-neutral-50 px-4">
-
-          @php
-            $wwDrawerUser = $storefrontUser ?? null;
-          @endphp
-          <a
-            href="{{ $wwDrawerUser ? url('/account/orders') : url('/account/login') }}"
-            title="{{ $wwDrawerUser ? ($wwDrawerUser['EMAIL'] ?: 'Tài khoản') : 'Đăng nhập' }}"
-            class="header-icon-group flex gap-2 items-center account-group  hover:bg-neutral-50 active:scale-95 transition-all duration-150 px-2 py-1 rounded-sm "
-            data-ww-drawer-account
-          >
-            <div class="header-icon w-[3.6rem] h-[3.6rem] p-2 rounded-sm flex items-center justify-center border border-neutral-50 overflow-hidden">
-              <img
-                class="ww-account__drawer-avatar"
-                alt=""
-                data-ww-drawer-avatar
-                referrerpolicy="no-referrer"
-                @if($wwDrawerUser && $wwDrawerUser['AVATAR_URL']) src="{{ $wwDrawerUser['AVATAR_URL'] }}" @else hidden @endif
-              >
-              <i
-                class="icon icon-user"
-                data-ww-drawer-icon
-                @if($wwDrawerUser && $wwDrawerUser['AVATAR_URL']) hidden @endif
-              ></i>
-            </div>
-            <div class=" ">
-              <span class="text-xs">Tài khoản</span>
-              <span class="font-semibold block" data-ww-drawer-name>{{ $wwDrawerUser['FULL_NAME'] ?? 'Đăng nhập' }}</span>
-            </div>
-          </a>
-
-          <div class="ww-account__drawer-actions">
-            <a
-              href="{{ url('/admin/san-pham/danh-sach') }}"
-              class="ww-account__drawer-admin"
-              data-ww-drawer-admin
-              @unless($wwDrawerUser && $wwDrawerUser['IS_ADMIN']) hidden @endunless
-            >Quản lý</a>
-            <button
-              type="button"
-              class="ww-account__drawer-logout"
-              data-ww-drawer-logout
-              @unless($wwDrawerUser) hidden @endunless
-            >Đăng xuất</button>
-          </div>
-
-        <button type="button" id="PortalClose-menu-crawer" class="portal-close-button w-[3.2rem] h-[3.2rem] rounded-full border border-white text-white flex items-center justify-center active:scale-95 transition-transform hover:animate-spin" title="Đóng" aria-label="Đóng">
-          <i class="icon icon-cross"></i>
-        </button>
+      <div class="navigation-header pt-4 border-b pb-3 border-neutral-50 px-4">
+        <div class="flex justify-between items-start gap-3 mb-2">
+          <span class="text-xs font-semibold text-neutral-200 uppercase tracking-wide pt-1">Tài khoản</span>
+          <button type="button" id="PortalClose-menu-crawer" class="portal-close-button w-[3.2rem] h-[3.2rem] rounded-full border border-white text-white flex items-center justify-center active:scale-95 transition-transform hover:animate-spin" title="Đóng" aria-label="Đóng">
+            <i class="icon icon-cross"></i>
+          </button>
+        </div>
+        @include('UI-FRONTEND.partials.menu-drawer-account')
       </div>
       <nav class="navigation-vertical overflow-y-auto no-scrollbar ">
         @include('UI-FRONTEND.partials.menu-category-nav')
@@ -669,7 +628,12 @@
         </a>
       </portal-opener>
 
-      <portal-opener class="cro-btn-item cro-btn-item--cart w-auto flex-shrink-0 flex-grow-0 h-full py-0.5 px-0.5 text-foreground h-full flex flex-col justify-center items-center gap-0.5" style="order:2">
+      <portal-opener
+        class="cro-btn-item cro-btn-item--cart ww-cart-auth-only w-auto flex-shrink-0 flex-grow-0 h-full py-0.5 px-0.5 text-foreground h-full flex flex-col justify-center items-center gap-0.5"
+        style="order:2"
+        data-ww-cart-auth
+        @unless($storefrontUser ?? null) hidden @endunless
+      >
         @php $wwCartUser = $storefrontUser ?? null; @endphp
         <a
           class="w-full h-full flex flex-col justify-center items-center gap-0.5"
@@ -714,33 +678,7 @@
 </div>
 	@include('UI-FRONTEND.partials.search-drawer')
 
-	<quick-view class="portal portal--modal" id="quick-view-product" data-type="modal" data-animation="scale-in-hor-left">
-		<dialog class="portal-dialog">
-			<div class=" flex items-center justify-center w-full h-full">
-				<div class="portal-overlay"></div>
-
-            <div class="portal-inner    h-full  ">
-				  <button type="button" id="PortalClose-quick-view-product" data-animation="fade-in" class="portal-close-button animation rounded-full w-[3.2rem] h-[3.2rem]  border border-white text-white flex items-center justify-center active:scale-95 transition-transform hover:animate-spin">
-                  <i class="icon icon-cross"> </i>
-                </button>
-				<div class="product-wrapper animation  bg-background  w-full h-full  md:rounded-lg">
-
-				</div>
-				<span class="loading-icon gap-1 hidden items-center justify-center">
-
-            <span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>
-
-            <span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>
-
-            <span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>
-
-</span>
-              </div>
-			</div>
-
-        </dialog>
-
-	</quick-view>
+	@include('UI-FRONTEND.common.quick-view-portal')
 
 <script src="{{ storefrontThemeAsset('product.js') }}" defer fetchpriority="low"></script>
 	<script src="{{ storefrontThemeAsset('quick-view-enhance.js') }}" defer fetchpriority="low"></script>
@@ -1040,6 +978,8 @@ Háº¹n giá» nháº­n hÃ ng
 
 	</promo-popup>
 	@endif
+
+	@include('UI-FRONTEND.common.login-invite-popup')
 
 	<error-popup class="portal portal--modal portal--modal-sm" id="error-modal" data-type="modal" data-animation="fade-in">
   <dialog class="portal-dialog">

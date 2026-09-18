@@ -97,7 +97,7 @@ class SapoOrderSyncTest extends TestCase
     public function test_sapo_order_window_is_sent_in_utc(): void
     {
         $sapo = $this->createMock(SapoService::class);
-        $sapo->expects($this->once())
+        $sapo->expects($this->exactly(3))
             ->method('get')
             ->willReturnCallback(function (string $path, array $query): array {
                 $this->assertSame('/admin/orders.json', $path);
@@ -105,6 +105,15 @@ class SapoOrderSyncTest extends TestCase
                 $this->assertSame('2026-08-17T07:30:00+00:00', $query['modified_on_max']);
                 $this->assertSame(1, $query['page']);
                 $this->assertSame(250, $query['limit']);
+                static $calls = 0;
+                $calls++;
+                if ($calls === 1) {
+                    $this->assertArrayNotHasKey('status', $query);
+                } elseif ($calls === 2) {
+                    $this->assertSame('cancelled', $query['status']);
+                } else {
+                    $this->assertSame('closed', $query['status']);
+                }
 
                 return ['orders' => []];
             });
@@ -397,6 +406,36 @@ class SapoOrderSyncTest extends TestCase
         $this->assertSame('Khách hàng yêu cầu hủy', $transaction->SAPO_CANCEL_REASON);
     }
 
+    public function test_refresh_transactions_updates_cancelled_status_from_sapo_detail(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 990000099,
+            'TRANSACTION_STATUS' => 'PENDING',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+
+        $sapo = $this->createMock(SapoService::class);
+        $sapo->method('isEnabled')->willReturn(true);
+        $sapo->expects($this->once())
+            ->method('get')
+            ->with('/admin/orders/990000099.json')
+            ->willReturn([
+                'order' => [
+                    'id' => 990000099,
+                    'status' => 'cancelled',
+                    'cancelled_on' => '2026-09-18T06:00:00Z',
+                    'cancel_reason' => 'customer',
+                ],
+            ]);
+
+        $updated = (new SapoOrderPuller($sapo))->refreshTransactions([$transaction]);
+
+        $this->assertSame(1, $updated);
+        $this->assertSame('CANCELLED', $transaction->fresh()->TRANSACTION_STATUS);
+        $this->assertSame('Khách hàng yêu cầu hủy', $transaction->fresh()->SAPO_CANCEL_REASON);
+    }
+
     /**
      * @dataProvider sapoOrderStatuses
      *
@@ -426,6 +465,10 @@ class SapoOrderSyncTest extends TestCase
             'fulfilled order' => [['status' => 'closed', 'fulfillment_status' => 'fulfilled'], 'COMPLETED'],
             'cancelled order' => [
                 ['status' => 'cancelled', 'cancelled_on' => '2026-08-17T06:40:32Z', 'financial_status' => 'paid'],
+                'CANCELLED',
+            ],
+            'canceled spelling' => [
+                ['status' => 'canceled', 'canceled_on' => '2026-08-17T06:40:32Z'],
                 'CANCELLED',
             ],
         ];

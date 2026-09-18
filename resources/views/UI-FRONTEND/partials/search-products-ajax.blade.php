@@ -621,7 +621,11 @@
     if (cfg.query) params.set('TU_KHOA', cfg.query);
     if (cfg.categoryId) params.append('DANH_MUC_SAN_PHAM_ID[]', String(cfg.categoryId));
     if (cfg.productHot) params.set('PRODUCT_HOT', 'true');
-    if (cfg.productVip) params.set('PRODUCT_VIP', 'true');
+    // /flash-sale = săn sale (có giá so sánh), cùng filter với flash sale trang chủ
+    if (cfg.productVip) {
+      params.set('CO_GIA_SO_SANH', 'true');
+      params.set('CON_HANG', 'true');
+    }
     buildMucGiaParams(params);
 
     fetch(cfg.apiUrl + '?' + params.toString(), {

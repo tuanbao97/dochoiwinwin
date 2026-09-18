@@ -47,16 +47,41 @@ return Application::configure(basePath: dirname(__DIR__))
         $errors = [
             'MSG' => null
         ];
+
+        // Tránh render JSON lỗi 2 lần (thiếu APP_KEY khi gắn cookie session
+        // vào response lỗi → client nhận 2 object JSON dính nhau).
+        $jsonError = static function (string $message, int $code) use (&$errors): JsonResponse {
+            static $rendering = false;
+            if ($rendering) {
+                return new JsonResponse([
+                    'ERRORS' => ['MSG' => $message],
+                    'STATUS' => AppConstant::STATUS_FAILURE,
+                    'CODE' => $code,
+                    'STATUS_DETAIL' => $message,
+                ], $code);
+            }
+
+            $rendering = true;
+            try {
+                $errors['MSG'] = $message;
+
+                return response()->json([
+                    'ERRORS' => $errors,
+                    'STATUS' => AppConstant::STATUS_FAILURE,
+                    'CODE' => $code,
+                    'STATUS_DETAIL' => $message,
+                ], $code);
+            } finally {
+                $rendering = false;
+            }
+        };
         
         // 401 - Unauthorized
-        $exceptions->render(function (AuthenticationException $e, $request) use ($errors){
-            $errors['MSG'] = 'Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.';
-            return response()->json([
-                'ERRORS' => $errors,
-                'STATUS' => AppConstant::STATUS_FAILURE,
-                'CODE' => JsonResponse::HTTP_UNAUTHORIZED,
-                'STATUS_DETAIL' => $errors['MSG']
-            ], JsonResponse::HTTP_UNAUTHORIZED);
+        $exceptions->render(function (AuthenticationException $e, $request) use ($jsonError) {
+            return $jsonError(
+                'Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.',
+                JsonResponse::HTTP_UNAUTHORIZED
+            );
         });
 
         // 422 - Dữ liệu không hợp lệ (bao gồm kiểm tra tồn kho).
@@ -72,27 +97,32 @@ return Application::configure(basePath: dirname(__DIR__))
 
 
         // 403 - Forbidden
-        $exceptions->render(function (HttpException $e, $request) use ($errors) {
-            $errors['MSG'] = 'Bạn không có quyền truy cập tài nguyên này.';
+        $exceptions->render(function (HttpException $e, $request) use ($jsonError) {
             if ($e->getStatusCode() === 403) {
-                return response()->json([
-                    'ERRORS' => $errors,
-                    'STATUS' => AppConstant::STATUS_FAILURE,
-                    'CODE' => JsonResponse::HTTP_FORBIDDEN,
-                    'STATUS_DETAIL' => $errors['MSG']
-                ], JsonResponse::HTTP_FORBIDDEN);
+                return $jsonError(
+                    'Bạn không có quyền truy cập tài nguyên này.',
+                    JsonResponse::HTTP_FORBIDDEN
+                );
             }
         });
 
         // 500 - Server Error (và các lỗi chưa được catch)
-        $exceptions->render(function (Throwable $e, $request) {
-            $errors['MSG'] = $e->getMessage();
-            return response()->json([
-                'ERRORS' => $errors,
-                'STATUS' => AppConstant::STATUS_FAILURE,
-                'CODE' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR,
-                'STATUS_DETAIL' => $e->getMessage()
-            ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        $exceptions->render(function (Throwable $e, $request) use ($jsonError) {
+            $message = trim($e->getMessage()) !== ''
+                ? $e->getMessage()
+                : 'Lỗi máy chủ.';
+
+            // Thiếu APP_KEY: trả đúng 1 JSON, không đi qua EncryptCookies lần 2.
+            if (str_contains($message, 'No application encryption key has been specified')) {
+                return new JsonResponse([
+                    'ERRORS' => ['MSG' => 'Thiếu APP_KEY. Chạy: php artisan key:generate'],
+                    'STATUS' => AppConstant::STATUS_FAILURE,
+                    'CODE' => JsonResponse::HTTP_INTERNAL_SERVER_ERROR,
+                    'STATUS_DETAIL' => 'Thiếu APP_KEY. Chạy: php artisan key:generate',
+                ], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return $jsonError($message, JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
         });
 
     })->create();

@@ -6,6 +6,31 @@ function themeApiUrl(path) {
       : "/" + path;
 }
 
+/** Tránh race: show()/updateCart() ghi đè cart_html vừa add bằng HTML trống. */
+function markCartHtmlFresh() {
+  window.__wwCartHtmlFreshAt = Date.now();
+}
+function isCartHtmlFresh(ms) {
+  const at = Number(window.__wwCartHtmlFreshAt || 0);
+  if (!at) return false;
+  return Date.now() - at < (ms || 5000);
+}
+
+window.__wwApplyCartHtml = function (html) {
+  if (!html || typeof html !== "string") return false;
+  let applied = false;
+  document.querySelectorAll("cart-form").forEach((form) => {
+    if (form && typeof form.renderCart === "function") {
+      if (form.renderCart(html)) applied = true;
+      else applied = applied || !!form.querySelector(".cart-item");
+    }
+  });
+  if (applied || /class=["'][^"']*\bcart-item\b/.test(html)) {
+    markCartHtmlFresh();
+  }
+  return applied;
+};
+
 function syncCartBadge(count) {
   const ensureNumEl = (badge) => {
     let numEl = badge.querySelector(".cart-count__num");
@@ -44,7 +69,11 @@ function syncCartBadge(count) {
     return;
   }
 
-  fetch(themeApiUrl("/cart?view=data"), { credentials: "same-origin" })
+  fetch(themeApiUrl("/cart?view=data"), {
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { Accept: "text/html" },
+  })
     .then((response) => response.text())
     .then((html) => {
       const doc = new DOMParser().parseFromString(html, "text/html");
@@ -447,7 +476,9 @@ __wwBootCartComponents(() => {
       }, 300);
       this.addEventListener("change", debouncedOnChange.bind(this));
 
-      this.form.addEventListener("submit", this.onSubmit.bind(this));
+      if (this.form) {
+        this.form.addEventListener("submit", this.onSubmit.bind(this));
+      }
     }
 
     onChange(e) {
@@ -507,6 +538,9 @@ __wwBootCartComponents(() => {
         });
     }
     updateCart() {
+      if (isCartHtmlFresh() && this.querySelector(".cart-item")) {
+        return;
+      }
       if (this._cartUpdateQueued) return;
       this._cartUpdateQueued = true;
       var self = this;
@@ -517,22 +551,38 @@ __wwBootCartComponents(() => {
       }, 80);
     }
     _updateCartNow() {
+      if (isCartHtmlFresh() && this.querySelector(".cart-item")) {
+        this._cartUpdateAgain = false;
+        return;
+      }
       if (this._cartUpdating) {
         this._cartUpdateAgain = true;
         return;
       }
       this._cartUpdating = true;
       this.classList.add("loading");
-      fetch(themeApiUrl("/cart?view=data"), { credentials: "same-origin" })
+      fetch(themeApiUrl("/cart?view=data"), {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { Accept: "text/html" },
+      })
         .then((response) => response.text())
         .then((res) => {
+          // Không ghi đè giỏ vừa add bằng response trống (race session/identity).
+          const hadItems = !!this.querySelector(".cart-item");
+          const incomingHasItems = /class=["'][^"']*\bcart-item\b/.test(res);
+          if (
+            hadItems &&
+            !incomingHasItems &&
+            isCartHtmlFresh()
+          ) {
+            return;
+          }
           this.renderCart(res);
-          this.classList.remove("loading");
         })
-        .catch((err) => {
-          this.classList.remove("loading");
-        })
+        .catch((err) => {})
         .finally(() => {
+          this.classList.remove("loading");
           this._cartUpdating = false;
           if (this._cartUpdateAgain) {
             this._cartUpdateAgain = false;
@@ -541,12 +591,17 @@ __wwBootCartComponents(() => {
         });
     }
     renderCart(res) {
+      if (!res || typeof res !== "string") return false;
       let html = new DOMParser().parseFromString(res, "text/html");
       let replaceSelectors = [".cart-table", ".cart-empty", ".cart-summary"];
       let relatedProducts = html.querySelector(".cart-releated-products");
       let cartRewards = this.querySelector("rewards-bar");
       let cro = document.querySelector(".cro-btns");
-      let isEmpty = html.querySelector(".is-empty");
+      const hasItems = !!html.querySelector(".cart-item");
+      const markedEmpty = !!html.querySelector(".is-empty");
+      const parsedCart = hasItems || markedEmpty || !!html.querySelector(".cart-table");
+      if (!parsedCart) return false;
+
       replaceSelectors.forEach((el) => {
         if (!this.querySelector(el)) return;
         const from = html.querySelector(el);
@@ -556,11 +611,16 @@ __wwBootCartComponents(() => {
       const mcFrom = html.querySelector(".mini-cart");
       const mcTo = document.querySelector(".mini-cart");
       if (mcFrom && mcTo) mcTo.innerHTML = mcFrom.innerHTML;
-      if (isEmpty) {
-        this.classList.add("is-empty");
-      } else {
+
+      // Đọc lại DOM sau replace — nguồn sự thật để bật/tắt is-empty (ẩn .cart-left).
+      const hasItemsNow = !!this.querySelector(".cart-item") || hasItems;
+      if (hasItemsNow) {
         this.classList.remove("is-empty");
+        markCartHtmlFresh();
+      } else if (markedEmpty) {
+        this.classList.add("is-empty");
       }
+
       const ccFrom = html.querySelector(".cart-count");
       if (ccFrom) {
         syncCartBadge((ccFrom.textContent || "").trim());
@@ -577,14 +637,18 @@ __wwBootCartComponents(() => {
         window.__wwLoadCartRecommendations();
       }
       if (cartRewards) {
-        cartRewards.update(html.querySelector("rewards-bar"));
+        const nextRewards = html.querySelector("rewards-bar");
+        if (nextRewards && typeof cartRewards.update === "function") {
+          cartRewards.update(nextRewards);
+        }
       }
       if (cro && cro.querySelector(".cart-bottom")) {
-        isEmpty ? cro.classList.add("hidden") : cro.classList.remove("hidden");
-        cro.querySelector(".cart-bottom").innerHTML =
-          html.querySelector(".cart-bottom").innerHTML;
+        hasItemsNow ? cro.classList.remove("hidden") : cro.classList.add("hidden");
+        const bottom = html.querySelector(".cart-bottom");
+        if (bottom) cro.querySelector(".cart-bottom").innerHTML = bottom.innerHTML;
       }
       this.scrollCartListToTop();
+      return hasItemsNow;
     }
     scrollCartListToTop() {
       const scroller =
@@ -620,6 +684,12 @@ __wwBootCartComponents(() => {
   }
 
   defineElement("cart-form", CartForm);
+
+  // Áp dụng HTML giỏ pending nếu add xong trước khi cart.js boot xong.
+  if (window.__wwPendingCartHtml && typeof window.__wwApplyCartHtml === "function") {
+    window.__wwApplyCartHtml(window.__wwPendingCartHtml);
+    window.__wwPendingCartHtml = null;
+  }
 
   function wwEnsureCartRemoveConfirm() {
     let el = document.getElementById("ww-cart-remove-confirm");
@@ -726,6 +796,8 @@ __wwBootCartComponents(() => {
     });
   }
 
+  window.wwConfirmCartRemove = wwConfirmCartRemove;
+
   class RemoveCartButton extends HTMLElement {
     constructor() {
       super();
@@ -777,6 +849,7 @@ __wwBootCartComponents(() => {
       }
     }
     connectedCallback() {
+      this.cartForm = this.cartForm || this.querySelector("cart-form");
       if (
         window.location.hash == "#cart" &&
         window.themeConfigs.mbBreakpoint.matches
@@ -784,6 +857,34 @@ __wwBootCartComponents(() => {
         this.show();
       }
       subscribe(window.themeConfigs.productAddEvent, (e) => {
+        const cartHtml =
+          e && e.data && typeof e.data.cart_html === "string" ? e.data.cart_html : "";
+        let rendered = false;
+        if (cartHtml) {
+          if (typeof window.__wwApplyCartHtml === "function") {
+            rendered = !!window.__wwApplyCartHtml(cartHtml);
+          } else {
+            const cartForm =
+              this.cartForm ||
+              this.querySelector("cart-form") ||
+              document.querySelector("cart-drawer cart-form");
+            if (cartForm && typeof cartForm.renderCart === "function") {
+              rendered = !!cartForm.renderCart(cartHtml);
+            }
+          }
+        }
+        if (!rendered) {
+          const cartForm =
+            this.cartForm ||
+            this.querySelector("cart-form") ||
+            document.querySelector("cart-drawer cart-form");
+          if (cartForm && typeof cartForm.updateCart === "function") {
+            cartForm.updateCart();
+          }
+        } else {
+          markCartHtmlFresh();
+        }
+
         if (
           e.action == "drawer" &&
           !isCartPathname() &&
@@ -799,13 +900,6 @@ __wwBootCartComponents(() => {
         document.querySelectorAll("quick-view").forEach((el) => {
           if (el && typeof el.hide === "function") el.hide();
         });
-        const cartForm =
-          this.cartForm ||
-          this.querySelector("cart-form") ||
-          document.querySelector("cart-drawer cart-form");
-        if (cartForm && typeof cartForm.updateCart === "function") {
-          cartForm.updateCart();
-        }
         // Đảm bảo danh sách trong drawer scroll lên đầu để thấy sp vừa thêm
         window.setTimeout(function () {
           document.querySelectorAll("cart-form").forEach(function (el) {
@@ -872,14 +966,23 @@ __wwBootCartComponents(() => {
     }
     show(opener) {
       try {
+        const alreadyRendered = !!this.querySelector(".cart-item");
+        const fresh = isCartHtmlFresh();
         if (!this.inited) {
-          const alreadyRendered = !!this.querySelector(".cart-item, .cart-empty img");
-          if (!alreadyRendered && this.cartForm && typeof this.cartForm.updateCart === "function") {
+          // Chỉ fetch lại khi chưa có HTML từ /cart/add — tránh race xóa sp vừa thêm.
+          if (
+            !alreadyRendered &&
+            !fresh &&
+            this.cartForm &&
+            typeof this.cartForm.updateCart === "function"
+          ) {
             this.cartForm.updateCart();
           } else if (typeof window.__wwLoadCartRecommendations === "function") {
             window.__wwLoadCartRecommendations();
           }
           this.inited = true;
+        } else if (!alreadyRendered && !fresh && this.cartForm && typeof this.cartForm.updateCart === "function") {
+          this.cartForm.updateCart();
         } else if (typeof window.__wwLoadCartRecommendations === "function") {
           window.__wwLoadCartRecommendations();
         }

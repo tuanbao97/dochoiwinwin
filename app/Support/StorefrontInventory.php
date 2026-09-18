@@ -107,6 +107,76 @@ class StorefrontInventory
     }
 
     /**
+     * Tính tạm tính đơn từ catalog thật. Bỏ qua mọi PRICE client gửi.
+     * Gộp dòng trùng biến thể để không vượt tồn bằng payload tách dòng.
+     *
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array{subtotal: int, lines: array<int, array<string, mixed>>, total_quantity: int}
+     */
+    public function priceOrderItems(array $items): array
+    {
+        $quantities = [];
+        $resolvedByVariant = [];
+
+        foreach ($items as $item) {
+            $resolved = $this->resolve((int) ($item['PRODUCT_ID'] ?? 0));
+            if (! $resolved) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'ITEMS' => 'Sản phẩm trong giỏ không còn khả dụng.',
+                ]);
+            }
+
+            $variantId = (int) $resolved['variant_id'];
+            $quantity = max(1, (int) ($item['QUANTITY'] ?? 0));
+            $quantities[$variantId] = ($quantities[$variantId] ?? 0) + $quantity;
+            $resolvedByVariant[$variantId] = $resolved;
+
+            if ($quantities[$variantId] > (int) $resolved['stock']) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'ITEMS' => $resolved['title'].' chỉ còn '.$resolved['stock'].' sản phẩm trong kho.',
+                ]);
+            }
+        }
+
+        ksort($quantities);
+
+        $subtotal = 0;
+        $totalQuantity = 0;
+        $lines = [];
+        foreach ($quantities as $variantId => $quantity) {
+            $resolved = $resolvedByVariant[$variantId];
+            $unitPrice = (int) $resolved['price'];
+            $subtotal += $unitPrice * $quantity;
+            $totalQuantity += $quantity;
+            $lines[] = [
+                'PRODUCT_ID' => (int) $resolved['product_id'],
+                'PRODUCT_VARIANT_ID' => (int) $resolved['variant_id'],
+                'SAPO_VARIANT_ID' => $resolved['sapo_variant_id'],
+                'QUANTITY' => $quantity,
+                'PRICE' => $unitPrice,
+                'TEN_SAN_PHAM' => $resolved['title'],
+                'HANDLE' => $resolved['handle'],
+                'STOCK' => (int) $resolved['stock'],
+                '_VARIANT' => $resolved['variant'],
+            ];
+        }
+
+        return [
+            'subtotal' => $subtotal,
+            'lines' => $lines,
+            'total_quantity' => $totalQuantity,
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     */
+    public function subtotalFromOrderItems(array $items): int
+    {
+        return (int) $this->priceOrderItems($items)['subtotal'];
+    }
+
+    /**
      * Đồng bộ giá, ID và số lượng của giỏ cũ theo tồn kho hiện tại.
      *
      * @param  array<int, array<string, mixed>>  $lines

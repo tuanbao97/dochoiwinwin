@@ -171,21 +171,25 @@ class ThemeStorefrontController extends Controller
             ]);
         }
 
-        $this->cart->replace(array_values($items));
+        $items = array_values($items);
+        $this->cart->replace($items);
 
         $detailHandle = $resolved['handle'].'-'.$resolved['product_id'];
         $url = url('san-pham/chi-tiet/'.ltrim($detailHandle, '/'));
 
         $line = collect($items)->firstWhere('variant_id', $variantId);
+        $cartData = $this->cartViewData($items);
+        $cartHtml = view('theme.cart-data', $cartData)->render();
 
         return response()->json([
             'variant_id' => $variantId,
             'title' => is_array($line) ? ($line['title'] ?? $resolved['title']) : $resolved['title'],
             'variant_title' => is_array($line) ? ($line['variant_title'] ?? 'Mặc định') : 'Mặc định',
             'url' => $url,
-            'item_count' => $this->totalQuantity($items),
+            'item_count' => $cartData['totalQuantity'],
             'stock' => $resolved['stock'],
-        ]);
+            'cart_html' => $cartHtml,
+        ], 200, [], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     }
 
     public function cartChange(Request $request): Response|\Illuminate\Http\JsonResponse
@@ -259,17 +263,14 @@ class ThemeStorefrontController extends Controller
         $items = $request->query('view') === 'data'
             ? $this->cart->items()
             : $this->getCartLines();
-        $data = [
-            'productId' => 0,
-            'items' => $items,
-            'totalQuantity' => $this->totalQuantity($items),
-            'totalPrice' => $this->totalPrice($items),
-            'appUrl' => rtrim(url('/'), '/'),
-            'storefrontUser' => $this->identity->payload(),
-        ];
+        $data = $this->cartViewData($items);
 
         if ($request->query('view') === 'data') {
-            return response()->view('theme.cart-data', $data);
+            return response()
+                ->view('theme.cart-data', $data)
+                ->header('Content-Type', 'text/html; charset=UTF-8')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
         }
 
         return view('UI-FRONTEND.cart.index', $data);
@@ -553,7 +554,7 @@ class ThemeStorefrontController extends Controller
         }
 
         $pageBasePath = match ($mode) {
-            'vip' => '/san-pham-vip',
+            'vip' => '/flash-sale',
             'hot' => '/san-pham-noi-bat',
             'category' => '/danh-muc/' . ($categoryKey !== '' ? $categoryKey : 'danh-muc-0'),
             'search' => '/tim-kiem/' . rawurlencode($query !== '' ? $query : '-'),
@@ -813,8 +814,10 @@ class ThemeStorefrontController extends Controller
         if ($productHot) {
             $params['PRODUCT_HOT'] = true;
         }
+        // /flash-sale = săn sale (có giá so sánh), cùng filter với flash sale trang chủ
         if ($productVip) {
-            $params['PRODUCT_VIP'] = true;
+            $params['CO_GIA_SO_SANH'] = true;
+            $params['CON_HANG'] = true;
         }
 
         $listRequest = Request::create('/', 'GET', $params);
@@ -1403,6 +1406,22 @@ class ThemeStorefrontController extends Controller
         } catch (Throwable) {
             return 0;
         }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<string, mixed>
+     */
+    private function cartViewData(array $items): array
+    {
+        return [
+            'productId' => 0,
+            'items' => $items,
+            'totalQuantity' => $this->totalQuantity($items),
+            'totalPrice' => $this->totalPrice($items),
+            'appUrl' => rtrim(url('/'), '/'),
+            'storefrontUser' => $this->identity->payload(),
+        ];
     }
 
     /**

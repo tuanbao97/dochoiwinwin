@@ -17,6 +17,18 @@ class StorefrontVoucher
     public const TYPE_FREE_SHIPPING = 'FREE_SHIPPING';
 
     /**
+     * Phí ship chỉ do máy chủ quyết định. Client không được gửi số tiền ship.
+     */
+    public static function shippingFee(bool $pickupAtStore): int
+    {
+        if ($pickupAtStore) {
+            return 0;
+        }
+
+        return max(0, (int) config('storefront.shipping_fee', 30000));
+    }
+
+    /**
      * Tính thử để hiển thị. Kết quả này không được dùng để lưu đơn hàng;
      * checkout phải gọi redeem() trong transaction để khóa lượt sử dụng.
      *
@@ -251,13 +263,63 @@ class StorefrontVoucher
             throw $this->invalid('Mỗi đơn chỉ áp dụng tối đa 1 mã giảm giá và 1 mã freeship.');
         }
 
+        // Khóa theo ID tăng dần để hai checkout đồng thời không deadlock
+        // khi áp dụng cùng cặp mã theo thứ tự ngược nhau.
+        if ($lock) {
+            $this->lockVouchersByCodes($codes);
+        }
+
         $quotes = [];
         foreach ($codes as $code) {
-            $quotes[] = $this->evaluateOne($code, $subtotal, $shippingFee, $userId, $email, $phone, $lock);
+            // Đã khóa ở trên khi redeem; evaluateOne không khóa lại.
+            $quotes[] = $this->evaluateOne($code, $subtotal, $shippingFee, $userId, $email, $phone, false);
+        }
+
+        return $this->composeQuoteResult($quotes, $subtotal, $shippingFee);
+    }
+
+    /**
+     * @param  array<int, string>  $codes
+     */
+    private function lockVouchersByCodes(array $codes): void
+    {
+        if ($codes === []) {
+            return;
+        }
+
+        DiscountVoucher::query()
+            ->whereIn('CODE', $codes)
+            ->where('STATUS', AppConstant::STATUS_USING)
+            ->where('IS_ACTIVE', true)
+            ->orderBy('ID')
+            ->lockForUpdate()
+            ->get(['ID', 'CODE']);
+    }
+
+    /**
+     * Gộp kết quả nhiều mã: phân loại đúng mã giảm giá / freeship bất kể
+     * thứ tự client gửi, và tôn trọng combines_with từ Sapo.
+     *
+     * @param  array<int, array<string, mixed>>  $quotes
+     * @return array<string, mixed>
+     */
+    private function composeQuoteResult(array $quotes, int $subtotal, int $shippingFee): array
+    {
+        $shippingQuotes = array_values(array_filter(
+            $quotes,
+            static fn (array $quote): bool => strtoupper((string) $quote['type']) === self::TYPE_FREE_SHIPPING
+        ));
+        $orderQuotes = array_values(array_filter(
+            $quotes,
+            static fn (array $quote): bool => strtoupper((string) $quote['type']) !== self::TYPE_FREE_SHIPPING
+        ));
+
+        if (count($shippingQuotes) > 1) {
+            throw $this->invalid('Mỗi đơn chỉ áp dụng được 1 mã miễn phí vận chuyển.');
         }
 
         // Sapo quyết định mã nào được cộng dồn qua combines_with; website tôn trọng đúng cấu hình đó.
-        // Một đơn chỉ nhận tối đa 1 mã thường, các mã còn lại bắt buộc phải là mã dùng chung được.
+        // Một đơn chỉ nhận tối đa 1 mã thường (không stackable); mã còn lại phải là mã dùng chung được.
         $exclusive = array_values(array_filter(
             $quotes,
             static fn (array $quote): bool => ! $quote['stackable']
@@ -274,18 +336,34 @@ class StorefrontVoucher
         }
         $discount = min($discount, $subtotal + $shippingFee);
 
-        $primary = $quotes[0];
-        $codesOrdered = array_map(static fn (array $quote): string => (string) $quote['code'], $quotes);
+        $primaryOrder = $orderQuotes[0] ?? null;
+        $secondaryOrder = $orderQuotes[1] ?? null;
+        $shippingQuote = $shippingQuotes[0] ?? null;
+        $primary = $primaryOrder ?? $shippingQuote ?? $quotes[0];
+
+        $extraVoucherId = $shippingQuote['voucher_id'] ?? ($secondaryOrder['voucher_id'] ?? null);
+        $extraCode = $shippingQuote['code'] ?? ($secondaryOrder['code'] ?? null);
+
+        // Hiển thị: mã giảm giá trước, freeship sau — ổn định dù client gửi ngược.
+        $displayQuotes = array_values(array_filter([$primaryOrder, $secondaryOrder, $shippingQuote]));
+        if ($displayQuotes === []) {
+            $displayQuotes = $quotes;
+        }
+        $codesOrdered = array_map(static fn (array $quote): string => (string) $quote['code'], $displayQuotes);
 
         return [
             'voucher_id' => (int) $primary['voucher_id'],
-            'extra_voucher_id' => isset($quotes[1]) ? (int) $quotes[1]['voucher_id'] : null,
-            'extra_code' => $quotes[1]['code'] ?? null,
+            'order_voucher_id' => $primaryOrder !== null ? (int) $primaryOrder['voucher_id'] : null,
+            'order_code' => $primaryOrder['code'] ?? null,
+            'shipping_voucher_id' => $shippingQuote !== null ? (int) $shippingQuote['voucher_id'] : null,
+            'shipping_code' => $shippingQuote['code'] ?? null,
+            'extra_voucher_id' => $extraVoucherId !== null ? (int) $extraVoucherId : null,
+            'extra_code' => $extraCode,
             'code' => implode(', ', $codesOrdered),
             'codes' => $codesOrdered,
             'title' => implode(' + ', array_map(
                 static fn (array $quote): string => (string) $quote['title'],
-                $quotes
+                $displayQuotes
             )),
             'type' => count($quotes) > 1 ? 'STACKED' : (string) $primary['type'],
             'value' => (int) $primary['value'],
@@ -295,7 +373,7 @@ class StorefrontVoucher
             'shipping_fee' => $shippingFee,
             'discount_amount' => $discount,
             'total' => max(0, $subtotal + $shippingFee - $discount),
-            'vouchers' => $quotes,
+            'vouchers' => $displayQuotes,
         ];
     }
 
@@ -349,12 +427,15 @@ class StorefrontVoucher
 
         $this->assertUsageAvailable($voucher, $userId, $email, $phone);
 
+        $type = strtoupper((string) $voucher->DISCOUNT_TYPE);
+        if ($type === self::TYPE_FREE_SHIPPING && $shippingFee <= 0) {
+            throw $this->invalid('Đơn đã miễn phí vận chuyển (nhận tại cửa hàng), không áp dụng mã FREESHIP.');
+        }
+
         $discount = $this->calculateDiscount($voucher, $subtotal, $shippingFee);
         if ($discount <= 0) {
             throw $this->invalid('Mã giảm giá không tạo ra giá trị giảm cho đơn hàng này.');
         }
-
-        $type = strtoupper((string) $voucher->DISCOUNT_TYPE);
 
         return [
             'voucher_id' => (int) $voucher->ID,
@@ -383,7 +464,9 @@ class StorefrontVoucher
         $rule = is_array($payload['price_rule'] ?? null) ? $payload['price_rule'] : [];
         $combines = is_array($rule['combines_with'] ?? null) ? $rule['combines_with'] : [];
 
-        return ! empty($combines['order_discount']) || ! empty($combines['product_discount']);
+        return ! empty($combines['order_discount'])
+            || ! empty($combines['product_discount'])
+            || ! empty($combines['shipping_discount']);
     }
 
     private function calculateDiscount(DiscountVoucher $voucher, int $subtotal, int $shippingFee): int

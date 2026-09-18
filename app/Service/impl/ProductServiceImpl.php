@@ -317,13 +317,14 @@ class ProductServiceImpl implements ProductService
         $arrNotInId = $request->query('NOT_IN_ID');
         $productHot = filter_var($request->query('PRODUCT_HOT', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         $productVip = filter_var($request->query('PRODUCT_VIP', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-    
+        $coGiaSoSanh = filter_var($request->input('CO_GIA_SO_SANH', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
         $isApiPublic = filter_var($request->input('IS_API_PUBLIC', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($isApiPublic) {
             $perPage = min(max(1, $perPage), 48);
         }
 
-        if ($isApiPublic && $this->useSapoStorefront()) {
+        if ($isApiPublic && $this->useSapoStorefront() && $coGiaSoSanh !== true) {
             return $this->getListSanPhamFromSapo($request, $draw, $page, $perPage, $tuKhoa, $arrDanhMucSanPhamId, $arrNotInId);
         }
 

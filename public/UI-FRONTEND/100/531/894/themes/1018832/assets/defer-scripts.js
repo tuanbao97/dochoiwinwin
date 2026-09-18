@@ -129,28 +129,37 @@ function horizontalNav () {
 }
 let lastScrollTop = 0
 let stickyHeaderTicking = false
+function syncHeaderFixedSpacer(stickyHeader, isActive) {
+	const body = document.body;
+	if (!body || !body.classList.contains('ega-theme')) return;
+	const useFixed = window.matchMedia('(max-width: 1279px)').matches;
+	if (isActive && useFixed) {
+		const h = stickyHeader && stickyHeader[0] ? stickyHeader[0].offsetHeight : 64;
+		document.documentElement.style.setProperty('--ww-header-offset', h + 'px');
+		body.classList.add('ww-header-fixed');
+	} else {
+		body.classList.remove('ww-header-fixed');
+		document.documentElement.style.removeProperty('--ww-header-offset');
+	}
+}
 function initStickyHeader(){
 		const stickyHeader = $('.header')
+		if (!stickyHeader.length) return;
 		const isInputFocus = $('.header input:focus').length > 0
 		let height =   isInputFocus ?  400 : 250 ;
 	  
 		let sticky = window.innerHeight / 2 > height ? height : window.innerHeight / 2  ;
 	
 	    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
- 		if(scrollTop != lastScrollTop + 20){
-
-		if (window.pageYOffset > sticky) {
-
-				stickyHeader.addClass("active");
-			} else {
-				stickyHeader.removeClass("active")
-			}
-		
-			
+		const shouldStick = scrollTop > sticky;
+		if (shouldStick) {
+			stickyHeader.addClass("active");
+			syncHeaderFixedSpacer(stickyHeader, true);
+		} else {
+			stickyHeader.removeClass("active");
+			syncHeaderFixedSpacer(stickyHeader, false);
 		}
-		
 		lastScrollTop = scrollTop;
-	
 	}
 function initStickyHeaderOnScroll() {
 	if (stickyHeaderTicking) return;
@@ -160,6 +169,12 @@ function initStickyHeaderOnScroll() {
 		stickyHeaderTicking = false;
 	});
 }
+// Bind sớm: không đợi firstInteraction (mobile hay mất sticky header)
+$(window).on('scroll.wwStickyHeader', initStickyHeaderOnScroll);
+$(window).on('resize.wwStickyHeader', function () {
+	const stickyHeader = $('.header');
+	syncHeaderFixedSpacer(stickyHeader, stickyHeader.hasClass('active'));
+});
 function lazyloadSrc(){
 	const elements = document.querySelectorAll('[data-lazyload]');
 	const observer = new IntersectionObserver((entries) => {
@@ -230,7 +245,7 @@ subscribe(window.themeConfigs.firstInteraction, (e)=>{
 	
 	function initNavigation(){
 
-	$(window).scroll(initStickyHeaderOnScroll)
+	// sticky header scroll đã bind sớm ở ngoài (scroll.wwStickyHeader)
 	$('.floating_banner .btn').click((e)=>{
 		$('.floating_banner').remove()
 

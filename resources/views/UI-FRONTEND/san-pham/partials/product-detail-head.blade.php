@@ -133,7 +133,17 @@
       };
       window.EGATheme.showQuickView = function (productHandle) {
         if (!productHandle) return;
-        document.querySelector('quick-view').show({ dataset: { product: productHandle } });
+        if (typeof window.wwOpenQuickView === 'function') {
+          var idMatch = String(productHandle).match(/(?:sp-|-)?(\d{3,})(?:\/?$|[?#])/);
+          if (idMatch) {
+            window.wwOpenQuickView(parseInt(idMatch[1], 10) || 0);
+            return;
+          }
+        }
+        var qv = document.querySelector('quick-view');
+        if (qv && typeof qv.show === 'function') {
+          qv.show({ dataset: { product: productHandle } });
+        }
       };
     </script>
 

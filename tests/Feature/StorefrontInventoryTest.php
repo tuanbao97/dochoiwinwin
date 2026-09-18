@@ -20,8 +20,39 @@ class StorefrontInventoryTest extends TestCase
         config()->set('app.url', 'http://localhost');
     }
 
+    public function test_cart_add_returns_drawer_html_with_the_new_item(): void
+    {
+        $user = \App\Models\User::query()->find(1);
+        $this->assertNotNull($user);
+        [$product, $variant] = $this->catalogItem(3);
+        $this->actingAs($user, 'web');
+
+        $response = $this->post('http://localhost/cart/add', [
+            'variantId' => $variant->ID,
+            'quantity' => 1,
+        ]);
+
+        $response->assertOk();
+        $html = (string) $response->json('cart_html');
+        $this->assertStringContainsString('cart-item', $html);
+        $this->assertStringContainsString('data-variant-id="'.$variant->ID.'"', $html);
+        $this->assertStringContainsString($product->NAME, $html);
+        $this->assertStringNotContainsString('<div class="is-empty"></div>', $html);
+
+        // /cart?view=data phải khớp HTML sau add (tránh race ghi đè drawer bằng giỏ trống).
+        $data = $this->get('http://localhost/cart?view=data');
+        $data->assertOk();
+        $body = $data->getContent();
+        $this->assertStringContainsString('cart-item', $body);
+        $this->assertStringContainsString('data-variant-id="'.$variant->ID.'"', $body);
+        $this->assertStringNotContainsString('<div class="is-empty"></div>', $body);
+    }
+
     public function test_cart_rejects_sold_out_and_cumulative_quantity_above_stock(): void
     {
+        $user = \App\Models\User::query()->find(1);
+        $this->assertNotNull($user);
+        $this->actingAs($user, 'web');
         [$product, $variant] = $this->catalogItem(2);
 
         $this->postJson('http://localhost/cart/add', [

@@ -135,6 +135,15 @@
           });
         }
       }
+      // Apply cart_html ngay — không phụ thuộc subscriber cart-drawer (tránh race trống giỏ).
+      if (response.cart_html && typeof response.cart_html === 'string') {
+        window.__wwCartHtmlFreshAt = Date.now();
+        if (typeof window.__wwApplyCartHtml === 'function') {
+          window.__wwApplyCartHtml(response.cart_html);
+        } else {
+          window.__wwPendingCartHtml = response.cart_html;
+        }
+      }
       if (!window.EGATheme || !window.EGATheme.publish || !window.themeConfigs) return;
       try {
         var action = buynow ? 'buynow' : window.themeConfigs.addToCartAction || 'drawer';
@@ -185,7 +194,15 @@
         try {
           payload = t ? JSON.parse(t) : {};
         } catch (parseErr) {
-          payload = {};
+          var start = t.indexOf('{');
+          var end = t.lastIndexOf('}');
+          if (start >= 0 && end > start) {
+            try {
+              payload = JSON.parse(t.slice(start, end + 1));
+            } catch (nestedErr) {
+              payload = {};
+            }
+          }
         }
         if (res.status === 419 && !retried) {
           return postCartAdd(params, true);

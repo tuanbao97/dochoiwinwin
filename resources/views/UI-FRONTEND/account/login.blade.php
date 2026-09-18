@@ -39,8 +39,21 @@
           <div class="bg-background rounded-lg px-3 py-4 md:p-6 mb-6">
             <div class="space-y-4">
               <div class="ww-login-invite">
-                <h1 class="ww-login-invite__title">Đăng nhập</h1>
-                <p class="ww-login-invite__text">bạn sẽ có nhiều voucher giảm giá</p>
+                <h1 class="ww-login-invite__title">ĐĂNG NHẬP MUA SẮM</h1>
+                <p class="ww-login-invite__text ww-login-invite__text--orange">NHẬN NGAY VOUCHER GIẢM GIÁ</p>
+              </div>
+
+              <div class="ww-login-invite-vouchers mb-2" aria-hidden="true">
+                <div class="ww-login-invite-vouchers__track">
+                  @php
+                    $wwLoginVouchers = ['FREESHIP', 'GIẢM 10%', 'GIẢM 20%', 'GIẢM 50%', 'GIẢM 100K'];
+                  @endphp
+                  @foreach ([1, 2] as $loopPass)
+                    @foreach ($wwLoginVouchers as $voucherLabel)
+                      <span class="ww-login-invite-vouchers__item">{{ $voucherLabel }}</span>
+                    @endforeach
+                  @endforeach
+                </div>
               </div>
               <div>
                 @if (session('social_error'))

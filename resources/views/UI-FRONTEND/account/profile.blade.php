@@ -62,6 +62,8 @@
 
   @include('UI-FRONTEND.common.footer')
   @include('UI-FRONTEND.common.theme-portals')
+  <script src="{{ storefrontThemeAsset('main.js') }}" defer fetchpriority="low"></script>
+  @include('UI-FRONTEND.common.cart-scripts')
 
   <style>
     .ww-profile{max-width:760px;margin:0 auto;background:#fff;border:1px solid #eee;border-radius:16px;padding:24px}
