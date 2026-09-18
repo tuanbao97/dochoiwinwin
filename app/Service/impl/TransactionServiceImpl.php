@@ -123,14 +123,23 @@ class TransactionServiceImpl implements TransactionService
 
     public function placeOrder(Request $request)
     {
+        // Bỏ mọi số tiền client gửi — chỉ tin catalog + cấu hình + redeem voucher.
+        $request->request->remove('SHIPPING_FEE');
+        $request->request->remove('DISCOUNT_AMOUNT');
+        $request->request->remove('SUBTOTAL');
+        $request->request->remove('TOTAL');
+        $request->request->remove('TOTAL_PRICE');
+        $request->request->remove('shipping_fee');
+        $request->request->remove('discount_amount');
+        $request->request->remove('subtotal');
+        $request->request->remove('total');
+
         $requestedItems = $this->aggregateOrderItems($this->resolveOrderItems($request));
         $pickupAtStore = filter_var(
             $request->input('NHAN_TAI_CUA_HANG', $request->input('pickup', false)),
             FILTER_VALIDATE_BOOLEAN
         );
-        $shippingFee = $pickupAtStore
-            ? 0
-            : max(0, (int) config('storefront.shipping_fee', 30000));
+        $shippingFee = StorefrontVoucher::shippingFee($pickupAtStore);
         $discountCode = StorefrontVoucher::normalizeCode($request->input('DISCOUNT_CODE'));
         $discountCodes = StorefrontVoucher::normalizeCodes($request->input('DISCOUNT_CODES', $discountCode));
 
@@ -146,6 +155,7 @@ class TransactionServiceImpl implements TransactionService
 
         if ($pickupAtStore) {
             $storeAddress = '';
+            $storePhones = [];
             if (function_exists('wwWebContact')) {
                 $contact = wwWebContact();
                 $storeAddress = trim((string) ($contact['address'] ?? ''));
@@ -153,6 +163,15 @@ class TransactionServiceImpl implements TransactionService
                     $storeAddress = 'Nhận tại cửa hàng ' . trim((string) ($contact['storeName'] ?? 'Đồ Chơi Win Win'));
                 } else {
                     $storeAddress = 'Nhận tại cửa hàng: ' . $storeAddress;
+                }
+                foreach (($contact['hotlines'] ?? []) as $hotline) {
+                    $display = trim((string) ($hotline['display'] ?? ''));
+                    if ($display !== '') {
+                        $storePhones[] = $display;
+                    }
+                }
+                if ($storePhones !== []) {
+                    $storeAddress .= "\nHotline: " . implode(' · ', $storePhones);
                 }
             }
             if ($storeAddress !== '') {
@@ -218,6 +237,7 @@ class TransactionServiceImpl implements TransactionService
                     unset($item['_VARIANT']);
                     $items[] = $item;
                     $totalQuantity += $quantity;
+                    // Giá luôn lấy từ catalog đã resolve — không tin PRICE client.
                     $subtotal += $quantity * (int) $item['PRICE'];
                 }
 
@@ -233,7 +253,27 @@ class TransactionServiceImpl implements TransactionService
                     );
                 }
                 $discountAmount = (int) ($discount['discount_amount'] ?? 0);
-                $totalPrice = max(0, $subtotal + $shippingFee - $discountAmount);
+                $expectedTotal = max(0, $subtotal + $shippingFee - $discountAmount);
+                $quotedTotal = isset($discount['total']) ? (int) $discount['total'] : $expectedTotal;
+                if ($quotedTotal !== $expectedTotal) {
+                    throw ValidationException::withMessages([
+                        'DISCOUNT_CODE' => 'Không xác minh được số tiền giảm giá. Vui lòng thử lại.',
+                    ]);
+                }
+                $totalPrice = $expectedTotal;
+
+                $orderVoucherId = $discount['order_voucher_id'] ?? $discount['voucher_id'] ?? null;
+                $shippingVoucherId = $discount['shipping_voucher_id']
+                    ?? $discount['extra_voucher_id']
+                    ?? null;
+                // Khi chỉ có 1 mã (kể cả freeship), giữ trên DISCOUNT_*; cột shipping chỉ khi stack.
+                if ($shippingVoucherId !== null && (int) $shippingVoucherId === (int) ($orderVoucherId ?? 0)) {
+                    $shippingVoucherId = null;
+                }
+                $shippingCode = $discount['shipping_code'] ?? $discount['extra_code'] ?? null;
+                if ($shippingVoucherId === null) {
+                    $shippingCode = null;
+                }
 
                 $transaction = new Transaction();
                 $transaction->USER_BUY_ID = $user?->ID;
@@ -246,12 +286,12 @@ class TransactionServiceImpl implements TransactionService
                 $transaction->SUBTOTAL_PRICE = $subtotal;
                 $transaction->TOTAL_PRICE = $totalPrice;
                 $transaction->SHIPPING_FEE = $shippingFee;
-                $transaction->DISCOUNT_VOUCHER_ID = $discount['voucher_id'] ?? null;
+                $transaction->DISCOUNT_VOUCHER_ID = $orderVoucherId;
                 $transaction->DISCOUNT_CODE = $discount['code'] ?? null;
                 $transaction->DISCOUNT_AMOUNT = $discountAmount;
                 $transaction->DISCOUNT_SNAPSHOT = $discount;
-                $transaction->SHIPPING_VOUCHER_ID = $discount['extra_voucher_id'] ?? null;
-                $transaction->SHIPPING_CODE = $discount['extra_code'] ?? null;
+                $transaction->SHIPPING_VOUCHER_ID = $shippingVoucherId;
+                $transaction->SHIPPING_CODE = $shippingCode;
                 $transaction->TRANSACTION_STATUS = TransactionStatusEnum::PENDING->value;
                 $transaction->PAYMENT_METHOD = $request->input('PHUONG_THUC_THANH_TOAN');
                 $transaction->SAPO_SYNC_STATUS = 'PENDING';
@@ -268,7 +308,7 @@ class TransactionServiceImpl implements TransactionService
                     $orderItem->PRODUCT_VARIANT_ID = $item['PRODUCT_VARIANT_ID'] ?? null;
                     $orderItem->SAPO_VARIANT_ID = $item['SAPO_VARIANT_ID'] ?? null;
                     $orderItem->QUANTITY = max(1, (int) ($item['QUANTITY'] ?? 0));
-                    $orderItem->PRICE = (float) ($item['PRICE'] ?? 0);
+                    $orderItem->PRICE = (int) ($item['PRICE'] ?? 0);
                     $orderItem->ATTR1 = $item['TEN_SAN_PHAM'] ?? null;
                     $orderItem->ATTR2 = $item['HINH_ANH'] ?? null;
                     $orderItem->ATTR3 = $item['HANDLE'] ?? null;

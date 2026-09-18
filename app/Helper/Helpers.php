@@ -398,7 +398,7 @@ use Illuminate\Support\Facades\DB;
             $filters = storefrontBuildListingFiltersPath($filterOpts);
 
             $base = match ($mode) {
-                'vip' => '/san-pham-vip',
+                'vip' => '/flash-sale',
                 'hot' => '/san-pham-noi-bat',
                 'category' => '/danh-muc/' . rawurlencode($categoryKey !== '' ? $categoryKey : 'danh-muc-0'),
                 'search' => '/tim-kiem/' . rawurlencode($query !== '' ? $query : '-'),

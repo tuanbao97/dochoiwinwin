@@ -219,6 +219,7 @@
                             width="480"
                             height="480"
                             decoding="async"
+                            @if ($i === 0) fetchpriority="high" @endif
                             loading="{{ $i === 0 ? 'eager' : 'lazy' }}"
                           >
                         </div>

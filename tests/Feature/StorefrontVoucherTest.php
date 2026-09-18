@@ -335,6 +335,113 @@ class StorefrontVoucherTest extends TestCase
         $this->assertCount(2, $redeemed['vouchers']);
     }
 
+    public function test_free_shipping_code_order_does_not_swap_voucher_roles(): void
+    {
+        $percent = $this->voucher([
+            'DISCOUNT_VALUE' => 1000,
+            'MAX_DISCOUNT_AMOUNT' => 30000,
+        ]);
+        $freeship = $this->voucher([
+            'DISCOUNT_TYPE' => StorefrontVoucher::TYPE_FREE_SHIPPING,
+            'DISCOUNT_VALUE' => 0,
+            'MAX_DISCOUNT_AMOUNT' => null,
+            'MIN_SUBTOTAL' => 0,
+            'SAPO_PAYLOAD' => [
+                'price_rule' => [
+                    'combines_with' => [
+                        'order_discount' => true,
+                        'shipping_discount' => true,
+                    ],
+                ],
+            ],
+        ]);
+        $service = app(StorefrontVoucher::class);
+
+        foreach ([[$percent->CODE, $freeship->CODE], [$freeship->CODE, $percent->CODE]] as $codes) {
+            $quote = $service->quoteMany($codes, 500000, 30000, null, 'role@example.com', '0909000040');
+            $this->assertSame($percent->ID, $quote['order_voucher_id']);
+            $this->assertSame($freeship->ID, $quote['shipping_voucher_id']);
+            $this->assertSame($percent->ID, $quote['voucher_id']);
+            $this->assertSame($freeship->ID, $quote['extra_voucher_id']);
+            $this->assertSame(60000, $quote['discount_amount']);
+            $this->assertSame(470000, $quote['total']);
+        }
+    }
+
+    public function test_pickup_rejects_free_shipping_voucher_and_forces_zero_ship(): void
+    {
+        [, $variant] = $this->catalogItem(200000, 3);
+        $freeship = $this->voucher([
+            'DISCOUNT_TYPE' => StorefrontVoucher::TYPE_FREE_SHIPPING,
+            'DISCOUNT_VALUE' => 0,
+            'MAX_DISCOUNT_AMOUNT' => null,
+        ]);
+
+        $items = [[
+            'PRODUCT_ID' => $variant->ID,
+            'QUANTITY' => 1,
+            'PRICE' => 1,
+        ]];
+
+        $this->postJson('http://localhost/api/public/voucher/quote', [
+            'DISCOUNT_CODE' => $freeship->CODE,
+            'EMAIL' => 'pickup@example.com',
+            'SO_DIEN_THOAI' => '0909000041',
+            'NHAN_TAI_CUA_HANG' => true,
+            'ITEMS' => $items,
+        ])->assertStatus(422);
+
+        $sapo = $this->createMock(SapoService::class);
+        $sapo->method('isEnabled')->willReturn(false);
+        $this->app->instance(SapoService::class, $sapo);
+
+        $response = $this->postJson('http://localhost/api/public/transaction/place-order', [
+            'name' => 'Khách nhận tại shop',
+            'phone' => '0909000041',
+            'email' => 'pickup@example.com',
+            'address' => 'Client gửi địa chỉ giả',
+            'pickup' => true,
+            'NHAN_TAI_CUA_HANG' => true,
+            'SHIPPING_FEE' => 999999,
+            'DISCOUNT_AMOUNT' => 999999,
+            'TOTAL' => 1,
+            'ITEMS' => $items,
+        ])->assertOk();
+
+        $transaction = Transaction::query()->findOrFail((int) $response->json('DATAS.TRANSACTION.ID'));
+        $this->assertSame(200000, (int) $transaction->SUBTOTAL_PRICE);
+        $this->assertSame(0, (int) $transaction->SHIPPING_FEE);
+        $this->assertSame(0, (int) $transaction->DISCOUNT_AMOUNT);
+        $this->assertSame(200000, (int) $transaction->TOTAL_PRICE);
+        $this->assertStringContainsString('Nhận tại cửa hàng', (string) $transaction->USER_BUY_ADDRESS);
+    }
+
+    public function test_place_order_rejects_tampered_client_price(): void
+    {
+        [, $variant] = $this->catalogItem(150000, 2);
+
+        $sapo = $this->createMock(SapoService::class);
+        $sapo->method('isEnabled')->willReturn(false);
+        $this->app->instance(SapoService::class, $sapo);
+
+        $response = $this->postJson('http://localhost/api/public/transaction/place-order', [
+            'name' => 'Khách giá giả',
+            'phone' => '0909000042',
+            'email' => 'price@example.com',
+            'address' => '456 Đường test',
+            'ITEMS' => [[
+                'PRODUCT_ID' => $variant->ID,
+                'QUANTITY' => 2,
+                'PRICE' => 1,
+            ]],
+        ])->assertOk();
+
+        $transaction = Transaction::query()->findOrFail((int) $response->json('DATAS.TRANSACTION.ID'));
+        $this->assertSame(300000, (int) $transaction->SUBTOTAL_PRICE);
+        $this->assertSame(30000, (int) $transaction->SHIPPING_FEE);
+        $this->assertSame(330000, (int) $transaction->TOTAL_PRICE);
+    }
+
     private function combinableVoucher(array $overrides = []): DiscountVoucher
     {
         return $this->voucher(array_merge([

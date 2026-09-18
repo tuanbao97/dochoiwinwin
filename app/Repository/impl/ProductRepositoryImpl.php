@@ -261,8 +261,16 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
             ]);
         }
 
-        
-        
+        $coGiaSoSanh = filter_var($request->input('CO_GIA_SO_SANH', false), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($coGiaSoSanh === true) {
+            // Sapo compare_at_price → PRICE_SALE (giá gốc) > PRICE (giá bán)
+            $query->whereNotNull('p.PRICE_SALE')
+                ->whereColumn('p.PRICE_SALE', '>', 'p.PRICE')
+                ->where('p.PRICE', '>', 0);
+            // Flash sale / săn sale: không hiện sản phẩm hết hàng
+            $request->merge(['CON_HANG' => true]);
+        }
+
         if ($isApiPublic === true) {
             $query->where('p.IS_ACTIVE', true);
         }
@@ -370,9 +378,13 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
         $sortDto = SortRequestDto::fromRequest($request);
         if ($filterByProductIds) {
             $query->orderByRaw('FIELD(p.ID, ' . implode(',', $arrDanhSachSanPhamId) . ')');
+            // Trong list theo ID vẫn đẩy hết hàng xuống cuối (giữ thứ tự tương đối của nhóm còn hàng / hết hàng).
+            if ($isApiPublic === true) {
+                $this->orderOutOfStockLast($query);
+            }
         } else if (!blank($boLoc)) {
-            // Luôn đẩy sản phẩm đã bán (SOLD) xuống cuối
-            $query->orderByRaw('CASE WHEN p.STATUS = ? THEN 1 ELSE 0 END', [AppConstant::STATUS_SOLD]);
+            // Luôn đẩy sản phẩm đã bán (SOLD) / hết tồn xuống cuối
+            $this->orderOutOfStockLast($query, true);
             switch ($boLoc) {
                 case 'default':
                     if ($isApiPublic === true) {
@@ -414,8 +426,8 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                     break;
             }
         } else if (!is_null($sortDto) && !is_null($sortDto->fieldName)) {
-            // Luôn đẩy sản phẩm đã bán (SOLD) xuống cuối
-            $query->orderByRaw('CASE WHEN p.STATUS = ? THEN 1 ELSE 0 END', [AppConstant::STATUS_SOLD]);
+            // Luôn đẩy sản phẩm đã bán (SOLD) / hết tồn xuống cuối
+            $this->orderOutOfStockLast($query, true);
             $fieldName = $sortDto->fieldName;
             $sortType = $sortDto->sortType;
 
@@ -451,8 +463,8 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
                     break;
             } 
         } else {
-            // Không có BO_LOC: SOLD cuối; frontend = nổi bật → tạo gần nhất
-            $query->orderByRaw('CASE WHEN p.STATUS = ? THEN 1 ELSE 0 END', [AppConstant::STATUS_SOLD]);
+            // Không có BO_LOC: hết hàng cuối; frontend = nổi bật → tạo gần nhất
+            $this->orderOutOfStockLast($query, true);
             if ($isApiPublic === true) {
                 $query->orderByRaw('CASE WHEN p.PRODUCT_HOT = ? THEN 0 ELSE 1 END', [true]);
                 $query->orderBy('p.CRT_DT', 'desc');
@@ -627,5 +639,38 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
         
         $query = $query->paginate($perPage, ['*'], 'page', $page);
         return $query;
+    }
+
+    /**
+     * Đẩy sản phẩm hết hàng xuống cuối danh sách.
+     * - STATUS = SOLD luôn cuối
+     * - Không còn biến thể nào có tồn > 0 (hoặc không có biến thể và PRODUCT_QUANTITY <= 0) cũng cuối
+     */
+    private function orderOutOfStockLast($query, bool $includeStatusSold = false): void
+    {
+        if ($includeStatusSold) {
+            $query->orderByRaw('CASE WHEN p.STATUS = ? THEN 1 ELSE 0 END', [AppConstant::STATUS_SOLD]);
+        }
+
+        $using = AppConstant::STATUS_USING;
+        $query->orderByRaw(
+            'CASE
+                WHEN EXISTS (
+                    SELECT 1 FROM product_variant AS pv_stock
+                    WHERE pv_stock.PRODUCT_ID = p.ID
+                      AND pv_stock.STATUS = ?
+                      AND pv_stock.IS_ACTIVE = 1
+                      AND pv_stock.INVENTORY_QUANTITY > 0
+                ) THEN 0
+                WHEN NOT EXISTS (
+                    SELECT 1 FROM product_variant AS pv_any
+                    WHERE pv_any.PRODUCT_ID = p.ID
+                      AND pv_any.STATUS = ?
+                      AND pv_any.IS_ACTIVE = 1
+                ) AND COALESCE(p.PRODUCT_QUANTITY, 0) > 0 THEN 0
+                ELSE 1
+            END ASC',
+            [$using, $using]
+        );
     }
 }

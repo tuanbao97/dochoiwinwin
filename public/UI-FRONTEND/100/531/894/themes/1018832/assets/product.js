@@ -875,9 +875,21 @@ subscribe(window.themeConfigs.firstInteraction, () => {
       this.changAnimationType(this.mql);
     }
     changAnimationType(media) {
-      this.dataset.animation = media.matches
-        ? "slide-in-bottom"
-        : "scale-in-hor-left";
+      // Đồng bộ quick-view-enhance: desktop không scale (tránh nhấp nhô)
+      this.dataset.animation = media.matches ? "slide-in-bottom" : "";
+    }
+    productIdFromOpener(opener) {
+      const raw =
+        (opener && opener.dataset && opener.dataset.product) ||
+        (opener && opener.getAttribute && opener.getAttribute("data-product")) ||
+        "";
+      const text = String(raw);
+      const sp = text.match(/(?:^|[\/\-])sp-(\d+)(?:[\/?#]|$)/i);
+      if (sp) return parseInt(sp[1], 10) || 0;
+      const trailing = text.match(/-(\d+)(?:\/?$|[?#])/);
+      if (trailing) return parseInt(trailing[1], 10) || 0;
+      const digits = text.match(/(\d{3,})/);
+      return digits ? parseInt(digits[1], 10) || 0 : 0;
     }
     loadProduct() {
       if (!this.url) return;
@@ -898,6 +910,11 @@ subscribe(window.themeConfigs.firstInteraction, () => {
           }
           this.querySelector(".portal-inner .product-wrapper").innerHTML =
             pf.outerHTML;
+          if (typeof window.__wwAfterQuickViewInject === "function") {
+            window.__wwAfterQuickViewInject(
+              this.querySelector(".portal-inner .product-wrapper")
+            );
+          }
           publish(window.themeConfigs.productLoaded);
           publish(window.themeConfigs.quickViewShow);
         })
@@ -909,6 +926,13 @@ subscribe(window.themeConfigs.firstInteraction, () => {
         });
     }
     show(opener) {
+      // Ưu tiên enhance (skeleton + scroll-lock + chống nháy ảnh) trên mọi trang
+      const productId = this.productIdFromOpener(opener);
+      if (productId && typeof window.wwOpenQuickView === "function") {
+        window.wwOpenQuickView(productId);
+        return;
+      }
+
       let url = opener.dataset.product + "/?view=quickview";
       if (this.url != url) {
         this.url = url;

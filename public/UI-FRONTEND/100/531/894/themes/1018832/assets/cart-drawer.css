@@ -126,6 +126,14 @@
 #cart-drawer .is-empty .cart-right{
 	display: none
 }
+/* Sau add-to-cart: luôn hiện danh sách khi đã bỏ is-empty (tránh CSS cũ ẩn nhầm). */
+#cart-drawer cart-form:not(.is-empty) .cart-left,
+#cart-drawer cart-form:not(.is-empty) .cart-right {
+	display: flex;
+}
+#cart-drawer cart-form:not(.is-empty) .cart-empty {
+	display: none;
+}
 #cart-drawer .cart-opener-group{
 	 display: grid;
 	grid-template-columns: repeat(auto-fit,minmax(0,1fr));

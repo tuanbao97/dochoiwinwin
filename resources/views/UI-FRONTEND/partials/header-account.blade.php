@@ -187,6 +187,21 @@
     return source ? source.charAt(0).toUpperCase() : '?';
   }
 
+  function setCartAuthVisible(loggedIn) {
+    document.querySelectorAll('[data-ww-cart-auth]').forEach(function (el) {
+      el.hidden = !loggedIn;
+      if (loggedIn) {
+        el.removeAttribute('hidden');
+        el.style.removeProperty('display');
+      } else {
+        el.setAttribute('hidden', '');
+        el.style.display = 'none';
+      }
+    });
+    document.documentElement.classList.toggle('ww-authed', !!loggedIn);
+    document.documentElement.classList.toggle('ww-guest', !loggedIn);
+  }
+
   function paint(user) {
     var letter = firstLetter(user);
     initial.textContent = letter;
@@ -215,6 +230,7 @@
     box.hidden = false;
     if (user.IS_ADMIN === true) adminItem.hidden = false;
 
+    setCartAuthVisible(true);
     paintDrawer(user, letter);
   }
 
@@ -234,26 +250,34 @@
   }
 
   function paintDrawerNow(user, letter) {
-    var link = document.querySelector('[data-ww-drawer-account]');
-    if (!link) return;
-
+    var guest = document.querySelector('[data-ww-drawer-guest]');
+    var box = document.querySelector('[data-ww-drawer-user]');
     var drawerName = document.querySelector('[data-ww-drawer-name]');
+    var drawerEmail = document.querySelector('[data-ww-drawer-email]');
     var drawerAvatar = document.querySelector('[data-ww-drawer-avatar]');
-    var drawerIcon = document.querySelector('[data-ww-drawer-icon]');
+    var drawerInitial = document.querySelector('[data-ww-drawer-initial]');
     var drawerAdmin = document.querySelector('[data-ww-drawer-admin]');
     var drawerLogout = document.querySelector('[data-ww-drawer-logout]');
 
-    link.setAttribute('href', urls.orders);
-    link.setAttribute('title', user.EMAIL || 'Tài khoản');
-    if (drawerName) drawerName.textContent = user.FULL_NAME || letter;
+    if (!guest && !box) return;
+
+    if (guest) guest.hidden = true;
+    if (box) box.hidden = false;
+    if (drawerName) drawerName.textContent = user.FULL_NAME || letter || 'Tài khoản';
+    if (drawerEmail) drawerEmail.textContent = user.EMAIL || '';
 
     if (user.AVATAR_URL && drawerAvatar) {
       drawerAvatar.src = user.AVATAR_URL;
       drawerAvatar.hidden = false;
-      if (drawerIcon) drawerIcon.hidden = true;
+      if (drawerInitial) drawerInitial.hidden = true;
+    } else if (drawerInitial) {
+      drawerInitial.textContent = letter || '?';
+      drawerInitial.hidden = false;
+      if (drawerAvatar) drawerAvatar.hidden = true;
     }
+
     if (drawerLogout) drawerLogout.hidden = false;
-    if (user.IS_ADMIN === true && drawerAdmin) drawerAdmin.hidden = false;
+    if (drawerAdmin) drawerAdmin.hidden = user.IS_ADMIN !== true;
   }
 
   function enterAdmin() {
@@ -299,7 +323,7 @@
 
   onReady(function () {
     var drawerLogout = document.querySelector('[data-ww-drawer-logout]');
-    var drawerAdmin = document.querySelector('[data-ww-drawer-admin]');
+    var drawerAdmin = document.querySelector('[data-ww-drawer-admin-link]');
     if (drawerLogout) drawerLogout.addEventListener('click', logout);
     if (drawerAdmin) drawerAdmin.addEventListener('click', enterAdmin);
   });
@@ -348,6 +372,8 @@
     logout: logout,
     paint: paint
   };
+
+  setCartAuthVisible(!!serverUser);
 
   try { sessionStorage.removeItem(reloadFlag); } catch (e) {}
 

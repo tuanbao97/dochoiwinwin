@@ -90,8 +90,14 @@ Route::middleware(['count-client-view-website'])->group(function() {
     Route::get('tim-kiem/{query}/{filters?}', [ThemeStorefrontController::class, 'keywordListing'])
         ->where('query', '[^/]+')
         ->where('filters', '.*');
-    Route::get('san-pham-vip/{filters?}', [ThemeStorefrontController::class, 'vipListing'])
+    Route::get('flash-sale/{filters?}', [ThemeStorefrontController::class, 'vipListing'])
         ->where('filters', '.*');
+    // Alias cũ → canonical
+    Route::get('san-pham-vip/{filters?}', function (?string $filters = null) {
+        $path = '/flash-sale' . ($filters !== null && $filters !== '' ? '/' . ltrim($filters, '/') : '');
+
+        return redirect($path, 301);
+    })->where('filters', '.*');
     Route::get('san-pham-noi-bat/{filters?}', [ThemeStorefrontController::class, 'hotListing'])
         ->where('filters', '.*');
     Route::get('tat-ca-san-pham/{filters?}', [ThemeStorefrontController::class, 'allProducts'])

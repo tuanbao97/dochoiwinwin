@@ -38,12 +38,8 @@
     <link rel="stylesheet" href="{{ storefrontThemeAsset('global.css') }}" media="all">
     <link rel="preload" as="style" media="all" href="{{ storefrontThemeAsset('custom.css') }}">
     <link rel="stylesheet" href="{{ storefrontThemeAsset('custom.css') }}" media="all">
-    <link
-      rel="stylesheet"
-      href="{{ storefrontThemeAsset('quickview.css') }}"
-      media="print"
-      onload="this.media='all'"
-    >
+    {{-- Sync load: tránh skeleton/open trước khi lock width (X lệch ngoài khung) --}}
+    <link rel="stylesheet" href="{{ storefrontThemeAsset('quickview.css') }}" media="all">
     <link
       rel="stylesheet"
       href="{{ storefrontThemeAsset('cart-drawer.css') }}"

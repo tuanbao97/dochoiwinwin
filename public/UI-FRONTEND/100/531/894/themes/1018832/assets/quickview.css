@@ -33,10 +33,19 @@
 	pointer-events: none !important;
 }
 
+/* Khóa kích thước chrome: skeleton = loaded (không phụ thuộc nội dung).
+   Ghi đè .portal-inner { max-width: var(--dialog-max-width, 400px) } từ components.css */
+#quick-view-product {
+	--dialog-max-width: 920px;
+	/* 100% theo flex parent (đã có padding) — tránh 100vw tràn */
+	--ww-qv-modal-width: min(920px, 100%);
+}
+
 #quick-view-product .portal-close-button {
-	/* Nằm trong khung trắng (.product-wrapper), không treo ngoài overlay */
-	top: calc(1.2rem + 0.85rem) !important;
-	right: calc(1.2rem + 0.85rem) !important;
+	/* Neo theo chrome cố định (.portal-inner = .product-wrapper), không theo content width */
+	position: absolute !important;
+	top: 0.85rem !important;
+	right: 0.85rem !important;
 	left: auto !important;
 	z-index: 40;
 	border-color: #991b1b !important;
@@ -53,28 +62,54 @@
 
 #quick-view-product .portal-inner {
 	position: relative;
+	box-sizing: border-box;
 	max-height: 80vh;
 	height: 80vh;
-	width: min(920px, calc(100% - 2.4rem));
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 1.2rem;
+	/* width + max-width cùng giá trị — tránh nhảy hẹp → rộng khi load */
+	width: var(--ww-qv-modal-width) !important;
+	max-width: var(--ww-qv-modal-width) !important;
+	min-width: 0;
+	flex: 0 0 auto !important;
+	/* block: product-wrapper luôn 100% chrome, không shrink-to-fit content */
+	display: block;
+	padding: 0;
 	margin: 0 auto;
 }
 
 #quick-view-product .product-wrapper {
 	position: relative;
 	border-radius: var(--rounded-lg);
-	width: 100%;
+	box-sizing: border-box;
+	width: 100% !important;
+	min-width: 100% !important;
+	max-width: 100% !important;
 	height: 100% !important;
+	min-height: 100% !important;
 	max-height: 100%;
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 	box-shadow: var(--shadow-l);
-	transition: min-height 0.28s ease, opacity 0.28s ease;
 	background: var(--color-background, #fff);
+	/* Không transition height/scale — tránh nhấp nhô khi skeleton → nội dung */
+	transform: none !important;
+}
+
+/* Skeleton fill đủ khung trắng — X luôn nằm trên nền trắng */
+#quick-view-product .product-wrapper.is-loading,
+#quick-view-product .product-wrapper .ww-qv-skeleton {
+	width: 100% !important;
+	min-width: 100%;
+	min-height: 100%;
+	box-sizing: border-box;
+}
+
+/* Tắt scale-in khi mở modal; chỉ fade nhẹ overlay lần đầu */
+#quick-view-product .product-wrapper.animation,
+#quick-view-product .animation.scale-in-hor-left,
+#quick-view-product.scale-in-hor-left .product-wrapper {
+	animation: none !important;
+	transform: none !important;
 }
 
 #quick-view-product .ww-qv-shell {
@@ -83,6 +118,7 @@
 	height: 100%;
 	min-height: 0;
 	width: 100%;
+	animation: ww-qv-fade-in 0.18s ease-out;
 }
 
 #quick-view-product .ww-qv-scroll {
@@ -105,28 +141,24 @@
 	box-shadow: 0 -6px 16px rgba(15, 23, 42, 0.06);
 }
 
-#quick-view-product .product-wrapper.is-loading {
-	min-height: min(62vh, 44rem);
-}
-
 #quick-view-product .product-wrapper.is-ready {
-	animation: ww-qv-expand 0.32s ease-out;
+	animation: none;
 }
 
 @keyframes ww-qv-expand {
 	from {
-		opacity: 0.88;
-		transform: scale(0.985);
+		opacity: 1;
+		transform: none;
 	}
 	to {
 		opacity: 1;
-		transform: scale(1);
+		transform: none;
 	}
 }
 
 @keyframes ww-qv-fade-in {
 	from {
-		opacity: 0.88;
+		opacity: 0.92;
 	}
 	to {
 		opacity: 1;
@@ -135,7 +167,10 @@
 
 #quick-view-product .ww-qv-skeleton {
 	padding: 1.6rem 2rem;
-	min-height: inherit;
+	width: 100%;
+	min-height: 100%;
+	height: 100%;
+	box-sizing: border-box;
 }
 
 #quick-view-product .ww-qv-skeleton__grid {
@@ -285,6 +320,8 @@
 	background: var(--color-background);
 	aspect-ratio: 1;
 	max-height: 240px;
+	/* Giữ chỗ ảnh — tránh nháy khi img opacity 0 → 1 */
+	isolation: isolate;
 }
 
 #quick-view-product .gallery-main .embla__container {
@@ -312,6 +349,23 @@
 	margin: 0 auto;
 	object-fit: contain;
 	border-radius: var(--rounded);
+	opacity: 0;
+	transition: opacity 0.18s ease-out;
+}
+
+#quick-view-product .gallery-main-img.ww-qv-img-ready {
+	opacity: 1;
+}
+
+#quick-view-product .embla-thumbs .embla__slide img,
+#quick-view-product .ww-qv-variant-thumb img {
+	opacity: 0;
+	transition: opacity 0.16s ease-out;
+}
+
+#quick-view-product .embla-thumbs .embla__slide img.ww-qv-img-ready,
+#quick-view-product .ww-qv-variant-thumb img.ww-qv-img-ready {
+	opacity: 1;
 }
 
 #quick-view-product .gallery-thumbnails {
@@ -677,12 +731,10 @@
 	box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
-#quick-view-product .portal-inner.loading {
-	display: block;
-}
-
 #quick-view-product .portal-inner.loading .product-wrapper {
-	width: 100%;
+	width: 100% !important;
+	min-width: 100%;
+	max-width: 100%;
 }
 
 @media (min-width: 768px) {
@@ -703,10 +755,15 @@
 		min-height: 100% !important;
 	}
 
+	#quick-view-product {
+		--ww-qv-modal-width: 100%;
+	}
+
 	#quick-view-product .portal-inner {
 		align-self: center !important;
-		width: min(100%, calc(100% - 2rem)) !important;
-		max-width: 100% !important;
+		width: var(--ww-qv-modal-width) !important;
+		max-width: var(--ww-qv-modal-width) !important;
+		min-width: 0;
 		height: 80vh !important;
 		max-height: 80vh !important;
 		margin: 0 auto !important;
@@ -715,6 +772,7 @@
 		right: auto !important;
 		transform: none !important;
 		border-radius: var(--rounded-lg);
+		display: block !important;
 	}
 
 	#quick-view-product .portal-close-button {
@@ -725,6 +783,7 @@
 	#quick-view-product .product-wrapper,
 	#quick-view-product .product-wrapper.animation {
 		width: 100% !important;
+		min-width: 100% !important;
 		max-width: 100% !important;
 		height: 100% !important;
 		max-height: 100% !important;
@@ -734,7 +793,7 @@
 	}
 
 	#quick-view-product .product-wrapper.is-ready {
-		animation: ww-qv-fade-in 0.28s ease-out;
+		animation: none;
 	}
 
 	#quick-view-product .product-wrapper.animation,
@@ -749,12 +808,10 @@
 		max-height: 100%;
 	}
 
-	#quick-view-product .product-wrapper.is-loading {
-		min-height: min(56vh, 40rem);
-	}
-
 	#quick-view-product .ww-qv-skeleton {
 		padding: 1.6rem;
+		min-height: 100%;
+		height: 100%;
 	}
 
 	#quick-view-product .ww-qv-skeleton__grid {

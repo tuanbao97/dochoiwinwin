@@ -63,6 +63,34 @@ class StorefrontProductListingStockTest extends TestCase
         $this->assertNotContains((int) $soldOut->ID, $ids);
     }
 
+    public function test_public_listing_puts_sold_out_products_last(): void
+    {
+        $category = $this->category();
+        [$soldOut] = $this->catalogItem($category, 0);
+        [$inStock] = $this->catalogItem($category, 5);
+
+        $response = $this->getJson('http://localhost/api/public/product/list?'.http_build_query([
+            'PAGE' => 1,
+            'PER_PAGE' => 50,
+            'IS_API_PUBLIC' => 'true',
+            'TRANG_THAI_HOAT_DONG' => 'true',
+            'BO_LOC' => 'default',
+            'DANH_MUC_SAN_PHAM_ID' => [$category->ID],
+        ]))->assertOk();
+
+        $ids = collect($response->json('DATAS.PRODUCT.DATA'))
+            ->pluck('ID')
+            ->map('intval')
+            ->all();
+
+        $inStockPos = array_search((int) $inStock->ID, $ids, true);
+        $soldOutPos = array_search((int) $soldOut->ID, $ids, true);
+
+        $this->assertNotFalse($inStockPos);
+        $this->assertNotFalse($soldOutPos);
+        $this->assertLessThan($soldOutPos, $inStockPos);
+    }
+
     private function category(): CategoryP
     {
         return CategoryP::query()->create([

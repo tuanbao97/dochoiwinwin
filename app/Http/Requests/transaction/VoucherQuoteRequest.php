@@ -39,9 +39,9 @@ class VoucherQuoteRequest extends FormRequest
             'EMAIL' => ['nullable', 'email', 'max:1000'],
             'SO_DIEN_THOAI' => ['nullable', 'string', 'max:50'],
             'NHAN_TAI_CUA_HANG' => ['boolean'],
-            'ITEMS' => ['required', 'array', 'min:1'],
+            'ITEMS' => ['required', 'array', 'min:1', 'max:50'],
             'ITEMS.*.PRODUCT_ID' => ['required', 'integer'],
-            'ITEMS.*.QUANTITY' => ['required', 'integer', 'min:1'],
+            'ITEMS.*.QUANTITY' => ['required', 'integer', 'min:1', 'max:999'],
         ];
     }
 }

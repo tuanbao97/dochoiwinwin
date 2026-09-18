@@ -66,8 +66,12 @@
 
           @include('UI-FRONTEND.partials.header-account')
 
-        <portal-opener>
-          @php $wwCartUser = $storefrontUser ?? null; @endphp
+        @php $wwCartUser = $storefrontUser ?? null; @endphp
+        <portal-opener
+          class="ww-cart-auth-only"
+          data-ww-cart-auth
+          @unless($wwCartUser) hidden @endunless
+        >
           <a
             @if($wwCartUser) data-portal="#cart-drawer" @endif
             href="{{ $wwCartUser ? url('/cart') : storefrontLoginUrl(url('/cart')) }}"

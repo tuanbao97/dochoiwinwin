@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 class StorefrontAccountController extends Controller
 {
+    public function __construct(private readonly SapoOrderPuller $sapoOrders) {}
+
     public function profile(Request $request)
     {
         /** @var User $user */
@@ -98,6 +100,21 @@ class StorefrontAccountController extends Controller
             ->orderByDesc('ID')
             ->paginate($perPage);
 
+        $this->sapoOrders->refreshTransactions($orders->getCollection());
+        $ids = $orders->getCollection()->pluck('ID')->filter()->all();
+        if ($ids !== []) {
+            $fresh = Transaction::query()
+                ->with(['orderItems.product'])
+                ->whereIn('ID', $ids)
+                ->get()
+                ->keyBy('ID');
+            $orders->setCollection(
+                $orders->getCollection()->map(
+                    static fn (Transaction $order): Transaction => $fresh->get($order->ID) ?? $order
+                )
+            );
+        }
+
         return response()->json(
             new ApiResponseDto(
                 AppConstant::STATUS_SUCCESS,
@@ -127,6 +144,10 @@ class StorefrontAccountController extends Controller
             ->with(['orderItems.product'])
             ->where('ID', $ID)
             ->firstOrFail();
+
+        $this->sapoOrders->refreshTransactions([$order]);
+        $order->refresh();
+        $order->load(['orderItems.product']);
 
         return response()->json(
             new ApiResponseDto(

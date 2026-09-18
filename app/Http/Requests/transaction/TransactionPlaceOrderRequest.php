@@ -59,6 +59,16 @@ class TransactionPlaceOrderRequest extends FormRequest
             )),
             'ITEMS' => $items,
         ]);
+
+        // Client không được quyết định tiền: bỏ mọi field số tiền nếu có gửi kèm.
+        foreach ([
+            'SHIPPING_FEE', 'shipping_fee',
+            'DISCOUNT_AMOUNT', 'discount_amount',
+            'SUBTOTAL', 'subtotal',
+            'TOTAL', 'total', 'TOTAL_PRICE', 'total_price',
+        ] as $moneyField) {
+            $this->request->remove($moneyField);
+        }
     }
 
     public function rules(): array
@@ -121,6 +131,7 @@ class TransactionPlaceOrderRequest extends FormRequest
                 'required',
                 'array',
                 'min:1',
+                'max:50',
             ],
             'ITEMS.*.PRODUCT_ID' => [
                 'bail',
@@ -132,10 +143,12 @@ class TransactionPlaceOrderRequest extends FormRequest
                 'required',
                 'integer',
                 'min:1',
+                'max:999',
             ],
+            // PRICE nếu client gửi cũng bị bỏ qua ở service; không bắt buộc.
             'ITEMS.*.PRICE' => [
                 'bail',
-                'required',
+                'nullable',
                 'numeric',
                 'min:0',
             ],

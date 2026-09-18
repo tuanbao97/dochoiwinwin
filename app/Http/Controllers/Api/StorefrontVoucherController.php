@@ -12,7 +12,6 @@ use App\Support\SapoVoucherSynchronizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class StorefrontVoucherController extends Controller
 {
@@ -29,15 +28,15 @@ class StorefrontVoucherController extends Controller
             'EMAIL' => ['nullable', 'email', 'max:1000'],
             'SO_DIEN_THOAI' => ['nullable', 'string', 'max:50'],
             'NHAN_TAI_CUA_HANG' => ['nullable', 'boolean'],
-            'ITEMS' => ['required', 'array', 'min:1'],
+            'ITEMS' => ['required', 'array', 'min:1', 'max:50'],
             'ITEMS.*.PRODUCT_ID' => ['required', 'integer'],
-            'ITEMS.*.QUANTITY' => ['required', 'integer', 'min:1'],
+            'ITEMS.*.QUANTITY' => ['required', 'integer', 'min:1', 'max:999'],
         ]);
 
         $this->synchronizer->syncIfStale();
-        $subtotal = $this->subtotal($validated['ITEMS']);
+        $subtotal = $this->inventory->subtotalFromOrderItems($validated['ITEMS']);
         $pickupAtStore = filter_var($validated['NHAN_TAI_CUA_HANG'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $shippingFee = $pickupAtStore ? 0 : max(0, (int) config('storefront.shipping_fee', 30000));
+        $shippingFee = StorefrontVoucher::shippingFee($pickupAtStore);
         $vouchers = $this->voucher->availableList(
             $subtotal,
             $shippingFee,
@@ -56,11 +55,11 @@ class StorefrontVoucherController extends Controller
 
     public function quote(VoucherQuoteRequest $request): JsonResponse
     {
-        $subtotal = $this->subtotal($request->input('ITEMS', []));
+        $subtotal = $this->inventory->subtotalFromOrderItems($request->input('ITEMS', []));
 
         $user = Auth::user();
         $pickupAtStore = filter_var($request->input('NHAN_TAI_CUA_HANG', false), FILTER_VALIDATE_BOOLEAN);
-        $shippingFee = $pickupAtStore ? 0 : max(0, (int) config('storefront.shipping_fee', 30000));
+        $shippingFee = StorefrontVoucher::shippingFee($pickupAtStore);
         $quote = $this->voucher->quoteMany(
             (array) $request->input('DISCOUNT_CODES', []),
             $subtotal,
@@ -76,43 +75,5 @@ class StorefrontVoucherController extends Controller
             ['VOUCHER' => $quote],
             JsonResponse::HTTP_OK
         ))->setStatusCode(JsonResponse::HTTP_OK);
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $items
-     */
-    private function subtotal(array $items): int
-    {
-        $quantities = [];
-        foreach ($items as $item) {
-            $resolved = $this->inventory->resolve((int) ($item['PRODUCT_ID'] ?? 0));
-            if (! $resolved) {
-                throw ValidationException::withMessages([
-                    'ITEMS' => 'Sản phẩm trong giỏ không còn khả dụng.',
-                ]);
-            }
-
-            $variantId = (int) $resolved['variant_id'];
-            $quantities[$variantId] = ($quantities[$variantId] ?? 0)
-                + (int) ($item['QUANTITY'] ?? 0);
-            if ($quantities[$variantId] > (int) $resolved['stock']) {
-                throw ValidationException::withMessages([
-                    'ITEMS' => $resolved['title'].' chỉ còn '.$resolved['stock'].' sản phẩm trong kho.',
-                ]);
-            }
-        }
-
-        $subtotal = 0;
-        foreach ($quantities as $variantId => $quantity) {
-            $resolved = $this->inventory->resolve($variantId);
-            if (! $resolved) {
-                throw ValidationException::withMessages([
-                    'ITEMS' => 'Sản phẩm trong giỏ không còn khả dụng.',
-                ]);
-            }
-            $subtotal += (int) $resolved['price'] * $quantity;
-        }
-
-        return $subtotal;
     }
 }

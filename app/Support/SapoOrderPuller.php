@@ -176,16 +176,94 @@ class SapoOrderPuller
     }
 
     /**
+     * Làm mới các đơn local từ GET /admin/orders/{id}.json.
+     * Dùng khi mở lịch sử mua hàng: cửa sổ modified_on mặc định của Sapo
+     * không trả đơn đã hủy nên status local dễ bị kẹt PENDING.
+     *
+     * @param  iterable<mixed>  $transactions
+     */
+    public function refreshTransactions(iterable $transactions): int
+    {
+        if (! $this->sapo->isEnabled()) {
+            return 0;
+        }
+
+        $updated = 0;
+        foreach ($transactions as $transaction) {
+            if (! $transaction instanceof Transaction) {
+                continue;
+            }
+
+            $sapoId = (int) $transaction->SAPO_ORDER_ID;
+            if ($sapoId <= 0) {
+                continue;
+            }
+
+            try {
+                $order = $this->fetchOrder($sapoId);
+                if ($order !== null && $this->apply($transaction, $order)) {
+                    $updated++;
+                }
+            } catch (Throwable $e) {
+                Log::warning('Unable to refresh Sapo order', [
+                    'transaction_id' => $transaction->ID,
+                    'sapo_id' => $sapoId,
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $updated;
+    }
+
+    /**
      * Luôn gửi ISO-8601 UTC để local (+07:00) và production dùng cùng một mốc.
      *
      * @return array<int, array<string, mixed>>
      */
     private function fetchWindow(CarbonInterface $from, CarbonInterface $to): array
     {
-        return $this->fetchPaginated([
+        $base = [
             'modified_on_min' => $from->copy()->utc()->toIso8601String(),
             'modified_on_max' => $to->copy()->utc()->toIso8601String(),
-        ]);
+        ];
+        $byId = [];
+
+        // Mặc định Sapo chỉ trả đơn open. `status=any` trên store này trả mảng rỗng,
+        // nên gọi thêm cancelled/closed để nhận đơn đã hủy hoặc đóng.
+        foreach ([null, 'cancelled', 'closed'] as $status) {
+            $filters = $base;
+            if (is_string($status)) {
+                $filters['status'] = $status;
+            }
+
+            try {
+                foreach ($this->fetchPaginated($filters) as $order) {
+                    $id = (string) ($order['id'] ?? '');
+                    if ($id !== '') {
+                        $byId[$id] = $order;
+                    }
+                }
+            } catch (Throwable $e) {
+                Log::warning('Unable to fetch Sapo order window', [
+                    'status' => $status,
+                    'message' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return array_values($byId);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchOrder(int $sapoId): ?array
+    {
+        $response = $this->sapo->get('/admin/orders/'.$sapoId.'.json');
+        $order = $response['order'] ?? null;
+
+        return is_array($order) ? $order : null;
     }
 
     /**
@@ -643,7 +721,11 @@ class SapoOrderPuller
         $fulfillment = $this->lower($order['fulfillment_status'] ?? null);
         $financial = $this->lower($order['financial_status'] ?? null);
 
-        if ($status === 'cancelled' || ! empty($order['cancelled_on'])) {
+        if (
+            in_array($status, ['cancelled', 'canceled', 'cancel'], true)
+            || ! empty($order['cancelled_on'])
+            || ! empty($order['canceled_on'])
+        ) {
             return TransactionStatusEnum::CANCELLED;
         }
 

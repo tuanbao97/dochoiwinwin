@@ -142,11 +142,33 @@ details[open] > summary > .icon-carret-right {
   height: 6.4rem;
   position: sticky;
   position: -webkit-sticky;
+  top: 0;
+  z-index: 2000;
+  background: var(--color-header-bg, var(--color-background, #fff));
   -webkit-animation: fade-in 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
   animation: fade-in 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
 }
 
-/* Thanh header d�nh cao 6.4rem n�n logo ph?i nh? l?i ?? kh�ng tr�n */
+/*
+ * Mobile: sticky bị hỏng khi html/body có overflow-x (clip/hidden).
+ * Dùng fixed giống cro-btns; spacer giữ chỗ khi header rời flow.
+ */
+@media (max-width: 1279px) {
+  .header.active {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: auto !important;
+    min-height: var(--header-height, 6.4rem);
+  }
+  body.ega-theme.ww-header-fixed {
+    padding-top: var(--ww-header-offset, 6.4rem);
+  }
+}
+
+/* Thanh header d?nh cao 6.4rem n?n logo ph?i nh? l?i ?? kh?ng tr?n */
 .header.active .logo-wrapper img {
   max-height: var(--logo-height);
 }
@@ -172,7 +194,11 @@ details[open] > summary > .icon-carret-right {
   .header {
     padding: var(--spacing-2) 0;
   }
-	
+  /* Mobile header 2 hàng — không ép 6.4rem kẻo cắt mất hamburger / logo */
+  .header.active {
+    height: auto;
+    min-height: var(--header-height, 6.4rem);
+  }
 }
 @media(max-width: 374px){
 	.header .logo-wrapper {
@@ -879,6 +905,12 @@ animating:not(.fade-in),
   font-size: 1rem;
   margin-right: 0;
 }
+/* Chưa login: ẩn giỏ (header + bottom bar), chỉ hiện Đăng nhập */
+[data-ww-cart-auth][hidden],
+.ww-cart-auth-only[hidden],
+html.ww-guest [data-ww-cart-auth] {
+  display: none !important;
+}
 .cro-btns .cart-limit-note,
 .cro-btns .cart-vat-note {
   display: none;
@@ -1305,7 +1337,7 @@ product-form.loading .product-cta .btn .loading-icon {
 .card-product--vertical .card-product__top .card-product__image,
 .card-product--vertical .card-product__top .card-product__image-2 {
 	--image-scale: 1;
-	/* Fill s�t m�p card ? bo g�c ch? do form overflow, tr�nh g�c h?t */
+	/* Fill s?t m?p card ? bo g?c ch? do form overflow, tr?nh g?c h?t */
 	position: absolute !important;
 	inset: 0 !important;
 	top: 0 !important;
@@ -1842,7 +1874,14 @@ body.ww-all-products .section-main-search,
 body.ega-theme.search main,
 body.ww-all-products main {
 	min-width: 0;
-	max-width: 100%;
+}
+
+/* Gi? ??ng b? ngang .container nh? trang ch? ? kh?ng bung full viewport */
+body.ega-theme.search .index-container.container,
+body.ww-all-products .index-container.container {
+	max-width: var(--container-width);
+	width: 100%;
+	margin-inline: auto;
 }
 
 .ww-search-filter-card {
@@ -2487,11 +2526,17 @@ top: auto!important;
 .card-product__body .card-product__price-row {
 	align-items: center !important;
 	gap: 0.75rem;
+	margin-top: 0.75rem;
 }
 
 /* C? gi? g?c: icon gi? c?n theo h?ng gi? b?n (tr?n), kh?ng b? k?o xu?ng */
 .card-product__body .card-product__price-row:has(.compare-price) {
 	align-items: flex-start !important;
+}
+
+.card-product--vertical .card-product__body .card-product__price-row,
+.product-list .card-product__body .card-product__price-row {
+	margin-top: 0.85rem;
 }
 
 .card-product__body .card-product__price-row .price-box {
@@ -3435,6 +3480,11 @@ body.checkout .checkout-order-item {
 	font-weight: 700;
 	color: #1a1a1a;
 }
+.ww-login-invite__title--popup {
+	font-size: clamp(1.8rem, 4.2vw, 2.4rem);
+	letter-spacing: -0.02em;
+	text-transform: uppercase;
+}
 .ww-login-invite__text {
 	display: inline-flex;
 	align-items: center;
@@ -3448,6 +3498,117 @@ body.checkout .checkout-order-item {
 	line-height: 1.3;
 	font-weight: 800;
 	letter-spacing: -0.01em;
+}
+.ww-login-invite__text--orange,
+#login-invite-popup .ww-login-invite__text,
+.section-main-login .ww-login-invite__text {
+	color: #ea580c !important;
+	background: rgba(234, 88, 12, 0.14);
+	border: 1px solid rgba(234, 88, 12, 0.35);
+	box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.08);
+}
+
+.ww-login-invite-vouchers {
+	position: relative;
+	overflow: hidden;
+	width: 100%;
+	mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+	-webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ww-login-invite-vouchers__track {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	width: max-content;
+	animation: ww-voucher-marquee 14s linear infinite;
+}
+.ww-login-invite-vouchers__item {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	min-width: 14rem;
+	height: 5.6rem;
+	padding: 0 1.8rem;
+	border-radius: 1.2rem;
+	background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+	color: #fff;
+	font-family: 'Lexend', var(--font-headings-family, sans-serif);
+	font-size: 1.7rem;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.2;
+	text-transform: uppercase;
+	white-space: nowrap;
+	box-shadow: 0 6px 12px rgba(234, 88, 12, 0.22);
+}
+.ww-login-invite-vouchers__item::before,
+.ww-login-invite-vouchers__item::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	width: 1.4rem;
+	height: 1.4rem;
+	border-radius: 999px;
+	background: #fff;
+	transform: translateY(-50%);
+}
+.ww-login-invite-vouchers__item::before {
+	left: -0.7rem;
+}
+.ww-login-invite-vouchers__item::after {
+	right: -0.7rem;
+}
+@keyframes ww-voucher-marquee {
+	from { transform: translateX(0); }
+	to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.ww-login-invite-vouchers__track {
+		animation: none;
+		flex-wrap: wrap;
+		justify-content: center;
+		width: 100%;
+	}
+}
+
+#login-invite-popup {
+	--dialog-index: 3600;
+}
+#login-invite-popup .portal-inner.ww-login-invite-popup {
+	position: relative;
+	width: min(100%, 44rem);
+	max-width: 44rem;
+	margin: auto;
+	padding: 2.4rem 1.8rem 2rem;
+	border-radius: 1.6rem;
+	background: #ffffff;
+	box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+}
+#login-invite-popup .portal-close-button {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	z-index: 2;
+	background: #b91c1c !important;
+	border-color: #991b1b !important;
+}
+.ww-login-invite-popup__body {
+	display: grid;
+	gap: 1.6rem;
+}
+.ww-login-invite-popup__actions .btn {
+	min-height: 4.4rem;
+	border-radius: 1rem;
+}
+@media (max-width: 480px) {
+	#login-invite-popup .portal-inner.ww-login-invite-popup {
+		padding: 2.2rem 1.4rem 1.6rem;
+	}
+	.ww-login-invite-popup__actions {
+		grid-template-columns: 1fr;
+	}
 }
 .ww-account__trigger {
 	display: flex;
@@ -3617,7 +3778,124 @@ body.checkout .checkout-order-item {
 	display: none;
 }
 
-/* Trang l?ch s? mua h�ng */
+/* Menu trái mobile: panel tài khoản giống dropdown desktop */
+.ww-drawer-account {
+	width: 100%;
+}
+.ww-drawer-account__guest {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.4rem 0;
+}
+.ww-drawer-account__guest[hidden],
+.ww-drawer-account__user[hidden] {
+	display: none !important;
+}
+.ww-drawer-account__avatar {
+	width: 4.4rem;
+	height: 4.4rem;
+	border-radius: 9999px;
+	background: #ea580c;
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	overflow: hidden;
+	font-size: 1.8rem;
+	font-weight: 700;
+}
+.ww-drawer-account__avatar--icon {
+	background: #f8fafc;
+	color: #0f172a;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.8rem;
+}
+.ww-drawer-account__avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.ww-drawer-account__avatar-img[hidden],
+.ww-drawer-account__initial[hidden] {
+	display: none;
+}
+.ww-drawer-account__meta {
+	min-width: 0;
+	flex: 1;
+}
+.ww-drawer-account__label {
+	display: block;
+	font-size: 1.2rem;
+	color: #94a3b8;
+}
+.ww-drawer-account__name {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: #0f172a;
+	line-height: 1.3;
+	word-break: break-word;
+}
+.ww-drawer-account__email {
+	margin: 0.15rem 0 0;
+	font-size: 1.25rem;
+	color: #64748b;
+	word-break: break-all;
+}
+.ww-drawer-account__head {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding-bottom: 1rem;
+	margin-bottom: 0.4rem;
+	border-bottom: 1px solid #e2e8f0;
+}
+.ww-drawer-account__menu {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.2rem;
+}
+.ww-drawer-account__link {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	width: 100%;
+	padding: 0.85rem 0.4rem;
+	border: 0;
+	background: transparent;
+	border-radius: 0.8rem;
+	color: #0f172a;
+	font-size: 1.45rem;
+	font-weight: 500;
+	text-align: left;
+	cursor: pointer;
+}
+.ww-drawer-account__link:hover {
+	background: #f8fafc;
+}
+.ww-drawer-account__link .icon,
+.ww-drawer-account__link svg {
+	width: 1.8rem;
+	height: 1.8rem;
+	flex-shrink: 0;
+}
+.ww-drawer-account__link--admin {
+	color: #ea580c;
+	font-weight: 600;
+}
+.ww-drawer-account__link--logout {
+	color: #dc2626;
+}
+.ww-drawer-account__link--logout:hover {
+	background: rgba(220, 38, 38, 0.08);
+	color: #dc2626;
+}
+
+/* Trang l?ch s? mua h?ng */
 .ww-orders {
 	max-width: 100rem;
 	margin: 0 auto 4rem;
@@ -3659,7 +3937,7 @@ body.checkout .checkout-order-item {
 		white-space: nowrap;
 	}
 }
-/* Anchor .btn c?a theme l� inline n�n padding d?c ?� l�n d�ng tr�n */
+/* Anchor .btn c?a theme l? inline n?n padding d?c ?? l?n d?ng tr?n */
 .ww-orders a.btn {
 	display: inline-flex;
 	align-items: center;
@@ -3999,7 +4277,7 @@ body.checkout .checkout-order-item {
 	}
 }
 
-/* Tr?ng th�i h?t h�ng c?a card s?n ph?m ngo�i danh s�ch */
+/* Tr?ng th?i h?t h?ng c?a card s?n ph?m ngo?i danh s?ch */
 .ww-card-soldout {
 	position: absolute;
 	inset: 0;
@@ -4030,7 +4308,7 @@ card-product.is-soldout .addtocart-btn {
 	}
 }
 
-/* ===== Trang thanh to�n ===== */
+/* ===== Trang thanh to?n ===== */
 .ww-co {
 	--co-border: rgba(15, 23, 42, 0.09);
 	--co-muted: rgba(15, 23, 42, 0.58);
@@ -4342,6 +4620,12 @@ card-product.is-soldout .addtocart-btn {
 	font-size: 1.3rem;
 	color: #047857;
 	font-weight: 600;
+	line-height: 1.45;
+}
+.ww-co-ship__hint-phone {
+	display: block;
+	margin-top: 0.25rem;
+	font-weight: 700;
 }
 #ww-checkout-shipping.is-free {
 	color: #047857;
@@ -4447,7 +4731,7 @@ card-product.is-soldout .addtocart-btn {
 	color: var(--co-muted);
 }
 
-/* T�m t?t ??n h�ng */
+/* T?m t?t ??n h?ng */
 .ww-sum {
 	padding: 1.8rem;
 	border: 1px solid var(--co-border);
@@ -4491,6 +4775,30 @@ card-product.is-soldout .addtocart-btn {
 	overflow-y: auto;
 	margin-top: 1.4rem;
 	padding-right: 0.4rem;
+}
+
+/* Thanh scroll danh s?ch SP checkout ? r?ng h?n global (override body.ega-theme *) */
+body.ega-theme .ww-sum__items-wrap {
+	scrollbar-width: auto !important;
+	scrollbar-color: var(--ww-scrollbar-thumb, rgba(2, 132, 199, 0.55)) var(--ww-scrollbar-track, rgba(148, 163, 184, 0.22));
+}
+body.ega-theme .ww-sum__items-wrap::-webkit-scrollbar {
+	width: 16px !important;
+	height: 16px !important;
+	display: block !important;
+}
+body.ega-theme .ww-sum__items-wrap::-webkit-scrollbar-track {
+	background: var(--ww-scrollbar-track, rgba(148, 163, 184, 0.22));
+	border-radius: 999px;
+}
+body.ega-theme .ww-sum__items-wrap::-webkit-scrollbar-thumb {
+	background-color: var(--ww-scrollbar-thumb, rgba(2, 132, 199, 0.55));
+	border-radius: 999px;
+	border: 3px solid transparent;
+	background-clip: padding-box;
+}
+body.ega-theme .ww-sum__items-wrap::-webkit-scrollbar-thumb:hover {
+	background-color: var(--ww-scrollbar-thumb-hover, rgba(2, 132, 199, 0.85));
 }
 .ww-sum__items {
 	list-style: none;
@@ -4776,7 +5084,7 @@ card-product.is-soldout .addtocart-btn {
 	}
 }
 
-/* Popup ch?n m� gi?m gi� ? layout table, kh�ng grid, kh�ng co chi?u cao */
+/* Popup ch?n m? gi?m gi? ? layout table, kh?ng grid, kh?ng co chi?u cao */
 #ww-voucher-picker.ww-voucher-picker {
 	position: fixed !important;
 	inset: 0 !important;
@@ -5186,6 +5494,15 @@ card-product.is-soldout .addtocart-btn {
 #ww-voucher-picker .ww-vcard.is-off {
 	opacity: 0.7;
 }
+#ww-voucher-picker .ww-vcard.is-disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+#ww-voucher-picker .ww-vcard.is-disabled .ww-vcard__radio:before {
+	background: #e5e7eb;
+	border-color: #cbd5e1;
+}
 #ww-voucher-picker .ww-vcard__stamp,
 #ww-voucher-picker .ww-vcard__info,
 #ww-voucher-picker .ww-vcard__radio {
@@ -5432,7 +5749,7 @@ html.ww-voucher-picker-open body {
 	font-size: 1.6rem;
 }
 
-/* Thanh ??t h�ng c? ??nh tr�n mobile */
+/* Thanh ??t h?ng c? ??nh tr?n mobile */
 .ww-co-bar {
 	display: none;
 	position: fixed;
@@ -5485,8 +5802,8 @@ html.ww-voucher-picker-open body {
 		top: calc(var(--header-height, 8rem) + 1.6rem);
 	}
 }
-/* Ch?a ch? cho thanh li�n h? n?i (fixed, right 12px) kh?i ?� l�n s? ti?n,
-   ch? ? c�c kho?ng m�n h�nh m� container kh�ng c�n l? tr?ng b�n ph?i. */
+/* Ch?a ch? cho thanh li?n h? n?i (fixed, right 12px) kh?i ?? l?n s? ti?n,
+   ch? ? c?c kho?ng m?n h?nh m? container kh?ng c?n l? tr?ng b?n ph?i. */
 @media (min-width: 1024px) and (max-width: 1405px) {
 	.ww-co .container {
 		padding-right: calc(var(--container-padding) + 6rem);
@@ -5547,7 +5864,7 @@ html.ww-voucher-picker-open body {
 	}
 }
 
-/* Popup ??t h�ng th�nh c�ng */
+/* Popup ??t h?ng th?nh c?ng */
 .ww-order-success {
 	position: fixed;
 	inset: 0;
@@ -5651,7 +5968,7 @@ html.ww-order-success-open body {
 	overflow: hidden;
 }
 
-/* C?nh b�o v??t t?n kho c?nh � s? l??ng */
+/* C?nh b?o v??t t?n kho c?nh ? s? l??ng */
 .ww-qty-stock-msg {
 	display: none;
 	color: #dc2626;
@@ -5668,7 +5985,7 @@ html.ww-order-success-open body {
 		font-size: 1.2rem;
 	}
 }
-/* Trong gi? h�ng c?t s? l??ng h?p n�n c?nh b�o xu?ng d�ng ri�ng */
+/* Trong gi? h?ng c?t s? l??ng h?p n?n c?nh b?o xu?ng d?ng ri?ng */
 .cart-quantity-col {
 	flex-wrap: wrap;
 }

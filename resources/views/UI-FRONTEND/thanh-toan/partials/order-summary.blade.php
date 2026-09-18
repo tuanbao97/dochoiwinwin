@@ -41,7 +41,7 @@
   $checkoutItemsPayload = collect($items ?? [])->map(static function (array $line): array {
       return [
           'PRODUCT_ID' => (int) ($line['variant_id'] ?? 0),
-          'QUANTITY' => (float) ($line['quantity'] ?? 0),
+          'QUANTITY' => max(1, (int) ($line['quantity'] ?? 0)),
           'PRICE' => (float) ($line['price'] ?? 0),
           'TEN_SAN_PHAM' => $line['title'] ?? null,
           'HINH_ANH' => $line['image'] ?? null,
@@ -56,14 +56,14 @@
   ];
 @endphp
 
-<div class="ww-sum" data-quantity="{{ $totalQuantity }}">
+<div class="ww-sum is-open" data-quantity="{{ $totalQuantity }}">
   <div class="ww-sum__head">
     <div class="ww-sum__head-text">
       <h2 class="ww-sum__heading">Đơn hàng của bạn</h2>
       <span class="ww-sum__count">{{ $totalQuantity }} sản phẩm</span>
     </div>
-    <button type="button" class="ww-sum__toggle" data-ww-summary-toggle aria-expanded="false">
-      <span data-ww-summary-toggle-text>Xem chi tiết</span>
+    <button type="button" class="ww-sum__toggle" data-ww-summary-toggle aria-expanded="true">
+      <span data-ww-summary-toggle-text>Thu gọn</span>
       <i class="icon icon-carret-down" aria-hidden="true"></i>
     </button>
   </div>

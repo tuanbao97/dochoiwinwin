@@ -2,9 +2,18 @@
   $seoTitle = 'Thanh toán — Win Win';
   $seoDescription = 'Thanh toán đơn hàng tại Đồ Chơi Win Win.';
   $wwCheckout = wwWebContact();
+  $storePickupPhones = collect($wwCheckout['hotlines'] ?? [])
+    ->map(static fn ($hl) => trim((string) ($hl['display'] ?? '')))
+    ->filter()
+    ->values()
+    ->all();
+  $storePickupPhoneText = $storePickupPhones !== [] ? implode(' · ', $storePickupPhones) : '';
   $storePickupAddress = $wwCheckout['address'] !== ''
     ? ('Nhận tại cửa hàng: ' . $wwCheckout['address'])
     : ('Nhận tại cửa hàng ' . ($wwCheckout['storeName'] ?? 'Đồ Chơi Win Win'));
+  if ($storePickupPhoneText !== '') {
+    $storePickupAddress .= "\nHotline: " . $storePickupPhoneText;
+  }
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -127,6 +136,9 @@
                     <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address">{{ $storefrontUser['ADDRESS'] ?? '' }}</textarea>
                     <p class="ww-co-ship__hint" id="ww-checkout-pickup-hint" hidden>
                       Bạn đến nhận tại cửa hàng — miễn phí vận chuyển.
+                      @if($storePickupPhoneText !== '')
+                        <span class="ww-co-ship__hint-phone">Liên hệ: {{ $storePickupPhoneText }}</span>
+                      @endif
                     </p>
                     <span class="ww-co-error" id="MSG_DIA_CHI"></span>
                   </div>
@@ -292,6 +304,64 @@
       return Math.max(0, Math.round(Number(value) || 0)).toLocaleString('vi-VN') + ' ₫';
     }
 
+    /**
+     * Lấy JSON đầu tiên trong body — phòng trường hợp PHP notice/HTML
+     * bị nối sau JSON (lỗi "Unexpected non-whitespace character after JSON").
+     */
+    function extractFirstJson(text) {
+      var raw = String(text || '').replace(/^\uFEFF/, '');
+      var start = raw.search(/[\{\[]/);
+      if (start < 0) return null;
+      var depth = 0;
+      var inString = false;
+      var escaped = false;
+      for (var i = start; i < raw.length; i++) {
+        var ch = raw.charAt(i);
+        if (inString) {
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (ch === '\\') {
+            escaped = true;
+            continue;
+          }
+          if (ch === '"') inString = false;
+          continue;
+        }
+        if (ch === '"') {
+          inString = true;
+          continue;
+        }
+        if (ch === '{' || ch === '[') depth++;
+        if (ch === '}' || ch === ']') {
+          depth--;
+          if (depth === 0) return raw.slice(start, i + 1);
+        }
+      }
+      return null;
+    }
+
+    function parseFetchJson(response) {
+      return response.text().then(function (text) {
+        var trimmed = String(text || '').replace(/^\uFEFF/, '').trim();
+        if (!trimmed) {
+          throw new Error('Máy chủ không trả dữ liệu.');
+        }
+        try {
+          return { ok: response.ok, data: JSON.parse(trimmed) };
+        } catch (err) {
+          var sliced = extractFirstJson(trimmed);
+          if (sliced) {
+            try {
+              return { ok: response.ok, data: JSON.parse(sliced) };
+            } catch (err2) {}
+          }
+          throw new Error('Không đọc được phản hồi máy chủ. Vui lòng thử lại.');
+        }
+      });
+    }
+
     function readJson(id, fallback) {
       var el = document.getElementById(id);
       if (!el) return fallback;
@@ -330,7 +400,7 @@
       var shippingEl = el('ww-checkout-shipping');
       if (!shippingEl) return;
       if (state.shipping <= 0) {
-        shippingEl.textContent = 'Miễn phí';
+        shippingEl.textContent = money(0);
         shippingEl.classList.add('is-free');
       } else {
         shippingEl.textContent = money(state.shipping);
@@ -343,6 +413,24 @@
       if (totalEl) totalEl.textContent = money(state.subtotal + state.shipping);
       updateShippingDisplay();
       syncBar();
+    }
+
+    function isFreeShippingVoucher(code) {
+      var upper = String(code || '').trim().toUpperCase();
+      if (!upper) return false;
+      var found = (voucherCache || []).find(function (voucher) {
+        return String(voucher.code || '').toUpperCase() === upper;
+      });
+      if (found && String(found.type || '').toUpperCase() === 'FREE_SHIPPING') {
+        return true;
+      }
+      return /FREESHIP|FREE[_\s-]?SHIP|MI[EỄ]N[_\s-]?PH[IÍ][_\s-]?SHIP/i.test(upper);
+    }
+
+    function stripFreeShippingVouchers(codes) {
+      return (codes || []).filter(function (code) {
+        return !isFreeShippingVoucher(code);
+      });
     }
 
     function applyDeliveryMethod() {
@@ -361,6 +449,7 @@
         if (form.address) {
           form.address.value = storePickupAddress;
           form.address.readOnly = true;
+          form.address.rows = 3;
           form.address.classList.remove('is-invalid');
         }
         if (addressLabelEl) {
@@ -370,23 +459,40 @@
         if (payTitleEl) payTitleEl.textContent = 'Thanh toán tại cửa hàng';
         if (payDescEl) payDescEl.textContent = 'Bạn đến nhận hàng và thanh toán trực tiếp tại cửa hàng.';
         state.shipping = 0;
-      } else {
-        if (form.address) {
-          form.address.readOnly = false;
-          if (String(form.address.value || '') === storePickupAddress) {
-            form.address.value = savedShipAddress;
-          }
+
+        var hadVoucher = appliedVoucherCodes.length > 0 || pendingVoucherCodes.length > 0;
+        appliedVoucherCodes = [];
+        pendingVoucherCodes = [];
+
+        updateShippingDisplay();
+        voucherCache = null;
+        if (hadVoucher) {
+          resetVoucher('Voucher đã được gỡ. Vui lòng chọn lại.');
+        } else {
+          refreshTotalsWithoutVoucher();
+          setVoucherMessage('', '');
         }
-        if (addressLabelEl) {
-          addressLabelEl.innerHTML = 'Địa chỉ nhận hàng <span class="ww-co-req">*</span>';
-        }
-        if (pickupHintEl) pickupHintEl.hidden = true;
-        if (payTitleEl) payTitleEl.textContent = 'Thanh toán khi nhận hàng (COD)';
-        if (payDescEl) payDescEl.textContent = 'Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.';
-        state.shipping = baseShipping;
+        refreshVoucherHighlight();
+        return;
       }
 
+      if (form.address) {
+        form.address.readOnly = false;
+        form.address.rows = 2;
+        if (String(form.address.value || '') === storePickupAddress) {
+          form.address.value = savedShipAddress;
+        }
+      }
+      if (addressLabelEl) {
+        addressLabelEl.innerHTML = 'Địa chỉ nhận hàng <span class="ww-co-req">*</span>';
+      }
+      if (pickupHintEl) pickupHintEl.hidden = true;
+      if (payTitleEl) payTitleEl.textContent = 'Thanh toán khi nhận hàng (COD)';
+      if (payDescEl) payDescEl.textContent = 'Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.';
+      state.shipping = baseShipping;
+
       updateShippingDisplay();
+      voucherCache = null;
       if (appliedVoucherCodes.length) {
         applyVoucherCodes(appliedVoucherCodes, true);
       } else {
@@ -541,8 +647,39 @@
 
         var removeBtn = e.target.closest('[data-ww-remove-line]');
         if (removeBtn) {
+          e.preventDefault();
           var line = parseInt(removeBtn.getAttribute('data-ww-remove-line') || '0', 10);
-          if (line) changeLine(line, 0);
+          if (!line || removeBtn.dataset.confirming === '1') return;
+
+          var item = removeBtn.closest('.ww-sum__item');
+          var title = '';
+          var image = '';
+          if (item) {
+            var titleEl = item.querySelector('.ww-sum__title');
+            var imgEl = item.querySelector('.ww-sum__thumb img');
+            title = titleEl ? String(titleEl.textContent || '').trim() : '';
+            image = imgEl ? (imgEl.getAttribute('src') || '') : '';
+          }
+
+          removeBtn.dataset.confirming = '1';
+          var confirmFn = typeof window.wwConfirmCartRemove === 'function'
+            ? window.wwConfirmCartRemove
+            : null;
+
+          var finish = function (ok) {
+            removeBtn.dataset.confirming = '0';
+            if (ok) changeLine(line, 0);
+          };
+
+          if (confirmFn) {
+            confirmFn({ title: title, image: image }).then(finish).catch(function () {
+              finish(false);
+            });
+          } else if (window.confirm('Bạn muốn xóa sản phẩm này khỏi đơn hàng?')) {
+            finish(true);
+          } else {
+            finish(false);
+          }
           return;
         }
 
@@ -596,20 +733,26 @@
 
     function voucherCardHtml(voucher) {
       var code = String(voucher.code || '').toUpperCase();
-      var eligible = voucher.eligible === true;
+      var isFreeship = String(voucher.type || '').toUpperCase() === 'FREE_SHIPPING';
+      var pickupBlocksFreeship = isPickup() && isFreeship;
+      var eligible = voucher.eligible === true && !pickupBlocksFreeship;
       var stackable = voucher.stackable === true;
-      var picked = pendingVoucherCodes.indexOf(code) !== -1;
+      var picked = !pickupBlocksFreeship && pendingVoucherCodes.indexOf(code) !== -1;
       var meta = voucherMeta(voucher).join(' · ');
-      var statusText = eligible && Number(voucher.discount_amount || 0) > 0
-        ? 'Đơn này giảm ' + money(voucher.discount_amount)
-        : (voucher.message || 'Chưa đủ điều kiện');
+      var statusText = pickupBlocksFreeship
+        ? 'Không dùng khi nhận tại cửa hàng'
+        : (eligible && Number(voucher.discount_amount || 0) > 0
+          ? 'Đơn này giảm ' + money(voucher.discount_amount)
+          : (voucher.message || 'Chưa đủ điều kiện'));
       var headline = voucher.benefit_headline || voucher.benefit || voucher.title;
       var note = voucher.benefit_note || '';
       var desc = String(voucher.description || voucher.title || '');
 
       return '<div class="ww-vcard' + (eligible ? ' is-ok' : ' is-off') +
-        (stackable ? ' is-stack' : '') + (picked ? ' is-picked' : '') + '"' +
-        (eligible ? ' data-ww-pick-voucher="' + escapeHtml(code) + '" role="button" tabindex="0"' : '') + '>' +
+        (stackable ? ' is-stack' : '') + (picked ? ' is-picked' : '') +
+        (pickupBlocksFreeship ? ' is-disabled' : '') + '"' +
+        (eligible ? ' data-ww-pick-voucher="' + escapeHtml(code) + '" role="button" tabindex="0"' : '') +
+        (pickupBlocksFreeship ? ' aria-disabled="true"' : '') + '>' +
         '<div class="ww-vcard__stamp">' +
           '<b>' + escapeHtml(headline) + '</b>' +
           (note ? '<small>' + escapeHtml(note) + '</small>' : '') +
@@ -634,7 +777,9 @@
       }
 
       var rank = function (voucher) {
-        return (voucher.stackable === true ? 0 : 2) + (voucher.eligible === true ? 0 : 1);
+        var isFreeship = String(voucher.type || '').toUpperCase() === 'FREE_SHIPPING';
+        var eligible = voucher.eligible === true && !(isPickup() && isFreeship);
+        return (voucher.stackable === true ? 0 : 2) + (eligible ? 0 : 1);
       };
       var ordered = vouchers.slice().sort(function (a, b) {
         return rank(a) - rank(b);
@@ -649,7 +794,8 @@
       if (!voucherCache) return;
 
       var eligible = voucherCache.filter(function (voucher) {
-        return voucher.eligible === true;
+        var isFreeship = String(voucher.type || '').toUpperCase() === 'FREE_SHIPPING';
+        return voucher.eligible === true && !(isPickup() && isFreeship);
       }).length;
 
       if (badge) {
@@ -679,6 +825,10 @@
       var next = String(nextCode || '').trim().toUpperCase();
       var base = (current || appliedVoucherCodes).slice();
       if (!next) return base;
+      if (isPickup() && isFreeShippingVoucher(next)) {
+        setVoucherMessage('Không dùng mã freeship khi nhận tại cửa hàng.', 'error');
+        return base;
+      }
       var merged = base.filter(function (code) {
         if (code === next) return false;
         return voucherStackable(next) || voucherStackable(code);
@@ -723,9 +873,7 @@
         })
       })
         .then(function (response) {
-          return response.json().then(function (data) {
-            return { ok: response.ok, data: data };
-          });
+          return parseFetchJson(response);
         })
         .then(function (res) {
           if (!res.ok || !res.data || res.data.STATUS === false) {
@@ -807,19 +955,6 @@
       voucherProgressTimer = null;
     }
 
-    function finishVoucherProgress(done) {
-      stopVoucherProgress();
-      var bar = document.querySelector('[data-ww-voucher-progress]');
-      var text = document.querySelector('[data-ww-voucher-progress-text]');
-      if (!bar) {
-        done();
-        return;
-      }
-      bar.style.width = '100%';
-      if (text) text.textContent = '100%';
-      setTimeout(done, 180);
-    }
-
     function loadVoucherList() {
       var list = el('ww-voucher-list');
       if (list && !voucherCache) {
@@ -830,9 +965,9 @@
 
       fetchVoucherList()
         .then(function (vouchers) {
-          finishVoucherProgress(function () {
-            renderVoucherList(vouchers);
-          });
+          // Data xong thì hiện list ngay — không chờ thanh % chạy tới 100.
+          stopVoucherProgress();
+          renderVoucherList(vouchers);
         })
         .catch(function (error) {
           stopVoucherProgress();
@@ -965,9 +1100,19 @@
       codes = (codes || []).map(function (code) {
         return String(code || '').trim().toUpperCase();
       }).filter(Boolean);
+      var strippedFreeship = false;
+      if (isPickup()) {
+        var beforeCount = codes.length;
+        codes = stripFreeShippingVouchers(codes);
+        strippedFreeship = codes.length !== beforeCount;
+      }
       var applyBtn = el('ww-voucher-apply');
       if (!codes.length) {
-        resetVoucher(silent ? '' : 'Vui lòng nhập mã giảm giá.');
+        resetVoucher(silent
+          ? ''
+          : (strippedFreeship
+            ? 'Không dùng mã freeship khi nhận tại cửa hàng.'
+            : 'Vui lòng nhập mã giảm giá.'));
         return;
       }
 
@@ -1003,9 +1148,7 @@
         })
       })
         .then(function (response) {
-          return response.json().then(function (data) {
-            return { ok: response.ok, data: data };
-          });
+          return parseFetchJson(response);
         })
         .then(function (res) {
           if (!res.ok || !res.data || res.data.STATUS === false) {
@@ -1235,9 +1378,7 @@
           });
         })
         .then(function (response) {
-          return response.json().then(function (data) {
-            return { ok: response.ok, data: data };
-          });
+          return parseFetchJson(response);
         })
         .then(function (res) {
           if (!res.ok || (res.data && res.data.STATUS === false)) {
