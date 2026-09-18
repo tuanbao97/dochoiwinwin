@@ -50,8 +50,12 @@
           @php
             $popularKeywords = [
               [
-                'label' => 'Điều khiển',
-                'url' => storefrontProductCategoryUrl(2001, 'Đồ chơi điều khiển'),
+                'label' => 'Xe điều khiển',
+                'url' => storefrontProductCategoryUrl(2009, 'Xe điều khiển'),
+              ],
+              [
+                'label' => 'Máy bay điều khiển',
+                'url' => storefrontProductCategoryUrl(2008, 'Máy bay điều khiển'),
               ],
               [
                 'label' => 'Lắp ghép',
@@ -60,6 +64,38 @@
               [
                 'label' => 'Mô hình',
                 'url' => storefrontProductCategoryUrl(2003, 'Đồ chơi mô hình'),
+              ],
+              [
+                'label' => 'Giáo dục',
+                'url' => storefrontProductCategoryUrl(2005, 'Đồ chơi giáo dục'),
+              ],
+              [
+                'label' => 'Bé gái',
+                'url' => storefrontProductCategoryUrl(2006, 'Đồ chơi bé gái'),
+              ],
+              [
+                'label' => 'Bỏ pin tự động',
+                'url' => storefrontProductCategoryUrl(2016, 'Đồ chơi bỏ pin tự động'),
+              ],
+              [
+                'label' => 'Vui nhộn',
+                'url' => storefrontProductCategoryUrl(2007, 'Đồ chơi vui nhộn'),
+              ],
+              [
+                'label' => 'Vận động',
+                'url' => storefrontProductCategoryUrl(2011, 'Đồ chơi vận động'),
+              ],
+              [
+                'label' => 'Robot lắp ghép',
+                'url' => storefrontProductCategoryUrl(2012, 'Lắp ghép siêu xe, robot'),
+              ],
+              [
+                'label' => 'Đồ chơi nước',
+                'url' => storefrontProductCategoryUrl(2004, 'Đồ chơi nước'),
+              ],
+              [
+                'label' => 'Câu cá',
+                'url' => url('/tim-kiem/'.rawurlencode('Câu cá')),
               ],
             ];
           @endphp
