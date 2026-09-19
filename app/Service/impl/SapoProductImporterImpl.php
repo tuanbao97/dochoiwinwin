@@ -200,7 +200,7 @@ class SapoProductImporterImpl implements SapoProductImporter
         $product->PRODUCT_QUANTITY = $qty;
         $product->STATUS = AppConstant::STATUS_USING;
         $product->IS_ACTIVE = $status === 'active';
-        $product->PRODUCT_HOT = (bool) ($product->PRODUCT_HOT ?? false);
+        $product->PRODUCT_HOT = $this->hasNoiBatTag((string) ($payload['tags'] ?? ''));
         $product->PRODUCT_VIP = (bool) ($product->PRODUCT_VIP ?? false);
         $product->ATTR1 = $priceVariantId;
         $product->ATTR2 = $this->clip((string) ($payload['vendor'] ?? ''), 500) ?: null;
@@ -532,6 +532,17 @@ class SapoProductImporterImpl implements SapoProductImporter
         }
 
         throw new \RuntimeException('Không tạo được UUID sản phẩm.');
+    }
+
+    private function hasNoiBatTag(string $tags): bool
+    {
+        foreach (preg_split('/\s*,\s*/', $tags) ?: [] as $part) {
+            if (strcasecmp(trim($part), 'NOI_BAT') === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function clip(string $value, int $max): string

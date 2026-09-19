@@ -10,7 +10,9 @@
           ->where('IS_ACTIVE', true)
           ->orderByRaw('CASE WHEN SORT_ORDER IS NOT NULL THEN SORT_ORDER ELSE 999999999 END ASC')
           ->orderBy('NAME', 'ASC')
-          ->with(['childrens'])
+          ->with(['childrens' => static function ($q) {
+              $q->where('IS_ACTIVE', true);
+          }])
           ->get();
   } catch (\Throwable) {
       $menuRoots = collect();
