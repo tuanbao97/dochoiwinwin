@@ -485,6 +485,9 @@ use Illuminate\Support\Facades\DB;
                 str_contains($n, 'vận động') || str_contains($n, 'van dong') => 'do-choi-van-dong.svg',
                 str_contains($n, 'bỏ pin') || str_contains($n, 'bo pin') || str_contains($n, 'tự động') || str_contains($n, 'tu dong') => 'do-choi-bo-pin-tu-dong.svg',
                 str_contains($n, 'máy bay') || str_contains($n, 'may bay') => 'may-bay-dieu-khien.svg',
+                str_contains($n, 'nhà bếp') || str_contains($n, 'nha bep') || str_contains($n, 'bếp') => 'do-choi-be-gai.svg',
+                str_contains($n, 'hóa trang') || str_contains($n, 'hoa trang') => 'qua-tang-tre-em.svg',
+                str_contains($n, 'nhập vai') || str_contains($n, 'nhap vai') || str_contains($n, 'bác sĩ') || str_contains($n, 'bac si') || str_contains($n, 'cứu hỏa') || str_contains($n, 'cuu hoa') || str_contains($n, 'cảnh sát') || str_contains($n, 'canh sat') => 'do-choi-tre-em.svg',
                 str_starts_with($n, 'xe ') => 'xe-dieu-khien.svg',
                 str_contains($n, 'siêu xe') || str_contains($n, 'sieu xe') => 'lap-ghep-xe-dua.svg',
                 str_contains($n, 'siêu anh hùng') || str_contains($n, 'sieu anh hung') => 'lap-ghep-sieu-anh-hung.svg',
@@ -518,6 +521,7 @@ use Illuminate\Support\Facades\DB;
                 'siêu anh hùng', 'siêu nhân', 'siêu xe', 'xe đua', 'máy bay', 'điều khiển',
                 'lắp ghép', 'xếp hình', 'tổng hợp', 'con vật', 'đồ chơi', 'bé gái',
                 'vui nhộn', 'vận động', 'bỏ pin', 'tự động', 'giáo dục', 'mô hình', 'trẻ em',
+                'nhập vai', 'nhà bếp', 'bác sĩ', 'cứu hỏa', 'cảnh sát', 'hóa trang', 'chủ đề',
             ];
 
             foreach ($phrases as $phrase) {

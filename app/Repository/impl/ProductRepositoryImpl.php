@@ -388,8 +388,8 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
             switch ($boLoc) {
                 case 'default':
                     if ($isApiPublic === true) {
-                        // UI "Tất cả": ưu tiên sản phẩm nổi bật, rồi tạo gần nhất
-                        $query->orderByRaw('CASE WHEN p.PRODUCT_HOT = ? THEN 0 ELSE 1 END', [true]);
+                        // UI "Tất cả": NOI_BAT / nổi bật trước, rồi mặc định, hết hàng đã đẩy cuối
+                        $this->orderFeaturedFirst($query);
                         $query->orderBy('p.CRT_DT', 'desc');
                     } else {
                         // Admin/BE: giữ sort cũ theo ngày tạo
@@ -466,7 +466,7 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
             // Không có BO_LOC: hết hàng cuối; frontend = nổi bật → tạo gần nhất
             $this->orderOutOfStockLast($query, true);
             if ($isApiPublic === true) {
-                $query->orderByRaw('CASE WHEN p.PRODUCT_HOT = ? THEN 0 ELSE 1 END', [true]);
+                $this->orderFeaturedFirst($query);
                 $query->orderBy('p.CRT_DT', 'desc');
             } else {
                 $query->orderBy('p.CRT_DT', 'desc');
@@ -639,6 +639,21 @@ class ProductRepositoryImpl extends BaseRepository implements ProductRepository
         
         $query = $query->paginate($perPage, ['*'], 'page', $page);
         return $query;
+    }
+
+    /**
+     * Sản phẩm gắn tag NOI_BAT / PRODUCT_HOT lên trước (hết hàng đã xếp riêng).
+     */
+    private function orderFeaturedFirst($query): void
+    {
+        $query->orderByRaw(
+            "CASE
+                WHEN p.PRODUCT_HOT = 1 THEN 0
+                WHEN p.PRODUCT_TAGS LIKE ? THEN 0
+                ELSE 1
+            END ASC",
+            ['%NOI_BAT%']
+        );
     }
 
     /**

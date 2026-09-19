@@ -135,7 +135,8 @@ class SapoCatalogCacheImpl implements SapoCatalogCache
 
         $total = (int) (clone $q)->count('p.ID');
 
-        $rows = $q->orderByDesc('p.MODIFIED_ON')
+        $rows = $q->orderByRaw("CASE WHEN p.PAYLOAD LIKE '%NOI_BAT%' THEN 0 ELSE 1 END")
+            ->orderByDesc('p.MODIFIED_ON')
             ->orderByDesc('p.ID')
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)

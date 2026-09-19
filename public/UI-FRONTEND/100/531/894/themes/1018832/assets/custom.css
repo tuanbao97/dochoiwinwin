@@ -270,6 +270,45 @@ details[open] > summary > .icon-carret-right {
   } 
  
 }
+
+/*
+ * Desktop: mọi menu trái (.ww-home-sidebar trên trang chủ / danh sách / tìm kiếm)
+ * → submenu position:fixed, JS neo trong viewport. Không đụng #menu-drawer.
+ */
+@media (min-width: 1280px) {
+  .ww-home-sidebar,
+  .ww-home-sidebar-sticky,
+  .ww-home-sidebar .bg-white.rounded.relative,
+  .ww-home-sidebar .navigation-vertical {
+    overflow: visible !important;
+  }
+
+  /* top/left do JS gán inline (!important) theo vị trí item + viewport */
+  .ww-home-sidebar .navigation-vertical > ul > .menu-item.group > .submenu {
+    position: fixed !important;
+    top: 96px;
+    left: 300px;
+    right: auto !important;
+    bottom: auto !important;
+    width: 280px !important;
+    min-width: 280px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 70vh;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    z-index: 2100 !important;
+    border-radius: 4px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    background-color: var(--color-background, #fff);
+    transform: none !important;
+  }
+
+  .ww-home-sidebar .navigation-vertical .submenu .toggle-submenu {
+    display: none !important;
+  }
+}
 @media(min-width: 1200px){
   #menu-drawer  .submenu[class*="mega-menu--"]{
    /* grid-template-columns: 50% 50%;*/
@@ -3379,7 +3418,7 @@ body.checkout .checkout-order-item {
 	padding: 0 1.35rem;
 	border-radius: 999px;
 	border: 0;
-	background: var(--color-primary);
+	background: #f97316;
 	color: #ffffff;
 	font-size: 1.35rem;
 	font-weight: 700;
@@ -3387,8 +3426,8 @@ body.checkout .checkout-order-item {
 	line-height: 1;
 	text-decoration: none;
 	white-space: nowrap;
-	box-shadow: 0 2px 10px color-mix(in srgb, var(--color-primary) 40%, transparent);
-	transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+	box-shadow: 0 2px 10px rgba(249, 115, 22, 0.4);
+	transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 .ww-account__login-btn[hidden] {
 	display: none !important;
@@ -3398,8 +3437,9 @@ body.checkout .checkout-order-item {
 	color: #ffffff;
 }
 .ww-account__login-btn:hover {
-	filter: brightness(1.06);
-	box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 50%, transparent);
+	background: #ea580c;
+	filter: none;
+	box-shadow: 0 4px 14px rgba(234, 88, 12, 0.5);
 	color: #ffffff;
 }
 .ww-account__login-btn:active {

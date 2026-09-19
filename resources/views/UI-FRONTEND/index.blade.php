@@ -177,10 +177,10 @@
               >
                 <div class="embla__container flex">
                   <div class="embla__slide flex-[0_0_100%] overflow-hidden rounded">
-                    <a class="block" href="https://dochoiwinwin.com/" title="Đồ chơi an toàn — Giao nhanh">
+                    <a class="block" href="{{ url('/') }}" title="Trang chủ">
                       <picture>
-                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}?ww-banner-4">
-                        <img class="block mx-auto w-full object-contain" loading="eager" width="1024" height="409" src="{{ asset('UI-FRONTEND/images/Banner do choi Win Win.png') }}?ww-banner-4" alt="Đồ chơi Win Win — Chất lượng, an toàn, niềm vui" fetchpriority="high">
+                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/banner-dochoi-winwin.jpg') }}?ww-banner-9">
+                        <img class="block mx-auto w-full object-contain" loading="eager" width="1877" height="838" src="{{ asset('UI-FRONTEND/images/banner-dochoi-winwin.jpg') }}?ww-banner-9" alt="Mua tại website DoChoiWinWin.com — Giảm giá mỗi ngày" fetchpriority="high">
                       </picture>
                     </a>
                   </div>
