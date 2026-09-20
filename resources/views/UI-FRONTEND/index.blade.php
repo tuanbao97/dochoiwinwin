@@ -179,8 +179,8 @@
                   <div class="embla__slide flex-[0_0_100%] overflow-hidden rounded">
                     <a class="block" href="{{ url('/') }}" title="Trang chủ">
                       <picture>
-                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/banner-dochoi-winwin.jpg') }}?ww-banner-9">
-                        <img class="block mx-auto w-full object-contain" loading="eager" width="1877" height="838" src="{{ asset('UI-FRONTEND/images/banner-dochoi-winwin.jpg') }}?ww-banner-9" alt="Mua tại website DoChoiWinWin.com — Giảm giá mỗi ngày" fetchpriority="high">
+                        <source media="(max-width: 480px)" srcset="{{ asset('UI-FRONTEND/images/banner-dochoi-winwin.jpg') }}?ww-banner-10">
+                        <img class="block mx-auto w-full object-contain" loading="eager" width="1877" height="838" src="{{ asset('UI-FRONTEND/images/banner-dochoi-winwin.jpg') }}?ww-banner-10" alt="Mua tại website DoChoiWinWin.com — Giảm giá mỗi ngày" fetchpriority="high">
                       </picture>
                     </a>
                   </div>

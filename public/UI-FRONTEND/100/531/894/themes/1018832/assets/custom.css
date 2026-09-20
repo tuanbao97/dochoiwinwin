@@ -274,12 +274,10 @@ details[open] > summary > .icon-carret-right {
 /*
  * Desktop: mọi menu trái (.ww-home-sidebar trên trang chủ / danh sách / tìm kiếm)
  * → submenu position:fixed, JS neo trong viewport. Không đụng #menu-drawer.
+ * Sidebar khống chế theo viewport để không phải cuộn giữa trang mới thấy mục cuối.
  */
 @media (min-width: 1280px) {
-  .ww-home-sidebar,
-  .ww-home-sidebar-sticky,
-  .ww-home-sidebar .bg-white.rounded.relative,
-  .ww-home-sidebar .navigation-vertical {
+  .ww-home-sidebar {
     overflow: visible !important;
   }
 
@@ -2150,9 +2148,9 @@ body.ww-all-products .index-container.container {
 }
 
 /*
- * Menu tr?i sticky (trang ch? / t?m ki?m / danh s?ch):
- * - C?t grid PH?I stretch (m?c ??nh) ?? parent cao b?ng c?t ph?i ? sticky m?i b?m khi scroll
- * - Kh?ng d?ng align-items:start / max-height (l?m sidebar cu?n trong h?p thay v? follow trang)
+ * Menu trái sticky (trang chủ / tìm kiếm / danh sách):
+ * - Cột grid stretch để parent cao bằng cột phải → sticky bám khi scroll
+ * - max-height theo viewport + cuộn trong nav → đủ mục cuối mà không kéo cả trang
  */
 @media (min-width: 1280px) {
 	.ww-home-sidebar,
@@ -2171,6 +2169,37 @@ body.ww-all-products .index-container.container {
 		top: 88px !important;
 		width: 100%;
 		z-index: 10;
+		/* Khít dưới header (~152px lúc đầu trang) để thanh cuộn menu nằm trong viewport */
+		max-height: calc(100vh - 168px);
+		overflow-x: hidden;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		scrollbar-width: thin;
+	}
+
+	.ww-home-sidebar-sticky::-webkit-scrollbar {
+		width: 6px;
+	}
+
+	.ww-home-sidebar-sticky::-webkit-scrollbar-thumb {
+		background: rgba(15, 23, 42, 0.22);
+		border-radius: 999px;
+	}
+
+	.ww-home-sidebar .bg-white.rounded.relative,
+	.ww-home-sidebar .navigation-vertical {
+		overflow: visible;
+	}
+
+	.ww-home-sidebar-promo {
+		margin-top: 1rem;
+	}
+
+	.ww-home-sidebar-promo img {
+		max-height: 140px;
+		width: 100%;
+		object-fit: cover;
+		object-position: center top;
 	}
 }
 
