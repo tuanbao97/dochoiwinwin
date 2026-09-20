@@ -40,7 +40,7 @@
             <div class="space-y-4">
               <div class="ww-login-invite">
                 <h1 class="ww-login-invite__title">ĐĂNG NHẬP MUA SẮM</h1>
-                <p class="ww-login-invite__text ww-login-invite__text--orange">NHẬN NGAY VOUCHER GIẢM GIÁ</p>
+                <p class="ww-login-invite__text ww-login-invite__text--orange">NHẬN VOUCHER GIẢM GIÁ</p>
               </div>
 
               <div class="ww-login-invite-vouchers mb-2" aria-hidden="true">

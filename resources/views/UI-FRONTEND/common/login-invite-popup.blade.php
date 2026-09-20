@@ -40,7 +40,7 @@
             <h2 class="ww-login-invite__title ww-login-invite__title--popup">
               ĐĂNG NHẬP MUA SẮM
             </h2>
-            <p class="ww-login-invite__text ww-login-invite__text--orange">NHẬN NGAY VOUCHER GIẢM GIÁ</p>
+            <p class="ww-login-invite__text ww-login-invite__text--orange">NHẬN VOUCHER GIẢM GIÁ</p>
           </div>
 
           <div class="ww-login-invite-vouchers" aria-hidden="true">
