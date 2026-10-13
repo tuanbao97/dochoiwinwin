@@ -14,6 +14,12 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # Ảnh crop upload/.../1x1_file.jpg chưa được tạo → trả ảnh gốc upload/.../file.jpg
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} ^(.+[/\\])\d+x\d+_([^/\\]+)$
+    RewriteCond %1%2 -f
+    RewriteRule ^(upload/.+/)\d+x\d+_([^/]+)$ $1$2 [L]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
