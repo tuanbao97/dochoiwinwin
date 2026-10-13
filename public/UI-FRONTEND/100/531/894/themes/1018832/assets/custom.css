@@ -281,15 +281,10 @@ details[open] > summary > .icon-carret-right {
     overflow: visible !important;
   }
 
-<<<<<<< HEAD
   /* top/left do JS gán inline (!important) theo vị trí item + viewport.
      Khi mở, JS đưa .submenu ra body để không bị overflow/sticky cắt hover. */
   .ww-home-sidebar .navigation-vertical > ul > .menu-item.group > .submenu,
   body > .submenu[data-ww-flyout] {
-=======
-  /* top/left do JS gán inline (!important) theo vị trí item + viewport */
-  .ww-home-sidebar .navigation-vertical > ul > .menu-item.group > .submenu {
->>>>>>> 0e5565fcb9e5bd22bdf9d6302398e7fed4801236
     position: fixed !important;
     top: 96px;
     left: 300px;
@@ -308,7 +303,6 @@ details[open] > summary > .icon-carret-right {
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
     background-color: var(--color-background, #fff);
     transform: none !important;
-<<<<<<< HEAD
     pointer-events: auto !important;
   }
 
@@ -322,11 +316,6 @@ details[open] > summary > .icon-carret-right {
 
   .ww-home-sidebar .navigation-vertical .submenu .toggle-submenu,
   body > .submenu[data-ww-flyout] .toggle-submenu {
-=======
-  }
-
-  .ww-home-sidebar .navigation-vertical .submenu .toggle-submenu {
->>>>>>> 0e5565fcb9e5bd22bdf9d6302398e7fed4801236
     display: none !important;
   }
 }
