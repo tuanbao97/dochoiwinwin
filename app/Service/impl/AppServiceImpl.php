@@ -10,9 +10,15 @@ use App\Dto\response\ApiResponseDto;
 use App\Dto\response\StatusActiveDto;
 use App\Enum\AppConstant;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class AppServiceImpl implements AppService
 {
+    private const SAPO_SYNC_STATUS_KEY = 'SAPO_ADMIN_SYNC_STATUS';
+    private const SAPO_SYNC_STATUS_TTL = 86400;
+    private const SAPO_SYNC_STALE_SECONDS = 1800;
+
     /**
      * Get thư mục upload theo ngày tháng năm hiện tại
      * 
@@ -114,24 +120,107 @@ class AppServiceImpl implements AppService
         )->setStatusCode(JsonResponse::HTTP_OK);
     }
 
+    /**
+     * Chạy sync sau khi đã trả response (fastcgi_finish_request) — fetch full + tải ảnh
+     * mất vài phút, chạy trong request sẽ bị nginx trả 504.
+     */
     public function syncSapoCatalog(Request $request)
     {
-        try {
-            $forceFull = filter_var($request->input('FULL', false), FILTER_VALIDATE_BOOLEAN);
-            $result = SyncSapoCatalogJob::dispatchSync($forceFull, true, false);
-        } catch (\Throwable $e) {
+        $forceFull = filter_var($request->input('FULL', false), FILTER_VALIDATE_BOOLEAN);
+
+        $current = $this->sapoSyncState();
+        if (($current['STATE'] ?? '') === 'running') {
             return response()->json(
-                new ApiResponseDto(
-                    AppConstant::STATUS_FAILURE,
-                    'Fetch Sapo lỗi: '.$e->getMessage(),
-                    []
-                )
+                new ApiResponseDto(AppConstant::STATUS_FAILURE, 'Đang có tiến trình fetch Sapo chạy nền, vui lòng đợi.', [
+                    'SAPO_SYNC_STATUS' => $current,
+                ])
             )->setStatusCode(JsonResponse::HTTP_OK);
         }
 
+        $runId = (string) Str::uuid();
+        $state = [
+            'STATE' => 'running',
+            'RUN_ID' => $runId,
+            'FULL' => $forceFull,
+            'STARTED_AT' => time(),
+            'FINISHED_AT' => null,
+            'STATUS' => null,
+            'STATUS_DETAIL' => $forceFull ? 'Đang fetch FULL sản phẩm Sapo...' : 'Đang fetch sản phẩm Sapo...',
+        ];
+        Cache::put(self::SAPO_SYNC_STATUS_KEY, $state, self::SAPO_SYNC_STATUS_TTL);
+
+        app()->terminating(function () use ($forceFull, $runId) {
+            ignore_user_abort(true);
+            @set_time_limit(0);
+            $this->runSapoSync($forceFull, $runId);
+        });
+
+        return response()->json(
+            new ApiResponseDto(AppConstant::STATUS_SUCCESS, 'Đã bắt đầu fetch Sapo chạy nền.', [
+                'SAPO_SYNC_STATUS' => $state,
+            ])
+        )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    public function getSapoSyncStatus(Request $request)
+    {
+        return response()->json(
+            new ApiResponseDto(AppConstant::STATUS_SUCCESS, 'Truy vấn thành công.', [
+                'SAPO_SYNC_STATUS' => $this->sapoSyncState(),
+            ])
+        )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    private function sapoSyncState(): array
+    {
+        $state = Cache::get(self::SAPO_SYNC_STATUS_KEY);
+        if (! is_array($state)) {
+            return ['STATE' => 'idle'];
+        }
+
+        // Process bị kill giữa chừng (timeout FPM, restart) → không khoá nút fetch mãi
+        if (($state['STATE'] ?? '') === 'running'
+            && time() - (int) ($state['STARTED_AT'] ?? 0) > self::SAPO_SYNC_STALE_SECONDS) {
+            $state['STATE'] = 'failed';
+            $state['STATUS'] = AppConstant::STATUS_FAILURE;
+            $state['STATUS_DETAIL'] = 'Fetch Sapo bị gián đoạn, vui lòng thử lại.';
+        }
+
+        return $state;
+    }
+
+    private function runSapoSync(bool $forceFull, string $runId): void
+    {
+        try {
+            $result = SyncSapoCatalogJob::dispatchSync($forceFull, true, false);
+            [$status, $detail] = $this->sapoSyncSummary($result);
+            $state = $status === AppConstant::STATUS_SUCCESS ? 'done' : 'failed';
+        } catch (\Throwable $e) {
+            $status = AppConstant::STATUS_FAILURE;
+            $detail = 'Fetch Sapo lỗi: '.$e->getMessage();
+            $state = 'failed';
+        }
+
+        $current = Cache::get(self::SAPO_SYNC_STATUS_KEY);
+        if (is_array($current) && ($current['RUN_ID'] ?? null) !== $runId) {
+            return;
+        }
+
+        Cache::put(self::SAPO_SYNC_STATUS_KEY, array_merge(is_array($current) ? $current : [], [
+            'STATE' => $state,
+            'FINISHED_AT' => time(),
+            'STATUS' => $status,
+            'STATUS_DETAIL' => $detail,
+        ]), self::SAPO_SYNC_STATUS_TTL);
+    }
+
+    /**
+     * @return array{0: bool, 1: string}
+     */
+    private function sapoSyncSummary(array $result): array
+    {
         $mode = $result['mode'] ?? '';
         $fetched = (int) ($result['fetched'] ?? 0);
-        $lastFetch = $result['last_fetch_api_sapo'] ?? null;
         $import = is_array($result['import'] ?? null) ? $result['import'] : [];
         $productsOk = (int) ($import['products_ok'] ?? 0);
         $imagesOk = (int) ($import['images_ok'] ?? 0);
@@ -158,13 +247,7 @@ class AppServiceImpl implements AppService
             ? AppConstant::STATUS_FAILURE
             : AppConstant::STATUS_SUCCESS;
 
-        return response()->json(
-            new ApiResponseDto($status, $detail, [
-                'SAPO_SYNC' => $result,
-                'SAPO_IMPORT' => $import,
-                'LAST_FETCH_API_SAPO' => $lastFetch,
-            ])
-        )->setStatusCode(JsonResponse::HTTP_OK);
+        return [$status, $detail];
     }
 
     private function sapoDisabledMessage(): string

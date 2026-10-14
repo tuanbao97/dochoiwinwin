@@ -174,6 +174,12 @@
             <li>
               <a class="ww-ft__menu-link" href="{{ url('/chinh-sach-thanh-toan') }}" title="Chính sách thanh toán">Chính sách thanh toán</a>
             </li>
+            <li>
+              <a class="ww-ft__menu-link" href="{{ url('/chinh-sach-bao-mat') }}" title="Chính sách bảo mật">Chính sách bảo mật</a>
+            </li>
+            <li>
+              <a class="ww-ft__menu-link" href="{{ url('/huong-dan-xoa-du-lieu') }}" title="Hướng dẫn xóa dữ liệu">Hướng dẫn xóa dữ liệu</a>
+            </li>
           </ul>
         </details>
 

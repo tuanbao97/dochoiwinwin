@@ -1822,6 +1822,39 @@ $(document).ready(function () {
 		}, 'Fetch FULL sẽ tải lại toàn bộ sản phẩm Sapo <span style="display: inline-block;">(có thể mất vài phút). Tiếp tục?</span>');
 	});
 
+	var sapoSyncPollTimer = null;
+	var sapoSyncButtons = $('button[name="BTN_FETCH_SAPO"], button[name="BTN_FETCH_SAPO_FULL"]');
+
+	setSapoSyncRunning = function(running) {
+		sapoSyncButtons.prop('disabled', running === true);
+	}
+
+	pollSapoSyncStatus = function(notifyWhenDone) {
+		if (sapoSyncPollTimer) clearTimeout(sapoSyncPollTimer);
+		$.ajax({
+			type: "GET",
+			url: '{{ url("/api/sapo/sync/status") }}',
+			success: function(data) {
+				var st = (data && data.DATAS && data.DATAS.SAPO_SYNC_STATUS) || {};
+				if (st.STATE === 'running') {
+					setSapoSyncRunning(true);
+					sapoSyncPollTimer = setTimeout(function() { pollSapoSyncStatus(true); }, 3000);
+					return;
+				}
+				setSapoSyncRunning(false);
+				if (!notifyWhenDone) return;
+				if (st.STATE === 'done') {
+					showToastSuccess('top-right', st.STATUS_DETAIL || 'Fetch Sapo thành công!');
+				} else if (st.STATE === 'failed') {
+					showToastFailure('top-right', st.STATUS_DETAIL || 'Fetch Sapo thất bại!');
+				}
+			},
+			error: function() {
+				sapoSyncPollTimer = setTimeout(function() { pollSapoSyncStatus(notifyWhenDone); }, 5000);
+			}
+		});
+	}
+
 	fetchSapoCatalog = function(full) {
 		$.ajax({
 			type: "POST",
@@ -1830,11 +1863,15 @@ $(document).ready(function () {
 			showLoading: true,
 			data: JSON.stringify({ FULL: full === true }),
 			success: function(data, textStatus, request) {
+				var st = (data && data.DATAS && data.DATAS.SAPO_SYNC_STATUS) || {};
 				if (data.STATUS === false) {
 					showToastFailure('top-right', data.STATUS_DETAIL || 'Fetch Sapo thất bại!');
+					if (st.STATE === 'running') pollSapoSyncStatus(true);
 					return;
 				}
-				showToastSuccess('top-right', data.STATUS_DETAIL || 'Fetch Sapo thành công!');
+				showToastSuccess('top-right', (data.STATUS_DETAIL || 'Đã bắt đầu fetch Sapo.') + ' Hệ thống sẽ báo khi hoàn tất.');
+				setSapoSyncRunning(true);
+				pollSapoSyncStatus(true);
 			},
 			error: function(request, textStatus, errorThrown) {
 				try {
@@ -1848,6 +1885,8 @@ $(document).ready(function () {
 			}
 		});
 	}
+
+	pollSapoSyncStatus(false);
 
 })
 </script>

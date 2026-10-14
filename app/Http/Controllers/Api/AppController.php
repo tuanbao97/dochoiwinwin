@@ -27,4 +27,8 @@ class AppController extends Controller
     public function syncSapoCatalog(Request $request) {
         return $this->appService->syncSapoCatalog($request);
     }
+
+    public function getSapoSyncStatus(Request $request) {
+        return $this->appService->getSapoSyncStatus($request);
+    }
 }

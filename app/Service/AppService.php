@@ -26,4 +26,6 @@ interface AppService
 
     public function syncSapoCatalog(Request $request);
 
+    public function getSapoSyncStatus(Request $request);
+
 }

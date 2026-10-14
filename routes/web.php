@@ -49,6 +49,12 @@ Route::middleware(['count-client-view-website'])->group(function() {
     Route::get('chinh-sach-thanh-toan', function () {
         return view('UI-FRONTEND/chinh-sach-thanh-toan/index', ['productId' => 0]);
     });
+    Route::get('chinh-sach-bao-mat', function () {
+        return view('UI-FRONTEND/chinh-sach-bao-mat/index', ['productId' => 0]);
+    });
+    Route::get('huong-dan-xoa-du-lieu', function () {
+        return view('UI-FRONTEND/huong-dan-xoa-du-lieu/index', ['productId' => 0]);
+    });
 
     Route::get('tin-tuc/chi-tiet/{newsKey}', [ThemeStorefrontController::class, 'newsDetail'])
         ->where('newsKey', '.+');
