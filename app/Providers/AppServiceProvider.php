@@ -1,6 +1,9 @@
 <?php
 namespace App\Providers;
 
+use App\Support\Socialite\ZaloProvider;
+use Laravel\Socialite\Facades\Socialite;
+
 use App\Repository\DistrictRepository;
 use App\Repository\ProductCategoryRepository;
 use App\Repository\ProductDocumentStorageRepository;
@@ -245,6 +248,10 @@ class AppServiceProvider extends ServiceProvider
                 ]);
             });
         }
+
+        Socialite::extend('zalo', function ($app) {
+            return Socialite::buildProvider(ZaloProvider::class, $app['config']['services.zalo']);
+        });
 
         if (! $this->app->runningInConsole()) {
             try {

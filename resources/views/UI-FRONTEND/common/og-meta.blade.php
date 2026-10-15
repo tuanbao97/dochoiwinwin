@@ -27,6 +27,7 @@
 @if($fbAppId !== '')
 <meta property="fb:app_id" content="{{ $fbAppId }}">
 @endif
+<meta name="zalo-platform-site-verification" content="E8wdAFEQBXCrfBzCjO4RUc2IYqMCv50OCpWt" />
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{ $seo['title'] }}">

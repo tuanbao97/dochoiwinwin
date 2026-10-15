@@ -13,7 +13,7 @@ class SocialAuthStatusCommand extends Command
 
     protected $description = 'Kiểm tra cấu hình đăng nhập Google/Facebook (.env) và callback URL';
 
-    private const PROVIDERS = ['google' => 'Google', 'facebook' => 'Facebook'];
+    private const PROVIDERS = ['google' => 'Google', 'facebook' => 'Facebook', 'zalo' => 'Zalo'];
 
     public function handle(): int
     {

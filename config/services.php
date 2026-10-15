@@ -45,6 +45,13 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim(env('APP_URL', ''), '/').'/auth/google/callback'),
     ],
 
+    // App ID + Secret key từ https://developers.zalo.me (mục Đăng nhập)
+    'zalo' => [
+        'client_id' => env('ZALO_APP_ID', ''),
+        'client_secret' => env('ZALO_APP_SECRET', ''),
+        'redirect' => env('ZALO_REDIRECT_URI', rtrim(env('APP_URL', ''), '/').'/auth/zalo/callback'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Sapo Private App (Basic Auth)

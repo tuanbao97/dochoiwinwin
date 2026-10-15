@@ -11,6 +11,7 @@
   $wwInviteRedirect = url()->current();
   $wwInviteGoogle = route('social.redirect', ['provider' => 'google']).'?redirect='.urlencode($wwInviteRedirect);
   $wwInviteFacebook = route('social.redirect', ['provider' => 'facebook']).'?redirect='.urlencode($wwInviteRedirect);
+  $wwInviteZalo = route('social.redirect', ['provider' => 'zalo']).'?redirect='.urlencode($wwInviteRedirect);
 @endphp
 
 @if ($wwShowLoginInvite)
@@ -56,7 +57,7 @@
             </div>
           </div>
 
-          <div class="ww-login-invite-popup__actions grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="ww-login-invite-popup__actions grid grid-cols-1 sm:grid-cols-3 gap-3">
             <a
               href="{{ $wwInviteGoogle }}"
               class="btn w-full font-semibold flex items-center justify-center gap-2 text-white"
@@ -81,6 +82,18 @@
                 <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07Z"/>
               </svg>
               Facebook
+            </a>
+            <a
+              href="{{ $wwInviteZalo }}"
+              class="btn w-full font-semibold flex items-center justify-center gap-2 text-white"
+              style="background:#0068ff"
+              rel="nofollow"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 2C6.48 2 2 5.94 2 10.8c0 2.77 1.46 5.24 3.74 6.85L5 21.5l4.02-2.13c.94.24 1.94.37 2.98.37 5.52 0 10-3.94 10-8.94S17.52 2 12 2Z"/>
+                <text x="12" y="13.4" text-anchor="middle" font-size="6" font-weight="700" font-family="Arial,sans-serif" fill="#0068ff">Zalo</text>
+              </svg>
+              Zalo
             </a>
           </div>
         </div>

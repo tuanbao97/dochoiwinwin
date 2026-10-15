@@ -17,10 +17,10 @@ Route::post('/account/session/token', [StorefrontSessionController::class, 'toke
 Route::post('/account/logout', [StorefrontSessionController::class, 'destroy'])->name('storefront.session.destroy');
 
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])
-    ->whereIn('provider', ['google', 'facebook'])
+    ->whereIn('provider', ['google', 'facebook', 'zalo'])
     ->name('social.redirect');
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])
-    ->whereIn('provider', ['google', 'facebook'])
+    ->whereIn('provider', ['google', 'facebook', 'zalo'])
     ->name('social.callback');
 
 Route::middleware(['count-client-view-website'])->group(function() {

@@ -17,6 +17,10 @@ class UserSocialAccount extends Model
 
     const UPDATED_AT = 'UPD_DT';
 
+    protected $casts = [
+        'IS_SENSITIVE' => 'boolean',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'USER_ID', 'ID');

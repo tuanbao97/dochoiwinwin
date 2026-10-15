@@ -18,7 +18,7 @@ use Throwable;
 
 class SocialAuthController extends Controller
 {
-    private const PROVIDERS = ['google', 'facebook'];
+    private const PROVIDERS = ['google', 'facebook', 'zalo'];
 
     private const REDIRECT_SESSION_KEY = 'storefront_login_redirect';
 
@@ -94,6 +94,9 @@ class SocialAuthController extends Controller
                 $roleId = $this->ensureStorefrontUserRole();
                 $this->ensureStorefrontUserTitle($user, $roleId, $provider);
 
+                // Magic __get của Socialite (không có __isset nên không dùng ??)
+                $isSensitive = (bool) $socialUser->isSensitive;
+
                 UserSocialAccount::query()->updateOrCreate(
                     [
                         'USER_ID' => $user->ID,
@@ -104,8 +107,16 @@ class SocialAuthController extends Controller
                         'EMAIL' => $email,
                         'NAME' => trim((string) $socialUser->getName()) ?: null,
                         'AVATAR_URL' => trim((string) $socialUser->getAvatar()) ?: null,
+                        'IS_SENSITIVE' => $isSensitive,
                     ]
                 );
+
+                if ($isSensitive) {
+                    Log::notice('Social login: tài khoản thuộc nhóm nhạy cảm', [
+                        'provider' => $provider,
+                        'user_id' => $user->ID,
+                    ]);
+                }
 
                 return $user;
             });
@@ -205,6 +216,11 @@ class SocialAuthController extends Controller
             return 'fb.'.$providerUserId.'@noreply.dochoiwinwin.com';
         }
 
+        // Zalo Social API không cấp email
+        if ($provider === 'zalo' && $providerUserId !== '') {
+            return 'zalo.'.$providerUserId.'@noreply.dochoiwinwin.com';
+        }
+
         throw new RuntimeException(
             'Tài khoản '.$this->providerLabel($provider).' chưa cung cấp email. Vui lòng cấp quyền email và thử lại.'
         );
@@ -281,6 +297,10 @@ class SocialAuthController extends Controller
 
     private function providerLabel(string $provider): string
     {
-        return $provider === 'google' ? 'Google' : 'Facebook';
+        return match ($provider) {
+            'google' => 'Google',
+            'zalo' => 'Zalo',
+            default => 'Facebook',
+        };
     }
 }
