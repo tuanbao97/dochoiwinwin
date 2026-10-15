@@ -1146,12 +1146,19 @@ product-form.loading .product-cta .btn .loading-icon {
     width: 100%;
     z-index: 40;
     margin: 0;
+    padding-bottom: 0;
+  }
+
+  /* Android edge-to-edge (viewport-fit=cover): nền trắng phủ cả vùng thanh vuốt, không lộ trang bên dưới */
+  .cro-btns:has(.cro-btn-item) > div {
+    min-height: calc(5.6rem + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   /* Ch?a ch? cu?i trang ?? n?i dung kh?ng b? menu che */
+  /* !important: theme-head-styles reset body padding: 0 !important */
   body.ega-theme:has(.cro-btns .cro-btn-item) {
-    padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(5.6rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 .promo-box__body p {
