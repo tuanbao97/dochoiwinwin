@@ -6,9 +6,11 @@ use App\Enum\AppConstant;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSocialAccount;
+use App\Support\SocialNativeLogin;
 use App\Support\StorefrontIdentity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -22,15 +24,35 @@ class SocialAuthController extends Controller
 
     private const REDIRECT_SESSION_KEY = 'storefront_login_redirect';
 
-    public function __construct(private readonly StorefrontIdentity $identity) {}
+    public function __construct(
+        private readonly StorefrontIdentity $identity,
+        private readonly SocialNativeLogin $nativeLogin,
+    ) {}
 
-    public function redirect(string $provider, Request $request): RedirectResponse
+    public function redirect(string $provider, Request $request): RedirectResponse|Response
     {
         try {
             $this->ensureProviderIsAvailable($provider);
             $this->rememberRedirectTarget($request);
 
-            return $this->socialiteDriver($provider)->redirect();
+            $pending = $this->socialiteDriver($provider)->redirect();
+            $oauthUrl = $pending->getTargetUrl();
+            $handoff = $this->nativeLogin->handoff(
+                $provider,
+                (string) $request->userAgent(),
+                $request->fullUrl(),
+                $oauthUrl
+            );
+
+            if ($handoff === null) {
+                return $pending;
+            }
+
+            return response()->view('UI-FRONTEND.account.social-app-handoff', [
+                'label' => $this->providerLabel($provider),
+                'appUrl' => $handoff['appUrl'],
+                'webUrl' => $handoff['webUrl'],
+            ]);
         } catch (Throwable $e) {
             return redirect('/account/login')->with('social_error', $e->getMessage());
         }
