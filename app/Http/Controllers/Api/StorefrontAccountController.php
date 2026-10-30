@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Support\SapoOrderPuller;
 use App\Support\StorefrontProfileWriter;
+use App\Support\StorefrontVoucher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -221,6 +222,7 @@ class StorefrontAccountController extends Controller
     private function serializeOrder(Transaction $order): array
     {
         $status = TransactionStatusEnum::tryFrom((string) $order->TRANSACTION_STATUS);
+        $settled = app(StorefrontVoucher::class)->settleFromLines($order);
 
         return [
             'ID' => (int) $order->ID,
@@ -228,12 +230,12 @@ class StorefrontAccountController extends Controller
             'STATUS' => $order->TRANSACTION_STATUS,
             'STATUS_LABEL' => $status?->description() ?? (string) $order->TRANSACTION_STATUS,
             'TOTAL_QUANTITY' => (float) $order->TOTAL_QUANTITY,
-            'SUBTOTAL' => (float) $order->SUBTOTAL_PRICE,
-            'SHIPPING_FEE' => (float) $order->SHIPPING_FEE,
+            'SUBTOTAL' => (float) $settled['subtotal'],
+            'SHIPPING_FEE' => (float) $settled['shipping'],
             'DISCOUNT_CODE' => $order->DISCOUNT_CODE,
-            'DISCOUNT_AMOUNT' => (float) $order->DISCOUNT_AMOUNT,
+            'DISCOUNT_AMOUNT' => (float) $settled['discount'],
             'VOUCHERS' => $this->serializeOrderVouchers($order),
-            'TOTAL_PRICE' => (float) $order->TOTAL_PRICE,
+            'TOTAL_PRICE' => (float) $settled['total'],
             'PAYMENT_METHOD' => $order->PAYMENT_METHOD,
             'CREATED_AT' => $order->CRT_DT?->toIso8601String(),
             'ASSIGNEE_NAME' => $order->SAPO_ASSIGNEE_NAME,

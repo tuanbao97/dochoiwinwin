@@ -6,6 +6,7 @@ use App\Dto\transaction\TransactionDetailDto;
 use App\Enum\TransactionStatusEnum;
 use App\Models\OrderItem;
 use App\Models\Transaction;
+use App\Support\StorefrontVoucher;
 use Illuminate\Support\Collection;
 
 class TransactionMapper
@@ -25,7 +26,9 @@ class TransactionMapper
         $dto->diaChi = $transaction->USER_BUY_ADDRESS;
         $dto->ghiChu = $transaction->USER_BUY_MESSAGE;
         $dto->tongSoLuong = $transaction->TOTAL_QUANTITY;
-        $dto->tongTien = $transaction->TOTAL_PRICE;
+        $dto->tongTien = $transaction->relationLoaded('orderItems')
+            ? app(StorefrontVoucher::class)->settleFromLines($transaction)['total']
+            : $transaction->TOTAL_PRICE;
         $dto->trangThaiGiaoDich = $transaction->TRANSACTION_STATUS;
         $dto->trangThaiGiaoDichText = self::resolveTransactionStatusText($transaction->TRANSACTION_STATUS);
         $dto->phuongThucThanhToan = $transaction->PAYMENT_METHOD;

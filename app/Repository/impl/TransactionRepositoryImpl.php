@@ -43,6 +43,7 @@ class TransactionRepositoryImpl extends BaseRepository implements TransactionRep
         int $perPage
     ): LengthAwarePaginator {
         $query = Transaction::query()
+            ->with(['orderItems'])
             ->where('STATUS', AppConstant::STATUS_USING);
 
         if (! empty($tuKhoa)) {

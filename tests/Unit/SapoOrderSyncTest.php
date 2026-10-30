@@ -265,6 +265,77 @@ class SapoOrderSyncTest extends TestCase
         $this->assertSame(500000, (int) $transaction->TOTAL_PRICE);
     }
 
+    public function test_sapo_pull_does_not_discount_a_subtotal_that_already_includes_the_voucher(): void
+    {
+        $transaction = Transaction::query()->create([
+            'SAPO_ORDER_ID' => 9900005572,
+            'TOTAL_QUANTITY' => 3,
+            'SUBTOTAL_PRICE' => 451000,
+            'SHIPPING_FEE' => 30000,
+            'DISCOUNT_CODE' => 'WINWIN10',
+            'DISCOUNT_AMOUNT' => 45100,
+            'DISCOUNT_SNAPSHOT' => [
+                'type' => 'PERCENTAGE',
+                'value' => 1000,
+                'max_discount_amount' => 50000,
+                'discount_amount' => 50000,
+                'vouchers' => [[
+                    'code' => 'WINWIN10',
+                    'type' => 'PERCENTAGE',
+                    'value' => 1000,
+                    'max_discount_amount' => 50000,
+                    'discount_amount' => 50000,
+                ]],
+            ],
+            'TOTAL_PRICE' => 435900,
+            'TRANSACTION_STATUS' => 'CONFIRMED',
+            'STATUS' => 'USING',
+            'IS_ACTIVE' => true,
+        ]);
+        foreach ([29000, 296000, 176000] as $index => $price) {
+            OrderItem::query()->create([
+                'TRANSACTION_ID' => $transaction->ID,
+                'SAPO_LINE_ITEM_ID' => 55720 + $index,
+                'QUANTITY' => 1,
+                'PRICE' => $price,
+                'ATTR1' => 'Sản phẩm '.($index + 1),
+                'STATUS' => 'USING',
+                'IS_ACTIVE' => true,
+            ]);
+        }
+
+        $method = new ReflectionMethod(SapoOrderPuller::class, 'apply');
+        $method->setAccessible(true);
+        $method->invoke(
+            new SapoOrderPuller($this->createMock(SapoService::class)),
+            $transaction,
+            [
+                'id' => 9900005572,
+                'status' => 'open',
+                'line_items' => [
+                    ['id' => 55720, 'quantity' => 1, 'price' => 29000, 'name' => 'Sản phẩm 1'],
+                    ['id' => 55721, 'quantity' => 1, 'price' => 296000, 'name' => 'Sản phẩm 2'],
+                    ['id' => 55722, 'quantity' => 1, 'price' => 176000, 'name' => 'Sản phẩm 3'],
+                ],
+                'current_subtotal_price' => 451000,
+                'total_shipping_price' => 30000,
+                'total_discounts' => 50000,
+                'current_total_price' => 435900,
+            ]
+        );
+
+        $transaction->refresh();
+        $this->assertSame(501000, (int) $transaction->SUBTOTAL_PRICE);
+        $this->assertSame(50000, (int) $transaction->DISCOUNT_AMOUNT);
+        $this->assertSame(481000, (int) $transaction->TOTAL_PRICE);
+
+        $transaction->load('orderItems');
+        $settled = app(\App\Support\StorefrontVoucher::class)->settleFromLines($transaction);
+        $this->assertSame(501000, $settled['subtotal']);
+        $this->assertSame(50000, $settled['discount']);
+        $this->assertSame(481000, $settled['total']);
+    }
+
     public function test_sapo_pull_keeps_item_image_when_catalog_has_no_thumbnail(): void
     {
         $transaction = Transaction::query()->create([

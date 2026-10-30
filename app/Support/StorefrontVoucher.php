@@ -206,6 +206,52 @@ class StorefrontVoucher
     }
 
     /**
+     * Tiền hàng = tổng đơn giá × số lượng. Voucher chỉ trừ một lần trên số đó.
+     *
+     * @return array{subtotal: int, shipping: int, discount: int, total: int}
+     */
+    public function settleFromLines(Transaction $order): array
+    {
+        $shipping = max(0, (int) $order->SHIPPING_FEE);
+        $storedSubtotal = max(0, (int) $order->SUBTOTAL_PRICE);
+        $storedDiscount = max(0, (int) $order->DISCOUNT_AMOUNT);
+        $storedTotal = max(0, (int) $order->TOTAL_PRICE);
+        $snapshot = is_array($order->DISCOUNT_SNAPSHOT) ? $order->DISCOUNT_SNAPSHOT : [];
+        $hasVoucher = trim((string) $order->DISCOUNT_CODE) !== ''
+            || $storedDiscount > 0
+            || $snapshot !== [];
+
+        $items = $order->relationLoaded('orderItems')
+            ? $order->orderItems
+            : $order->orderItems()->get();
+        $lineSubtotal = (int) round($items->sum(
+            static fn ($item): float => (float) $item->QUANTITY * (float) $item->PRICE
+        ));
+
+        if (! $hasVoucher || $lineSubtotal <= 0) {
+            return [
+                'subtotal' => $storedSubtotal,
+                'shipping' => $shipping,
+                'discount' => $storedDiscount,
+                'total' => $storedTotal,
+            ];
+        }
+
+        $discount = (string) $order->TRANSACTION_STATUS === TransactionStatusEnum::CANCELLED->value
+            ? min($storedDiscount, $lineSubtotal + $shipping)
+            : ($snapshot !== []
+                ? $this->amountFromSnapshot($snapshot, $lineSubtotal, $shipping)
+                : min($storedDiscount, $lineSubtotal + $shipping));
+
+        return [
+            'subtotal' => $lineSubtotal,
+            'shipping' => $shipping,
+            'discount' => $discount,
+            'total' => max(0, $lineSubtotal + $shipping - $discount),
+        ];
+    }
+
+    /**
      * Tính lại số tiền giảm từ snapshot đã khóa lúc checkout.
      * Dùng khi Sapo kéo đơn và có thể tính % không giới hạn tối đa.
      *

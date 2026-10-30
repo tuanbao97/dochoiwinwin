@@ -525,13 +525,16 @@ class SapoOrderPuller
 
         $isCancelled = $this->lower($sapoOrder['status'] ?? null) === 'cancelled'
             || ! empty($sapoOrder['cancelled_on']);
-        $subtotal = $this->firstNumeric(
+        $subtotalFromSapo = $this->firstNumeric(
             $sapoOrder,
             $isCancelled
                 ? ['subtotal_price', 'sub_total_price', 'total_line_items_price']
                 : ['current_subtotal_price', 'subtotal_price', 'sub_total_price', 'total_line_items_price'],
             $calculatedSubtotal
         );
+        // current_subtotal_price của Sapo đã trừ voucher. Lấy số đó rồi trừ
+        // tiếp % voucher sẽ tính thành tiền thấp hơn số khách phải trả.
+        $subtotal = $calculatedSubtotal > 0 ? $calculatedSubtotal : $subtotalFromSapo;
         $shippingFee = $this->firstNumeric(
             $sapoOrder,
             ['total_shipping_price'],
