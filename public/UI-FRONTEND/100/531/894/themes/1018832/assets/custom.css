@@ -238,6 +238,9 @@ details[open] > summary > .icon-carret-right {
   .header .ww-account__login-btn span {
     white-space: nowrap;
   }
+  .header .ww-account__dropdown {
+    width: min(26rem, calc(100vw - 1.6rem));
+  }
 }
 @media(max-width: 374px){
 	.header .logo-wrapper {
@@ -3489,12 +3492,9 @@ body.checkout .checkout-order-item {
 }
 .ww-account__user {
 	position: relative;
-	display: none;
 }
-@media (min-width: 768px) {
-	.ww-account__user:not([hidden]) {
-		display: block;
-	}
+.ww-account__user:not([hidden]) {
+	display: block;
 }
 .ww-account__login-btn {
 	display: inline-flex !important;

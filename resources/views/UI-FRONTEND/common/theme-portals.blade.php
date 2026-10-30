@@ -66,13 +66,11 @@
     <div class="portal-overlay"></div>
     <div class="portal-inner animation bg-background h-full grid grid-rows-[auto_1fr_auto]">
       <div class="navigation-header pt-4 border-b pb-3 border-neutral-50 px-4">
-        <div class="flex justify-between items-start gap-3 mb-2">
-          <span class="text-xs font-semibold text-neutral-200 uppercase tracking-wide pt-1">Tài khoản</span>
+        <div class="flex justify-end">
           <button type="button" id="PortalClose-menu-crawer" class="portal-close-button w-[3.2rem] h-[3.2rem] rounded-full border border-white text-white flex items-center justify-center active:scale-95 transition-transform hover:animate-spin" title="Đóng" aria-label="Đóng">
             <i class="icon icon-cross"></i>
           </button>
         </div>
-        @include('UI-FRONTEND.partials.menu-drawer-account')
       </div>
       <nav class="navigation-vertical overflow-y-auto no-scrollbar ">
         @include('UI-FRONTEND.partials.menu-category-nav')
