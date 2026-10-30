@@ -30,8 +30,8 @@
   };
 
   $subtotal = (int) $totalPrice;
-  $shippingFee = max(0, (int) config('storefront.shipping_fee', 30000));
-  $grandTotal = $subtotal + $shippingFee;
+  $shippingFee = 0;
+  $grandTotal = $subtotal;
   $savings = collect($items ?? [])->sum(static function (array $line): int {
       $compare = (int) ($line['compare_price'] ?? 0);
       $price = (int) ($line['price'] ?? 0);
@@ -157,14 +157,15 @@
     @endif
     <div class="ww-sum__row">
       <span>Phí vận chuyển</span>
-      <span id="ww-checkout-shipping">{{ $formatPrice($shippingFee) }}</span>
+      <span id="ww-checkout-shipping">Chi phí thỏa thuận</span>
     </div>
     <div class="ww-sum__discounts" id="ww-checkout-discount-rows"></div>
     <div class="ww-sum__row ww-sum__row--total">
       <span>Tổng cộng</span>
       <span id="ww-checkout-total">{{ $formatPrice($grandTotal) }}</span>
     </div>
-    <p class="ww-sum__vat">Đã bao gồm VAT (nếu có). Thanh toán khi nhận hàng.</p>
+    <p class="ww-sum__vat">Đã bao gồm VAT (nếu có). Phí vận chuyển được chốt khi shop xác nhận đơn.</p>
+    <p class="ww-sum__hold">Chúng tôi sẽ giữ đơn và xác nhận với quý khách trong vòng 15-20 phút tới. Vui lòng để ý điện thoại và Zalo.</p>
   </div>
 
   <button type="submit" form="ww-checkout-form" class="ww-sum__submit" id="ww-checkout-submit">

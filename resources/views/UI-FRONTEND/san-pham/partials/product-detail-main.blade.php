@@ -325,7 +325,7 @@
 		  
     <button type="button" name="buynow" class=" font-semibold  btn bg-[var(--color-addtocart-color)] text-[var(--color-addtocart-bg)] border border-[var(--color-addtocart-bg)]  hover:bg-[var(--color-addtocart-bg)] hover:text-[var(--color-addtocart)] btn-buynow w-full" data-requires-variant="0" id="ww-pd-buynow">
 		    
-		MUA NGAY
+		ĐẶT HÀNG
 				 <span class="loading-icon gap-1 hidden items-center justify-center">
         
             <span class="w-1.5 h-1.5 bg-[currentColor] rounded-full animate-pulse"></span>

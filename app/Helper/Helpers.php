@@ -883,6 +883,339 @@ use Illuminate\Support\Facades\DB;
         }
     }
 
+    if (! function_exists('wwStorePickupAddress')) {
+        function wwStorePickupAddress(): string
+        {
+            $contact = wwWebContact();
+            $storeName = trim((string) ($contact['storeName'] ?? '')) ?: 'Đồ Chơi Win Win';
+            $street = trim((string) ($contact['address'] ?? ''));
+            $place = $storeName;
+            if ($street !== '' && mb_stripos($street, $storeName) === false) {
+                $place .= ', ' . $street;
+            } elseif ($street !== '') {
+                $place = $street;
+            }
+
+            $line = 'Nhận tại cửa hàng: ' . $place;
+            $phones = [];
+            foreach (($contact['hotlines'] ?? []) as $hotline) {
+                $display = trim((string) ($hotline['display'] ?? ''));
+                if ($display !== '') {
+                    $phones[] = $display;
+                }
+            }
+            if ($phones !== []) {
+                $line .= "\nHotline: " . implode(' · ', $phones);
+            }
+
+            return $line;
+        }
+    }
+
+    if (! function_exists('wwVietnamAreas')) {
+        function wwVietnamAreas(): array
+        {
+            static $areas = null;
+            if (is_array($areas)) {
+                return $areas;
+            }
+
+            $path = resource_path('data/vn-provinces-wards.json');
+            $decoded = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+
+            return $areas = is_array($decoded) ? $decoded : [];
+        }
+    }
+
+    if (! function_exists('wwEmptyShipAddress')) {
+        function wwEmptyShipAddress(): array
+        {
+            return ['street' => '', 'ward' => '', 'province' => ''];
+        }
+    }
+
+    if (! function_exists('wwComposeShipAddress')) {
+        function wwComposeShipAddress(array $parts): string
+        {
+            $pieces = [];
+            foreach (['street', 'ward', 'province'] as $key) {
+                $value = trim((string) ($parts[$key] ?? ''));
+                if ($value !== '') {
+                    $pieces[] = $value;
+                }
+            }
+
+            return implode(', ', $pieces);
+        }
+    }
+
+    if (! function_exists('wwCanonicalShipAddress')) {
+        /**
+         * Chỉ nhận bộ địa chỉ khớp danh sách tỉnh/phường đang dùng trên trang đặt hàng.
+         *
+         * @return array{street: string, ward: string, province: string}|null
+         */
+        function wwCanonicalShipAddress(string $street, string $ward, string $province): ?array
+        {
+            $street = trim(preg_replace('/\s+/u', ' ', $street) ?? '');
+            $ward = trim($ward);
+            $province = trim($province);
+            if ($street === '' || $ward === '' || $province === '' || mb_strlen($street) > 1500) {
+                return null;
+            }
+            if (str_starts_with(mb_strtolower($street), 'nhận tại cửa hàng')) {
+                return null;
+            }
+
+            $area = null;
+            foreach (wwVietnamAreas() as $candidate) {
+                if ((string) ($candidate['name'] ?? '') === $province) {
+                    $area = $candidate;
+                    break;
+                }
+            }
+            if ($area === null) {
+                return null;
+            }
+
+            $wards = $area['wards'] ?? [];
+            if (! is_array($wards) || ! in_array($ward, $wards, true)) {
+                return null;
+            }
+
+            return ['street' => $street, 'ward' => $ward, 'province' => $province];
+        }
+    }
+
+    if (! function_exists('wwSplitShipAddress')) {
+        /**
+         * Tách địa chỉ đã lưu ("số nhà, phường/xã, tỉnh") về đúng ô trên form.
+         *
+         * @return array{street: string, ward: string, province: string}
+         */
+        function wwSplitShipAddress(string $address): array
+        {
+            $address = trim(preg_replace('/\s+/u', ' ', str_replace(["\r\n", "\r", "\n"], ' ', $address)) ?? '');
+            if ($address === '' || str_starts_with(mb_strtolower($address), 'nhận tại cửa hàng')) {
+                return wwEmptyShipAddress();
+            }
+
+            $parts = preg_split('/\s*,\s*/u', $address) ?: [];
+            $parts = array_values(array_filter(array_map('trim', $parts), static fn (string $part): bool => $part !== ''));
+            if ($parts === []) {
+                return wwEmptyShipAddress();
+            }
+
+            $province = null;
+            $provinceIndex = null;
+            for ($i = count($parts) - 1; $i >= 0; $i--) {
+                $found = wwMatchProvinceSegment($parts[$i]);
+                if ($found !== null) {
+                    $province = $found;
+                    $provinceIndex = $i;
+                    break;
+                }
+            }
+
+            if ($province === null) {
+                return wwSplitFreeTextShipAddress($address);
+            }
+
+            $ward = '';
+            $wardIndex = null;
+            if ($provinceIndex > 0) {
+                $matchedWard = wwMatchWardSegment($province, $parts[$provinceIndex - 1]);
+                if ($matchedWard !== null) {
+                    $ward = $matchedWard;
+                    $wardIndex = $provinceIndex - 1;
+                }
+            }
+
+            $streetParts = [];
+            foreach ($parts as $index => $part) {
+                if ($index === $provinceIndex || $index === $wardIndex) {
+                    continue;
+                }
+                $streetParts[] = $part;
+            }
+            $street = implode(', ', $streetParts);
+            if ($ward === '') {
+                $foundWard = wwFindWardInText($province, $street);
+                if ($foundWard !== null) {
+                    $ward = $foundWard;
+                    $street = wwStripShipToken($street, $foundWard);
+                }
+            }
+
+            return [
+                'street' => trim($street, " \t,"),
+                'ward' => $ward,
+                'province' => (string) $province['name'],
+            ];
+        }
+    }
+
+    if (! function_exists('wwResolveCheckoutShipAddress')) {
+        /**
+         * Ưu tiên địa chỉ khách vừa chọn trong phiên này.
+         * Hồ sơ trên DB mới hơn (sửa tài khoản hoặc đơn sau đó) thì dùng hồ sơ.
+         *
+         * @return array{street: string, ward: string, province: string}
+         */
+        function wwResolveCheckoutShipAddress(?string $profileAddress, mixed $profileUpdatedAt): array
+        {
+            $fromDb = wwSplitShipAddress((string) $profileAddress);
+            $session = session('storefront.ship_address');
+            $fromSession = null;
+            if (is_array($session)) {
+                $fromSession = wwCanonicalShipAddress(
+                    (string) ($session['street'] ?? ''),
+                    (string) ($session['ward'] ?? ''),
+                    (string) ($session['province'] ?? '')
+                );
+            }
+            if ($fromSession === null) {
+                return $fromDb;
+            }
+
+            $sessionAt = (int) ($session['saved_at'] ?? 0);
+            $profileAt = $profileUpdatedAt instanceof \DateTimeInterface
+                ? $profileUpdatedAt->getTimestamp()
+                : (is_numeric($profileUpdatedAt) ? (int) $profileUpdatedAt : 0);
+            if ($profileAt > $sessionAt || ($profileAt === 0 && $fromDb['ward'] !== '')) {
+                return $fromDb;
+            }
+
+            return $fromSession;
+        }
+    }
+
+    if (! function_exists('wwMatchProvinceSegment')) {
+        function wwMatchProvinceSegment(string $segment): ?array
+        {
+            $segment = trim($segment);
+            if ($segment === '') {
+                return null;
+            }
+            $lower = mb_strtolower($segment);
+            foreach (wwVietnamAreas() as $area) {
+                $name = trim((string) ($area['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                if (mb_strtolower($name) === $lower) {
+                    return $area;
+                }
+                $short = preg_replace('/^(Thành phố|Tỉnh)\s+/iu', '', $name) ?? $name;
+                if (mb_strlen($short) > 2 && mb_strtolower($short) === $lower) {
+                    return $area;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    if (! function_exists('wwMatchWardSegment')) {
+        function wwMatchWardSegment(array $area, string $segment): ?string
+        {
+            $lower = mb_strtolower(trim($segment));
+            if ($lower === '') {
+                return null;
+            }
+            foreach ($area['wards'] ?? [] as $ward) {
+                if (mb_strtolower((string) $ward) === $lower) {
+                    return (string) $ward;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    if (! function_exists('wwFindWardInText')) {
+        function wwFindWardInText(array $area, string $text): ?string
+        {
+            $best = null;
+            $bestLen = 0;
+            foreach ($area['wards'] ?? [] as $ward) {
+                $ward = (string) $ward;
+                if ($ward === '' || mb_stripos($text, $ward) === false) {
+                    continue;
+                }
+                $len = mb_strlen($ward);
+                if ($len > $bestLen) {
+                    $best = $ward;
+                    $bestLen = $len;
+                }
+            }
+
+            return $best;
+        }
+    }
+
+    if (! function_exists('wwStripShipToken')) {
+        function wwStripShipToken(string $text, string $token): string
+        {
+            $quoted = preg_quote($token, '/');
+            $stripped = preg_replace('/(?:^|,\s*)'.$quoted.'\s*$/iu', '', $text) ?? $text;
+            if ($stripped === $text) {
+                $stripped = preg_replace('/'.$quoted.'/iu', '', $text, 1) ?? $text;
+            }
+
+            return trim($stripped, " \t,");
+        }
+    }
+
+    if (! function_exists('wwSplitFreeTextShipAddress')) {
+        function wwSplitFreeTextShipAddress(string $address): array
+        {
+            $best = null;
+            $bestLen = 0;
+            $bestPos = -1;
+            $bestToken = '';
+            foreach (wwVietnamAreas() as $area) {
+                $name = trim((string) ($area['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                $pos = mb_stripos($address, $name);
+                $token = $name;
+                if ($pos === false) {
+                    $short = preg_replace('/^(Thành phố|Tỉnh)\s+/iu', '', $name) ?? $name;
+                    if (mb_strlen($short) < 3 || ! preg_match('/(?:^|[\s,])'.preg_quote($short, '/').'\s*$/iu', $address)) {
+                        continue;
+                    }
+                    $pos = mb_stripos($address, $short);
+                    $token = $short;
+                }
+                if ($pos === false) {
+                    continue;
+                }
+                $len = mb_strlen($token);
+                if ($len > $bestLen || ($len === $bestLen && $pos > $bestPos)) {
+                    $best = $area;
+                    $bestLen = $len;
+                    $bestPos = $pos;
+                    $bestToken = $token;
+                }
+            }
+            if ($best === null) {
+                return ['street' => $address, 'ward' => '', 'province' => ''];
+            }
+
+            $before = trim(mb_substr($address, 0, $bestPos), " \t,");
+            $ward = wwFindWardInText($best, $before) ?? '';
+            $street = $ward !== '' ? wwStripShipToken($before, $ward) : $before;
+
+            return [
+                'street' => trim($street, " \t,"),
+                'ward' => $ward,
+                'province' => (string) $best['name'],
+            ];
+        }
+    }
+
     /**
      * Đảm bảo URL tuyệt đối (Facebook / crawler cần absolute https).
      */

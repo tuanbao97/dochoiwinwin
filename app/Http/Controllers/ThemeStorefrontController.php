@@ -10,7 +10,9 @@ use App\Service\VideoService;
 use App\Support\StorefrontCart;
 use App\Support\StorefrontIdentity;
 use App\Support\StorefrontInventory;
+use App\Support\StorefrontProfileWriter;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -283,6 +285,7 @@ class ThemeStorefrontController extends Controller
         }
 
         $items = $this->getCartLines();
+        $profile = $this->identity->user()?->profile;
         $data = [
             'productId' => 0,
             'items' => $items,
@@ -290,6 +293,10 @@ class ThemeStorefrontController extends Controller
             'totalPrice' => $this->totalPrice($items),
             'appUrl' => rtrim(url('/'), '/'),
             'storefrontUser' => $this->identity->payload(),
+            'savedShipAddress' => wwResolveCheckoutShipAddress(
+                is_string($profile?->ADDRESS) ? $profile->ADDRESS : null,
+                $profile?->UPD_DT
+            ),
         ];
 
         if ($request->query('view') === 'summary') {
@@ -297,6 +304,37 @@ class ThemeStorefrontController extends Controller
         }
 
         return view('UI-FRONTEND.thanh-toan.index', $data);
+    }
+
+    public function rememberCheckoutAddress(Request $request): JsonResponse
+    {
+        if (! $this->identity->check()) {
+            return response()->json(['ok' => false], 401);
+        }
+
+        $canonical = wwCanonicalShipAddress(
+            (string) $request->input('street', ''),
+            (string) $request->input('ward', ''),
+            (string) $request->input('province', '')
+        );
+        if ($canonical === null) {
+            return response()->json(['ok' => false], 422);
+        }
+
+        $user = $this->identity->user();
+        if ($user) {
+            StorefrontProfileWriter::save(
+                (int) $user->ID,
+                (string) ($user->FULL_NAME ?: $user->USERNAME),
+                (string) $user->EMAIL,
+                (string) ($user->profile?->MOBILE ?? ''),
+                wwComposeShipAddress($canonical)
+            );
+        }
+
+        $request->session()->put('storefront.ship_address', $canonical + ['saved_at' => time()]);
+
+        return response()->json(['ok' => true]);
     }
 
     public function cartRecommendations(Request $request): \Illuminate\Http\JsonResponse

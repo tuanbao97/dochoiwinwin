@@ -1,3 +1,16 @@
+    <script src="{{ storefrontThemeAsset('disable-devtool.min.js') }}"></script>
+    <script>
+      DisableDevtool({
+        disableMenu: false,
+        disableSelect: false,
+        disableCopy: false,
+        disableCut: false,
+        disablePaste: false,
+        ondevtoolopen: function () {
+          location.reload();
+        }
+      });
+    </script>
     <style>
       @font-face {
         font-family: 'Lexend';

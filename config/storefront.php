@@ -6,9 +6,9 @@ return [
     | Phí vận chuyển
     |--------------------------------------------------------------------------
     |
-    | Đồng giá cho đơn giao tận nơi. Đơn nhận tại cửa hàng (pickup) luôn
-    | miễn phí ship — phí được tính lại ở máy chủ, client không tự đặt.
+    | Website không cộng phí ship vào tổng đơn. Giao tận nơi hiển thị
+    | "Chi phí thỏa thuận" và được chốt khi shop gọi xác nhận.
     |
     */
-    'shipping_fee' => (int) env('STOREFRONT_SHIPPING_FEE', 30000),
+    'shipping_fee' => 0,
 ];

@@ -141,6 +141,15 @@
         + '</div>';
     }
 
+    function shippingText(order) {
+      var fee = Number(order.SHIPPING_FEE || 0);
+      if (fee > 0) return money(fee);
+      var buyer = order.BUYER || {};
+      var note = String(buyer.MESSAGE || '') + ' ' + String(buyer.ADDRESS || '');
+      if (/nhận tại cửa hàng|nhan tai cua hang/i.test(note)) return 'Miễn phí';
+      return 'Chi phí thỏa thuận';
+    }
+
     function paymentRow(label, value, modifier) {
       return '<div class="ww-orders__pay-row' + (modifier ? ' ' + modifier : '') + '">'
         + '<span>' + label + '</span>'
@@ -155,7 +164,7 @@
       }
 
       var rows = paymentRow('Tổng tiền hàng', money(order.SUBTOTAL))
-        + paymentRow('Phí vận chuyển', money(order.SHIPPING_FEE))
+        + paymentRow('Phí vận chuyển', shippingText(order))
         + vouchers.map(function (voucher) {
           var code = escapeHtml(String(voucher.CODE || '').toUpperCase() || 'Mã giảm giá');
           return paymentRow(

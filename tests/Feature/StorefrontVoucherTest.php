@@ -38,12 +38,15 @@ class StorefrontVoucherTest extends TestCase
         $atCap = $service->quote($voucher->CODE, 300000, 30000, null, 'b@example.com', '0909000002');
         $aboveCap = $service->quote($voucher->CODE, 500000, 30000, null, 'c@example.com', '0909000003');
         $fractional = $service->quote($voucher->CODE, 99999, 30000, null, 'd@example.com', '0909000004');
+        $rounded = $service->quote($voucher->CODE, 233450, 0, null, 'e@example.com', '0909000005');
 
         $this->assertSame(20000, $belowCap['discount_amount']);
         $this->assertSame(30000, $atCap['discount_amount']);
         $this->assertSame(30000, $aboveCap['discount_amount']);
-        $this->assertSame(9999, $fractional['discount_amount']);
-        $this->assertSame(120000, $fractional['total']);
+        $this->assertSame(10000, $fractional['discount_amount']);
+        $this->assertSame(119999, $fractional['total']);
+        $this->assertSame(24000, $rounded['discount_amount']);
+        $this->assertSame(209450, $rounded['total']);
     }
 
     public function test_fixed_discount_never_exceeds_subtotal(): void
@@ -120,7 +123,7 @@ class StorefrontVoucherTest extends TestCase
             ->assertOk()
             ->assertJsonPath('DATAS.VOUCHER.subtotal', 500000)
             ->assertJsonPath('DATAS.VOUCHER.discount_amount', 30000)
-            ->assertJsonPath('DATAS.VOUCHER.total', 500000);
+            ->assertJsonPath('DATAS.VOUCHER.total', 470000);
 
         $sapo = $this->createMock(SapoService::class);
         $sapo->method('isEnabled')->willReturn(false);
@@ -138,9 +141,9 @@ class StorefrontVoucherTest extends TestCase
         $transactionId = (int) $response->json('DATAS.TRANSACTION.ID');
         $transaction = Transaction::query()->findOrFail($transactionId);
         $this->assertSame(500000, (int) $transaction->SUBTOTAL_PRICE);
-        $this->assertSame(30000, (int) $transaction->SHIPPING_FEE);
+        $this->assertSame(0, (int) $transaction->SHIPPING_FEE);
         $this->assertSame(30000, (int) $transaction->DISCOUNT_AMOUNT);
-        $this->assertSame(500000, (int) $transaction->TOTAL_PRICE);
+        $this->assertSame(470000, (int) $transaction->TOTAL_PRICE);
         $this->assertSame($voucher->CODE, $transaction->DISCOUNT_CODE);
         $this->assertSame($voucher->ID, (int) $transaction->DISCOUNT_VOUCHER_ID);
     }
@@ -273,6 +276,59 @@ class StorefrontVoucherTest extends TestCase
         $this->assertSame(300000, (int) $voucher->MIN_SUBTOTAL);
         $this->assertSame(919191, (int) $voucher->SAPO_PRICE_RULE_ID);
         $this->assertSame(818181, (int) $voucher->SAPO_DISCOUNT_CODE_ID);
+    }
+
+    public function test_sapo_sync_deactivates_codes_removed_from_sapo(): void
+    {
+        $removed = $this->voucher([
+            'SAPO_PRICE_RULE_ID' => 2198232,
+            'SAPO_DISCOUNT_CODE_ID' => 3426472,
+        ]);
+        $kept = 'KEEP'.random_int(100000, 999999);
+
+        $sapo = $this->createMock(SapoService::class);
+        $sapo->method('isEnabled')->willReturn(true);
+        $sapo->method('get')->willReturnCallback(function (string $path) use ($kept): array {
+            if ($path === '/admin/price_rules.json') {
+                return ['price_rules' => [[
+                    'id' => 919192,
+                    'title' => $kept,
+                    'value' => '-10000',
+                    'value_type' => 'fixed_amount',
+                    'target_type' => 'line_item',
+                    'status' => 'active',
+                    'starts_on' => now()->subHour()->utc()->toIso8601String(),
+                ]]];
+            }
+
+            return ['discount_codes' => [[
+                'id' => 818182,
+                'code' => $kept,
+            ]]];
+        });
+        $this->app->instance(SapoService::class, $sapo);
+
+        app(SapoVoucherSynchronizer::class)->sync();
+
+        $this->assertFalse((bool) $removed->fresh()->IS_ACTIVE);
+        $this->assertTrue((bool) DiscountVoucher::query()->where('CODE', $kept)->value('IS_ACTIVE'));
+    }
+
+    public function test_sapo_sync_deactivates_every_code_when_sapo_has_no_rules(): void
+    {
+        $removed = $this->voucher([
+            'SAPO_PRICE_RULE_ID' => 2198232,
+            'SAPO_DISCOUNT_CODE_ID' => 3426472,
+        ]);
+
+        $sapo = $this->createMock(SapoService::class);
+        $sapo->method('isEnabled')->willReturn(true);
+        $sapo->method('get')->willReturn(['price_rules' => []]);
+        $this->app->instance(SapoService::class, $sapo);
+
+        app(SapoVoucherSynchronizer::class)->sync();
+
+        $this->assertFalse((bool) $removed->fresh()->IS_ACTIVE);
     }
 
     public function test_combinable_voucher_stacks_with_percentage_voucher(): void
@@ -438,8 +494,8 @@ class StorefrontVoucherTest extends TestCase
 
         $transaction = Transaction::query()->findOrFail((int) $response->json('DATAS.TRANSACTION.ID'));
         $this->assertSame(300000, (int) $transaction->SUBTOTAL_PRICE);
-        $this->assertSame(30000, (int) $transaction->SHIPPING_FEE);
-        $this->assertSame(330000, (int) $transaction->TOTAL_PRICE);
+        $this->assertSame(0, (int) $transaction->SHIPPING_FEE);
+        $this->assertSame(300000, (int) $transaction->TOTAL_PRICE);
     }
 
     private function combinableVoucher(array $overrides = []): DiscountVoucher

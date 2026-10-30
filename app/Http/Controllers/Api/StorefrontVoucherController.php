@@ -55,6 +55,7 @@ class StorefrontVoucherController extends Controller
 
     public function quote(VoucherQuoteRequest $request): JsonResponse
     {
+        $this->synchronizer->syncIfStale();
         $subtotal = $this->inventory->subtotalFromOrderItems($request->input('ITEMS', []));
 
         $user = Auth::user();

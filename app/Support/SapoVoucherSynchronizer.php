@@ -12,20 +12,18 @@ use Throwable;
 
 class SapoVoucherSynchronizer
 {
-    private const CACHE_KEY = 'sapo:vouchers:last-synced-at';
-
     public function __construct(private readonly SapoService $sapo)
     {
     }
 
-    public function syncIfStale(int $seconds = 300): void
+    /**
+     * Luôn lấy danh sách mã từ Sapo. Không giữ cache thời điểm đồng bộ.
+     */
+    public function syncIfStale(): void
     {
-        if (! $this->sapo->isEnabled()) {
-            return;
-        }
+        Cache::forget('sapo:vouchers:last-synced-at');
 
-        $lastSyncedAt = (int) Cache::get(self::CACHE_KEY, 0);
-        if ($lastSyncedAt > 0 && (time() - $lastSyncedAt) < $seconds) {
+        if (! $this->sapo->isEnabled()) {
             return;
         }
 
@@ -48,7 +46,7 @@ class SapoVoucherSynchronizer
 
         $ruleCount = 0;
         $codeCount = 0;
-        $seenRuleIds = [];
+        $seenCodes = [];
 
         for ($page = 1; ; $page++) {
             $response = $this->sapo->get('/admin/price_rules.json', [
@@ -66,7 +64,6 @@ class SapoVoucherSynchronizer
 
                 $ruleCount++;
                 $ruleId = (int) $rule['id'];
-                $seenRuleIds[] = $ruleId;
                 $codes = $this->discountCodes($ruleId);
 
                 foreach ($codes as $codePayload) {
@@ -79,6 +76,7 @@ class SapoVoucherSynchronizer
                     }
 
                     $codeCount++;
+                    $seenCodes[] = $code;
                     $this->upsert($rule, $codePayload, $code);
                 }
             }
@@ -88,14 +86,21 @@ class SapoVoucherSynchronizer
             }
         }
 
-        if ($seenRuleIds !== []) {
-            DiscountVoucher::query()
-                ->whereNotNull('SAPO_PRICE_RULE_ID')
-                ->whereNotIn('SAPO_PRICE_RULE_ID', array_values(array_unique($seenRuleIds)))
-                ->update(['IS_ACTIVE' => false]);
+        // Mã đã xóa trên Sapo (kể cả xóa code nhưng còn price rule, hoặc xóa hết rule)
+        // phải tắt trên web. Chỉ chạy sau khi lấy đủ danh sách, tránh tắt nhầm khi API lỗi.
+        $missing = DiscountVoucher::query()
+            ->where('IS_ACTIVE', true)
+            ->where(function ($query): void {
+                $query->whereNotNull('SAPO_PRICE_RULE_ID')
+                    ->orWhereNotNull('SAPO_DISCOUNT_CODE_ID');
+            });
+        if ($seenCodes !== []) {
+            $missing->whereNotIn('CODE', array_values(array_unique($seenCodes)));
         }
-
-        Cache::forever(self::CACHE_KEY, time());
+        $missing->update([
+            'IS_ACTIVE' => false,
+            'UPD_DT' => now(),
+        ]);
 
         return ['rules' => $ruleCount, 'codes' => $codeCount];
     }

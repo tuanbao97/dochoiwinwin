@@ -194,10 +194,49 @@ details[open] > summary > .icon-carret-right {
   .header {
     padding: var(--spacing-2) 0;
   }
-  /* Mobile header 2 hàng — không ép 6.4rem kẻo cắt mất hamburger / logo */
   .header.active {
     height: auto;
     min-height: var(--header-height, 6.4rem);
+  }
+}
+/* Điện thoại: logo, tìm kiếm và Đăng nhập cùng một hàng, chữ không xuống dòng */
+@media (max-width: 1023px) {
+  .header .header-wrapper {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .header .header-wrapper > div:first-child,
+  .header .header-wrapper > div:first-child > div {
+    min-width: 0;
+    gap: 0.4rem;
+  }
+  .header .logo-wrapper {
+    min-width: 0;
+    max-width: 13.6rem;
+  }
+  .header .logo-wrapper img {
+    max-height: 4.6rem;
+    max-width: 100%;
+  }
+  .header .header-icon-wrapper {
+    flex: 0 0 auto;
+    margin-left: auto;
+    gap: 0.4rem;
+  }
+  .header .ww-account,
+  .header .ww-account__login-btn {
+    flex-shrink: 0;
+  }
+  .header .ww-account__login-btn {
+    height: 3.4rem;
+    padding: 0 1rem;
+    gap: 0.4rem;
+    font-size: 1.25rem;
+  }
+  .header .ww-account__login-btn,
+  .header .ww-account__login-btn span {
+    white-space: nowrap;
   }
 }
 @media(max-width: 374px){
@@ -4556,13 +4595,9 @@ card-product.is-soldout .addtocart-btn {
 }
 .ww-co-ship {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: 1fr;
 	gap: 1.2rem;
-}
-@media (max-width: 540px) {
-	.ww-co-ship {
-		grid-template-columns: 1fr;
-	}
+	align-items: start;
 }
 .ww-co-ship__option {
 	position: relative;
@@ -4684,6 +4719,44 @@ card-product.is-soldout .addtocart-btn {
 	line-height: 1.35;
 	color: #64748b;
 }
+.ww-co-ship__place {
+	display: grid;
+	gap: 0.15rem;
+	padding-left: 4.8rem;
+}
+.ww-co-ship__option--pickup .ww-co-ship__title {
+	white-space: nowrap;
+}
+.ww-co-ship__option--pickup .ww-co-ship__badge {
+	margin-left: auto;
+	margin-right: 0.4rem;
+	flex: 0 0 auto;
+}
+.ww-co-ship__place-name {
+	font-size: 1.4rem;
+	line-height: 1.35;
+	font-weight: 700;
+	color: #0f172a;
+}
+.ww-co-ship__place-line,
+.ww-co-ship__place-note {
+	font-size: 1.32rem;
+	line-height: 1.45;
+	color: #475569;
+}
+.ww-co-ship__place-phone {
+	margin-top: 0.35rem;
+	font-size: 1.38rem;
+	line-height: 1.4;
+	font-weight: 700;
+	color: #0f766e;
+	white-space: nowrap;
+}
+@media (max-width: 420px) {
+	.ww-co-ship__place-phone {
+		white-space: normal;
+	}
+}
 .ww-co-ship__badge {
 	display: inline-flex;
 	align-items: center;
@@ -4732,7 +4805,23 @@ card-product.is-soldout .addtocart-btn {
 	font-weight: 400;
 	color: var(--co-muted);
 }
+.ww-co-area {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1.2rem;
+	margin-bottom: 1.2rem;
+}
+@media (max-width: 540px) {
+	.ww-co-area {
+		grid-template-columns: 1fr;
+	}
+}
+.ww-co-area[hidden],
+#ww-checkout-street-label[hidden] {
+	display: none;
+}
 .ww-co-field input,
+.ww-co-field select,
 .ww-co-field textarea {
 	width: 100%;
 	padding: 1.15rem 1.3rem;
@@ -4748,13 +4837,22 @@ card-product.is-soldout .addtocart-btn {
 	min-height: 8rem;
 	resize: vertical;
 }
+.ww-co-field select {
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1.2 1.2 6 6.2 10.8 1.2'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 1.2rem center;
+	padding-right: 3.2rem;
+}
 .ww-co-field input:focus,
+.ww-co-field select:focus,
 .ww-co-field textarea:focus {
 	outline: none;
 	border-color: var(--color-primary);
 	box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }
 .ww-co-field input.is-invalid,
+.ww-co-field select.is-invalid,
 .ww-co-field textarea.is-invalid {
 	border-color: #dc2626;
 	box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
@@ -5793,6 +5891,15 @@ html.ww-voucher-picker-open body {
 	margin: 0;
 	font-size: 1.25rem;
 	color: var(--co-muted);
+}
+.ww-sum__hold {
+	margin: 0.8rem 0 0;
+	padding: 1rem 1.2rem;
+	border-radius: 0.8rem;
+	background: #fff7ed;
+	color: #9a3412;
+	font-size: 1.35rem;
+	line-height: 1.45;
 }
 .ww-sum__submit {
 	width: 100%;

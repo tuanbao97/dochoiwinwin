@@ -151,7 +151,7 @@ HTML;
 
       <div class="cart-submit mt-3 space-y-2">
         <a href="{{ url('/thanh-toan') }}" class="btn w-full btn--large font-semibold bg-primary text-white inline-flex justify-center items-center gap-2">
-          THANH TOÁN
+          ĐẶT HÀNG
           <i class="icon icon-arrow-login"></i>
         </a>
         <a href="{{ url('/cart') }}" class="btn w-full btn--large font-semibold border border-neutral-50 bg-background text-foreground inline-flex justify-center items-center gap-2">

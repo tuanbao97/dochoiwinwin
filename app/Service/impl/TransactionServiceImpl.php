@@ -15,6 +15,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\TransactionRepository;
 use App\Service\TransactionService;
+use App\Support\SapoVoucherSynchronizer;
 use App\Support\StorefrontCart;
 use App\Support\StorefrontIdentity;
 use App\Support\StorefrontInventory;
@@ -39,6 +40,7 @@ class TransactionServiceImpl implements TransactionService
         private readonly StorefrontInventory $inventory,
         private readonly StorefrontVoucher $voucher,
         private readonly StorefrontCart $cart,
+        private readonly SapoVoucherSynchronizer $voucherSync,
     ) {
         $this->transactionRepository = $transactionRepository;
     }
@@ -142,6 +144,9 @@ class TransactionServiceImpl implements TransactionService
         $shippingFee = StorefrontVoucher::shippingFee($pickupAtStore);
         $discountCode = StorefrontVoucher::normalizeCode($request->input('DISCOUNT_CODE'));
         $discountCodes = StorefrontVoucher::normalizeCodes($request->input('DISCOUNT_CODES', $discountCode));
+        if ($discountCodes !== []) {
+            $this->voucherSync->syncIfStale();
+        }
 
         $user = Auth::user();
         if (! $user instanceof User) {
@@ -154,26 +159,7 @@ class TransactionServiceImpl implements TransactionService
         $buyerNote = $request->input('GHI_CHU');
 
         if ($pickupAtStore) {
-            $storeAddress = '';
-            $storePhones = [];
-            if (function_exists('wwWebContact')) {
-                $contact = wwWebContact();
-                $storeAddress = trim((string) ($contact['address'] ?? ''));
-                if ($storeAddress === '') {
-                    $storeAddress = 'Nhận tại cửa hàng ' . trim((string) ($contact['storeName'] ?? 'Đồ Chơi Win Win'));
-                } else {
-                    $storeAddress = 'Nhận tại cửa hàng: ' . $storeAddress;
-                }
-                foreach (($contact['hotlines'] ?? []) as $hotline) {
-                    $display = trim((string) ($hotline['display'] ?? ''));
-                    if ($display !== '') {
-                        $storePhones[] = $display;
-                    }
-                }
-                if ($storePhones !== []) {
-                    $storeAddress .= "\nHotline: " . implode(' · ', $storePhones);
-                }
-            }
+            $storeAddress = function_exists('wwStorePickupAddress') ? wwStorePickupAddress() : '';
             if ($storeAddress !== '') {
                 $buyerAddress = $storeAddress;
             }
@@ -184,6 +170,14 @@ class TransactionServiceImpl implements TransactionService
             } elseif (! str_contains(mb_strtolower($buyerNote), 'nhận tại cửa hàng')
                 && ! str_contains(mb_strtolower($buyerNote), 'nhan tai cua hang')) {
                 $buyerNote = $pickupNote . ' ' . $buyerNote;
+            }
+        } else {
+            $agreeNote = 'Phí vận chuyển thỏa thuận. Shop giữ đơn và xác nhận trong 15-20 phút.';
+            $buyerNote = trim((string) $buyerNote);
+            if ($buyerNote === '') {
+                $buyerNote = $agreeNote;
+            } elseif (! str_contains(mb_strtolower($buyerNote), 'thỏa thuận')) {
+                $buyerNote = $agreeNote.' '.$buyerNote;
             }
         }
 
@@ -198,7 +192,8 @@ class TransactionServiceImpl implements TransactionService
                 $buyerPhone,
                 $buyerEmail,
                 $buyerAddress,
-                $buyerNote
+                $buyerNote,
+                $pickupAtStore
             ): Transaction {
                 $items = [];
                 $totalQuantity = 0;
@@ -318,7 +313,23 @@ class TransactionServiceImpl implements TransactionService
                     $orderItem->save();
                 }
 
-                $this->saveBuyerProfile($user, $buyerName, $buyerPhone, $buyerAddress);
+                $this->saveBuyerProfile(
+                    $user,
+                    $buyerName,
+                    $buyerPhone,
+                    $pickupAtStore ? '' : (string) $buyerAddress
+                );
+                if (! $pickupAtStore && $request->hasSession()) {
+                    $remembered = wwSplitShipAddress((string) $buyerAddress);
+                    $canonical = wwCanonicalShipAddress(
+                        $remembered['street'],
+                        $remembered['ward'],
+                        $remembered['province']
+                    );
+                    if ($canonical !== null) {
+                        $request->session()->put('storefront.ship_address', $canonical + ['saved_at' => time()]);
+                    }
+                }
 
                 return $transaction;
             });

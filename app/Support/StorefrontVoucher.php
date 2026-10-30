@@ -17,15 +17,12 @@ class StorefrontVoucher
     public const TYPE_FREE_SHIPPING = 'FREE_SHIPPING';
 
     /**
-     * Phí ship chỉ do máy chủ quyết định. Client không được gửi số tiền ship.
+     * Không cộng phí ship vào đơn. Giao tận nơi là chi phí thỏa thuận khi shop
+     * gọi xác nhận; nhận tại cửa hàng thì miễn phí.
      */
     public static function shippingFee(bool $pickupAtStore): int
     {
-        if ($pickupAtStore) {
-            return 0;
-        }
-
-        return max(0, (int) config('storefront.shipping_fee', 30000));
+        return 0;
     }
 
     /**
@@ -475,7 +472,7 @@ class StorefrontVoucher
 
         $type = strtoupper((string) $voucher->DISCOUNT_TYPE);
         if ($type === self::TYPE_FREE_SHIPPING && $shippingFee <= 0) {
-            throw $this->invalid('Đơn đã miễn phí vận chuyển (nhận tại cửa hàng), không áp dụng mã FREESHIP.');
+            throw $this->invalid('Phí vận chuyển được thỏa thuận khi shop xác nhận đơn, không áp dụng mã miễn phí vận chuyển.');
         }
 
         $discount = $this->calculateDiscount($voucher, $subtotal, $shippingFee);
@@ -544,7 +541,27 @@ class StorefrontVoucher
             $discount = min($discount, max(0, $maximum));
         }
 
-        return min($discount, $subtotal + $shippingFee);
+        $discount = min($discount, $subtotal + $shippingFee);
+
+        // 23345 → 24000. Không vượt trần voucher hay tổng đơn.
+        $rounded = $this->roundUpToThousand($discount);
+        if ($maximum !== null) {
+            $rounded = min($rounded, max(0, $maximum));
+        }
+
+        return min($rounded, $subtotal + $shippingFee);
+    }
+
+    /** Làm tròn lên đến nghìn đồng. 23000 giữ nguyên, 23001 thành 24000. */
+    private function roundUpToThousand(int $amount): int
+    {
+        if ($amount <= 0) {
+            return 0;
+        }
+
+        $remainder = $amount % 1000;
+
+        return $remainder === 0 ? $amount : $amount + (1000 - $remainder);
     }
 
     /**

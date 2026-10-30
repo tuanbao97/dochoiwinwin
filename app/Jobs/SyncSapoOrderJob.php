@@ -173,7 +173,7 @@ class SyncSapoOrderJob
             'tags' => 'Đồ Chơi Win Win, Website',
             'line_items' => $lineItems,
             'shipping_lines' => [[
-                'title' => 'Phí vận chuyển',
+                'title' => $this->shippingLineTitle($transaction),
                 'price' => (int) $transaction->SHIPPING_FEE,
                 'code' => 'WEBSITE_FIXED',
             ]],
@@ -224,6 +224,22 @@ class SyncSapoOrderJob
         }
 
         return ['order' => $order];
+    }
+
+    private function shippingLineTitle(Transaction $transaction): string
+    {
+        if ((int) $transaction->SHIPPING_FEE > 0) {
+            return 'Phí vận chuyển';
+        }
+
+        $note = mb_strtolower(trim(
+            (string) $transaction->USER_BUY_MESSAGE.' '.(string) $transaction->USER_BUY_ADDRESS
+        ));
+        if (str_contains($note, 'nhận tại cửa hàng') || str_contains($note, 'nhan tai cua hang')) {
+            return 'Nhận tại cửa hàng';
+        }
+
+        return 'Chi phí thỏa thuận';
     }
 
     private function normalizePhone(string $phone): string

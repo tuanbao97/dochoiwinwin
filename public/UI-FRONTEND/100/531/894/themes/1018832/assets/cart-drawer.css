@@ -2,12 +2,21 @@
 	display: none;
 }
 
+#cart-drawer dialog.portal-dialog {
+	height: 100dvh;
+	max-height: 100dvh;
+	overflow: hidden;
+}
+
 #cart-drawer .cart {
 	--cart-right-column: 100%;
 	--cart-left-column: 100%;
 	--cart-gap: 1.6rem;
 	display: grid;
 	height: 100%;
+	min-height: 0;
+	max-height: 100%;
+	overflow: hidden;
 }
 
 #cart-drawer .portal-inner {
@@ -15,6 +24,8 @@
 	flex-direction: column;
 	max-width: 42rem;
 	margin-left: auto;
+	min-height: 0;
+	max-height: 100%;
 	box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
 }
 
@@ -31,8 +42,35 @@
 
 #cart-drawer .cart-right {
 	flex-shrink: 0;
+	flex-direction: column;
+	align-items: stretch;
+	width: 100%;
+	box-sizing: border-box;
 	border-top: 1px solid var(--color-neutral-50);
 	background: var(--color-background);
+	padding-bottom: calc(1.6rem + env(safe-area-inset-bottom, 0px));
+}
+
+#cart-drawer .cart-summary {
+	width: 100%;
+	min-width: 0;
+}
+
+#cart-drawer .ww-cart-drawer-summary .cart-total {
+	gap: 1.2rem;
+}
+
+#cart-drawer .ww-cart-drawer-summary .cart-total > p {
+	min-width: 0;
+}
+
+#cart-drawer .ww-cart-drawer-summary .cart-total .text-right {
+	flex: 0 0 auto;
+	min-width: max-content;
+}
+
+#cart-drawer .ww-cart-drawer-summary .cart-total .price {
+	white-space: nowrap;
 }
 
 #cart-drawer .cart-table {
@@ -105,7 +143,7 @@
 #cart-drawer .cart-summary > div {
 	--spacing-4: 1.2rem;
 	border: none;
-	padding: 0;
+	padding: 1.2rem;
 }
 
 #cart-drawer .ww-cart-drawer-summary {

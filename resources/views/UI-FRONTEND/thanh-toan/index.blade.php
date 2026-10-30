@@ -1,19 +1,21 @@
 @php
-  $seoTitle = 'Thanh toán — Win Win';
-  $seoDescription = 'Thanh toán đơn hàng tại Đồ Chơi Win Win.';
+  $seoTitle = 'Đặt hàng — Win Win';
+  $seoDescription = 'Đặt hàng tại Đồ Chơi Win Win.';
   $wwCheckout = wwWebContact();
-  $storePickupPhones = collect($wwCheckout['hotlines'] ?? [])
-    ->map(static fn ($hl) => trim((string) ($hl['display'] ?? '')))
-    ->filter()
-    ->values()
-    ->all();
-  $storePickupPhoneText = $storePickupPhones !== [] ? implode(' · ', $storePickupPhones) : '';
-  $storePickupAddress = $wwCheckout['address'] !== ''
-    ? ('Nhận tại cửa hàng: ' . $wwCheckout['address'])
-    : ('Nhận tại cửa hàng ' . ($wwCheckout['storeName'] ?? 'Đồ Chơi Win Win'));
-  if ($storePickupPhoneText !== '') {
-    $storePickupAddress .= "\nHotline: " . $storePickupPhoneText;
+  $storePickupName = trim((string) ($wwCheckout['storeName'] ?? '')) ?: 'Đồ Chơi Win Win';
+  $storePickupStreet = trim((string) ($wwCheckout['address'] ?? ''));
+  $storePickupNote = '';
+  if (preg_match('/^(.*?)\s*\((.+)\)\s*$/u', $storePickupStreet, $storePickupMatch)) {
+      $storePickupStreet = trim($storePickupMatch[1], " \t,");
+      $storePickupNote = trim($storePickupMatch[2]);
+      $storePickupNote = mb_strtoupper(mb_substr($storePickupNote, 0, 1)).mb_substr($storePickupNote, 1);
   }
+  $storePickupPhones = collect($wwCheckout['hotlines'] ?? [])
+      ->map(static fn ($hl) => trim((string) ($hl['display'] ?? '')))
+      ->filter()
+      ->values()
+      ->all();
+  $storePickupAddress = wwStorePickupAddress();
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -21,7 +23,7 @@
   <script>
     (function () {
       var t = document.getElementById('ww-page-title');
-      if (t) t.textContent = 'Thanh toán — Win Win';
+      if (t) t.textContent = 'Đặt hàng — Win Win';
     })();
   </script>
 
@@ -37,7 +39,7 @@
             <a class="link" href="{{ url('/cart') }}" title="Giỏ hàng"><span>Giỏ hàng</span></a>
             <span class="mx-1 md:mx-2 inline-block">&nbsp;/&nbsp;</span>
           </li>
-          <li><span class="text-neutral-100">Thanh toán</span></li>
+          <li><span class="text-neutral-100">Đặt hàng</span></li>
         </ul>
       </div>
     </div>
@@ -45,7 +47,7 @@
     <section class="section section-checkout" style="--section-margin: 0 0 40px; --section-margin-mb: 0 0 24px">
       <div class="container">
         <div class="ww-co__head">
-          <h1 class="ww-co__title">Thanh toán</h1>
+          <h1 class="ww-co__title">Đặt hàng</h1>
           <a class="ww-co__back" href="{{ url('/cart') }}">
             <i class="icon icon-arrow-left" aria-hidden="true"></i> Quay lại giỏ hàng
           </a>
@@ -123,23 +125,42 @@
                             <i class="icon icon-location"></i>
                           </span>
                           <strong class="ww-co-ship__title">Nhận tại cửa hàng</strong>
+                          <span class="ww-co-ship__badge">FREESHIP</span>
                         </span>
                         <span class="ww-co-ship__body">
-                          <em>Đến lấy tại shop</em>
-                          <span class="ww-co-ship__badge">FREESHIP</span>
+                          <span class="ww-co-ship__place">
+                            <strong class="ww-co-ship__place-name">{{ $storePickupName }}</strong>
+                            @if($storePickupStreet !== '')
+                              <span class="ww-co-ship__place-line">{{ $storePickupStreet }}</span>
+                            @endif
+                            @if($storePickupNote !== '')
+                              <span class="ww-co-ship__place-note">{{ $storePickupNote }}</span>
+                            @endif
+                            @if($storePickupPhones !== [])
+                              <span class="ww-co-ship__place-phone">{{ implode(' · ', $storePickupPhones) }}</span>
+                            @endif
+                          </span>
                         </span>
                       </label>
                     </div>
                   </div>
                   <div class="ww-co-field ww-co-field--full" id="ww-checkout-address-field">
-                    <label for="checkout-address" id="ww-checkout-address-label">Địa chỉ nhận hàng <span class="ww-co-req">*</span></label>
-                    <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" autocomplete="street-address">{{ $storefrontUser['ADDRESS'] ?? '' }}</textarea>
-                    <p class="ww-co-ship__hint" id="ww-checkout-pickup-hint" hidden>
-                      Bạn đến nhận tại cửa hàng — miễn phí vận chuyển.
-                      @if($storePickupPhoneText !== '')
-                        <span class="ww-co-ship__hint-phone">Liên hệ: {{ $storePickupPhoneText }}</span>
-                      @endif
-                    </p>
+                    <span class="ww-co-field__label" id="ww-checkout-address-label">Địa chỉ nhận hàng <span class="ww-co-req">*</span></span>
+                    <div class="ww-co-area" id="ww-checkout-area">
+                      <div>
+                        <label for="checkout-province">Tỉnh/Thành phố <span class="ww-co-req">*</span></label>
+                        <select id="checkout-province" autocomplete="address-level1"></select>
+                        <span class="ww-co-error" id="MSG_TINH_THANH"></span>
+                      </div>
+                      <div>
+                        <label for="checkout-ward">Phường/Xã <span class="ww-co-req">*</span></label>
+                        <select id="checkout-ward" autocomplete="address-level2"></select>
+                        <span class="ww-co-error" id="MSG_PHUONG_XA"></span>
+                      </div>
+                    </div>
+                    <label for="checkout-address" id="ww-checkout-street-label">Số nhà, tên đường <span class="ww-co-req">*</span></label>
+                    <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, tên đường" autocomplete="street-address">{{ $savedShipAddress['street'] ?? '' }}</textarea>
+                    <p class="ww-co-ship__hint" id="ww-checkout-pickup-hint" hidden>Miễn phí vận chuyển khi nhận tại cửa hàng.</p>
                     <span class="ww-co-error" id="MSG_DIA_CHI"></span>
                   </div>
                   <input type="hidden" name="pickup" id="checkout-pickup" value="0">
@@ -220,8 +241,7 @@
       <h2 id="ww-order-success-title" class="ww-order-success__title text-h4 font-semibold">Đặt hàng thành công</h2>
       <p class="ww-order-success__code text-h6 font-semibold" id="ww-order-success-code" hidden></p>
       <p class="ww-order-success__desc text-h6">
-        Cảm ơn bạn đã tin tưởng <span style="white-space:nowrap">Win&nbsp;Win</span>.<br>
-        Chúng tôi sẽ liên hệ bạn sớm nhất để xác nhận đơn hàng.
+        Chúng tôi sẽ giữ đơn và xác nhận với quý khách trong vòng 15-20 phút tới. Vui lòng để ý điện thoại và Zalo.
       </p>
       <div class="ww-order-success__actions">
         <a href="{{ url('/account/orders') }}" class="ww-order-success__link btn" id="ww-order-success-orders" hidden>Xem đơn hàng</a>
@@ -251,6 +271,7 @@
     var voucherListUrl = @json(url('/api/public/voucher/list'));
     var voucherQuoteUrl = @json(url('/api/public/voucher/quote'));
     var summaryUrl = @json(url('/thanh-toan')) + '?view=summary';
+    var rememberAddressUrl = @json(url('/thanh-toan/dia-chi'));
     var cartChangeUrl = @json(url('/cart/change'));
     var cartClearUrl = @json(url('/cart/clear'));
     var homeUrl = @json(url('/'));
@@ -280,8 +301,15 @@
     var voucherProgressTimer = null;
     var submitting = false;
     var storePickupAddress = @json($storePickupAddress);
-    var savedShipAddress = form.address ? String(form.address.value || '') : '';
+    var savedShipParts = @json($savedShipAddress ?? ['street' => '', 'ward' => '', 'province' => '']);
+    var savedShipAddress = savedShipParts.street ? String(savedShipParts.street) : (form.address ? String(form.address.value || '') : '');
+    var rememberTimer = null;
     var addressLabelEl = document.getElementById('ww-checkout-address-label');
+    var areaEl = document.getElementById('ww-checkout-area');
+    var provinceSelect = document.getElementById('checkout-province');
+    var wardSelect = document.getElementById('checkout-ward');
+    var vnAreas = @json(json_decode(file_get_contents(resource_path('data/vn-provinces-wards.json')), true) ?: []);
+    var streetLabelEl = document.getElementById('ww-checkout-street-label');
     var pickupHintEl = document.getElementById('ww-checkout-pickup-hint');
     var pickupInput = document.getElementById('checkout-pickup');
     var payTitleEl = document.getElementById('ww-checkout-pay-title');
@@ -399,13 +427,13 @@
     function updateShippingDisplay() {
       var shippingEl = el('ww-checkout-shipping');
       if (!shippingEl) return;
-      if (state.shipping <= 0) {
-        shippingEl.textContent = money(0);
+      if (isPickup()) {
+        shippingEl.textContent = 'Miễn phí';
         shippingEl.classList.add('is-free');
-      } else {
-        shippingEl.textContent = money(state.shipping);
-        shippingEl.classList.remove('is-free');
+        return;
       }
+      shippingEl.textContent = 'Chi phí thỏa thuận';
+      shippingEl.classList.remove('is-free');
     }
 
     function refreshTotalsWithoutVoucher() {
@@ -443,6 +471,8 @@
       });
 
       if (pickup) {
+        if (areaEl) areaEl.hidden = true;
+        if (streetLabelEl) streetLabelEl.hidden = true;
         if (form.address && !form.address.readOnly) {
           savedShipAddress = String(form.address.value || '');
         }
@@ -476,6 +506,8 @@
         return;
       }
 
+      if (areaEl) areaEl.hidden = false;
+      if (streetLabelEl) streetLabelEl.hidden = false;
       if (form.address) {
         form.address.readOnly = false;
         form.address.rows = 2;
@@ -956,12 +988,12 @@
     }
 
     function loadVoucherList() {
+      voucherCache = null;
       var list = el('ww-voucher-list');
-      if (list && !voucherCache) {
+      if (list) {
         list.innerHTML = voucherLoadingHtml();
         startVoucherProgress();
       }
-      if (voucherCache) renderVoucherList(voucherCache);
 
       fetchVoucherList()
         .then(function (vouchers) {
@@ -1290,11 +1322,24 @@
         firstInvalid = firstInvalid || markField('SO_DIEN_THOAI', 'phone', 'Số điện thoại chưa đúng, vui lòng kiểm tra lại.');
       }
 
+      if (!isPickup()) {
+        if (provinceSelect && !provinceSelect.value) {
+          firstInvalid = firstInvalid || markField('TINH_THANH', null, 'Vui lòng chọn tỉnh/thành phố.');
+          provinceSelect.classList.add('is-invalid');
+          if (!firstInvalid) firstInvalid = provinceSelect;
+        }
+        if (wardSelect && !wardSelect.value) {
+          var wardInvalid = markField('PHUONG_XA', null, 'Vui lòng chọn phường/xã.');
+          wardSelect.classList.add('is-invalid');
+          firstInvalid = firstInvalid || wardSelect || wardInvalid;
+        }
+      }
+
       if (!form.address.value.trim()) {
         firstInvalid = firstInvalid || markField(
           'DIA_CHI',
           'address',
-          isPickup() ? 'Chưa có địa chỉ cửa hàng. Vui lòng liên hệ shop.' : 'Vui lòng nhập địa chỉ nhận hàng.'
+          isPickup() ? 'Chưa có địa chỉ cửa hàng. Vui lòng liên hệ shop.' : 'Vui lòng nhập số nhà, tên đường.'
         );
       }
 
@@ -1352,7 +1397,7 @@
         name: form.name.value,
         phone: form.phone.value,
         email: form.email.value,
-        address: form.address.value,
+        address: isPickup() ? form.address.value : composedShipAddress(),
         note: form.note.value,
         pickup: isPickup(),
         NHAN_TAI_CUA_HANG: isPickup(),
@@ -1422,6 +1467,116 @@
         });
     });
 
+    function findArea(name) {
+      for (var i = 0; i < vnAreas.length; i++) {
+        if (vnAreas[i].name === name) return vnAreas[i];
+      }
+      return null;
+    }
+
+    function fillWards(province, selectedWard) {
+      if (!wardSelect) return;
+      wardSelect.innerHTML = '';
+      var placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Chọn phường/xã';
+      placeholder.selected = true;
+      placeholder.disabled = true;
+      wardSelect.appendChild(placeholder);
+      var hasSelected = false;
+      (province && province.wards ? province.wards : []).forEach(function (name) {
+        var option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        if (selectedWard && name === selectedWard) hasSelected = true;
+        wardSelect.appendChild(option);
+      });
+      wardSelect.value = hasSelected ? selectedWard : '';
+    }
+
+    function rememberShipAddress() {
+      if (isPickup() || !provinceSelect || !wardSelect || !form.address) return;
+      var street = String(form.address.value || '').trim();
+      var ward = wardSelect.value;
+      var province = provinceSelect.value;
+      if (!street || !ward || !province) return;
+      savedShipAddress = street;
+      savedShipParts = { street: street, ward: ward, province: province };
+      fetch(rememberAddressUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': csrfToken()
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(savedShipParts)
+      }).catch(function () {});
+    }
+
+    function scheduleRemember() {
+      if (rememberTimer) clearTimeout(rememberTimer);
+      rememberTimer = setTimeout(rememberShipAddress, 500);
+    }
+
+    function initAddressCombos() {
+      if (!provinceSelect || !wardSelect || !vnAreas.length) return;
+      vnAreas.forEach(function (province) {
+        var option = document.createElement('option');
+        option.value = province.name;
+        option.textContent = province.name;
+        provinceSelect.appendChild(option);
+      });
+      provinceSelect.value = (savedShipParts.province && findArea(savedShipParts.province))
+        ? savedShipParts.province
+        : vnAreas[0].name;
+
+      fillWards(findArea(provinceSelect.value), savedShipParts.ward || '');
+      if (form.address && savedShipParts.street) {
+        form.address.value = savedShipParts.street;
+        savedShipAddress = savedShipParts.street;
+      }
+
+      provinceSelect.addEventListener('change', function () {
+        provinceSelect.classList.remove('is-invalid');
+        var msg = document.getElementById('MSG_TINH_THANH');
+        if (msg) msg.textContent = '';
+        savedShipParts.ward = '';
+        fillWards(findArea(provinceSelect.value), '');
+      });
+      wardSelect.addEventListener('change', function () {
+        wardSelect.classList.remove('is-invalid');
+        var msg = document.getElementById('MSG_PHUONG_XA');
+        if (msg) msg.textContent = '';
+        rememberShipAddress();
+      });
+      if (form.address) {
+        form.address.addEventListener('input', function () {
+          savedShipAddress = String(form.address.value || '');
+          scheduleRemember();
+        });
+      }
+    }
+
+    function composedShipAddress() {
+      var street = String(form.address.value || '').trim().replace(/[,\s]+$/, '');
+      var ward = wardSelect ? wardSelect.value : '';
+      var province = provinceSelect ? provinceSelect.value : '';
+      var lower = street.toLowerCase();
+      var parts = [];
+      if (street) parts.push(street);
+      if (ward && lower.indexOf(ward.toLowerCase()) === -1) parts.push(ward);
+      if (province) {
+        var shortName = province.replace(/^(Thành phố|Tỉnh)\s+/i, '');
+        if (lower.indexOf(province.toLowerCase()) === -1 && lower.indexOf(shortName.toLowerCase()) === -1) {
+          parts.push(province);
+        }
+      }
+      return parts.join(', ');
+    }
+
+    initAddressCombos();
     bindVoucherPicker();
     applyDeliveryMethod();
     syncBar();

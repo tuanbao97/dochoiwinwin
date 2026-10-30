@@ -88,6 +88,7 @@ Route::middleware(['count-client-view-website'])->group(function() {
     Route::get('cart/recommendations', [ThemeStorefrontController::class, 'cartRecommendations']);
     Route::get('cart', [ThemeStorefrontController::class, 'cartPage']);
     Route::get('thanh-toan', [ThemeStorefrontController::class, 'checkoutPage']);
+    Route::post('thanh-toan/dia-chi', [ThemeStorefrontController::class, 'rememberCheckoutAddress']);
 
     // Listing SP dạng path (/danh-muc/.../gia/.../sap-xep/.../trang/N)
     Route::get('danh-muc/{categoryKey}/{filters?}', [ThemeStorefrontController::class, 'categoryListing'])
