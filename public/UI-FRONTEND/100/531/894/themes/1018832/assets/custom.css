@@ -1078,6 +1078,21 @@ product-form.loading .product-cta .btn .loading-icon {
 }
 
 /* Menu sidebar close ? ??ng b? v?i modal */
+#menu-drawer .ww-menu-hello {
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 1.5rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#menu-drawer .ww-menu-hello[hidden] {
+  display: none !important;
+}
 #menu-drawer .portal-close-button,
 #PortalClose-menu-crawer,
 #cart-drawer .portal-close-button,

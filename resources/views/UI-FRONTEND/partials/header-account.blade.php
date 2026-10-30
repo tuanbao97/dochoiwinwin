@@ -250,6 +250,14 @@
   }
 
   function paintDrawerNow(user, letter) {
+    var hello = document.querySelector('[data-ww-menu-hello]');
+    var helloName = document.querySelector('[data-ww-menu-hello-name]');
+    if (hello && helloName) {
+      var menuName = String((user && user.FULL_NAME) || '').trim();
+      helloName.textContent = menuName;
+      hello.hidden = menuName === '';
+    }
+
     var guest = document.querySelector('[data-ww-drawer-guest]');
     var box = document.querySelector('[data-ww-drawer-user]');
     var drawerName = document.querySelector('[data-ww-drawer-name]');
