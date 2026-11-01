@@ -52,9 +52,9 @@
 .ww-admin-order__products { padding: 6px 8px; }
 .ww-admin-order__product {
 	display: grid;
-	grid-template-columns: 72px 1fr auto;
+	grid-template-columns: 72px minmax(0, 1fr);
 	gap: 12px;
-	align-items: center;
+	align-items: start;
 	padding: 12px 10px;
 	border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
@@ -72,13 +72,31 @@
 	font-size: 28px;
 }
 .ww-admin-order__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ww-admin-order__name { font-weight: 700; color: #0f172a; text-decoration: none; }
+.ww-admin-order__name {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	overflow: hidden;
+	max-height: 4.05em;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #0f172a;
+	text-decoration: none;
+}
 .ww-admin-order__name:hover { color: #ea580c; }
-.ww-admin-order__facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.ww-admin-order__facts {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	gap: 8px;
+	margin-top: 8px;
+}
 .ww-admin-order__fact {
 	display: flex;
+	flex: 1 1 0;
 	flex-direction: column;
-	min-width: 92px;
+	justify-content: center;
+	min-width: 0;
 	padding: 6px 12px 7px;
 	border-radius: 10px;
 	background: #fff7ed;
@@ -94,10 +112,29 @@
 .ww-admin-order__fact strong { font-size: 20px; line-height: 1.15; color: #9a3412; }
 .ww-admin-order__fact--price { background: #eff6ff; border-color: #93c5fd; }
 .ww-admin-order__fact--price span { color: #1d4ed8; }
-.ww-admin-order__fact--price strong { color: #1e3a8a; font-size: 18px; }
-.ww-admin-order__line { text-align: right; white-space: nowrap; }
-.ww-admin-order__line strong { display: block; font-size: 15px; color: #0f172a; }
-.ww-admin-order__line span { color: #64748b; font-size: 12px; }
+.ww-admin-order__fact--price strong { color: #1e3a8a; }
+.ww-admin-order__fact strong,
+.ww-admin-order__line strong { white-space: nowrap; }
+.ww-admin-order__line {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	min-width: 0;
+	padding: 6px 12px 7px;
+	border-radius: 10px;
+	background: #f0fdf4;
+	border: 1px solid #86efac;
+	text-align: left;
+}
+.ww-admin-order__line span {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #15803d;
+}
+.ww-admin-order__line strong { display: block; font-size: 20px; line-height: 1.15; color: #14532d; }
 .ww-admin-order__delivery {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -133,13 +170,16 @@
 .ww-admin-order__row b { color: #0f172a; white-space: nowrap; }
 .ww-admin-order__row--save b { color: #15803d; }
 .ww-admin-order__row--total {
-	margin-top: 6px;
-	padding-top: 12px;
-	border-top: 1px dashed rgba(15, 23, 42, 0.16);
+	margin-top: 8px;
+	padding: 10px 12px;
+	border-radius: 10px;
+	background: #f0fdf4;
+	border: 1px solid #86efac;
 	font-size: 16px;
 	font-weight: 700;
-	color: #0f172a;
+	color: #14532d;
 }
+.ww-admin-order__row--total b { color: #14532d; font-size: 20px; }
 .ww-admin-order__voucher {
 	display: inline-flex;
 	align-items: center;
@@ -153,8 +193,10 @@
 }
 .ww-admin-order__side .card { border-radius: 16px; }
 @media (max-width: 767px) {
-	.ww-admin-order__product { grid-template-columns: 64px 1fr; }
-	.ww-admin-order__line { grid-column: 2; text-align: left; }
+	.ww-admin-order__product { grid-template-columns: 64px minmax(0, 1fr); }
+	.ww-admin-order__facts { gap: 6px; }
+	.ww-admin-order__fact, .ww-admin-order__line { padding: 6px 8px 7px; }
+	.ww-admin-order__fact strong, .ww-admin-order__line strong { font-size: 16px; }
 	.ww-admin-order__delivery, .ww-admin-order__track { grid-template-columns: 1fr; }
 }
 </style>
@@ -270,12 +312,12 @@ $(document).ready(function () {
 			: '<div class="ww-admin-order__image">🧸</div>';
 		return '<div class="ww-admin-order__product">'
 			+ thumb
-			+ '<div><a class="ww-admin-order__name" href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' + escapeHtml(name) + '</a>'
+			+ '<div><a class="ww-admin-order__name" href="' + escapeHtml(href) + '" target="_blank" rel="noopener" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</a>'
 			+ '<div class="ww-admin-order__facts">'
 			+ '<div class="ww-admin-order__fact"><span>Số lượng</span><strong>' + escapeHtml(line.SO_LUONG || 0) + '</strong></div>'
 			+ '<div class="ww-admin-order__fact ww-admin-order__fact--price"><span>Đơn giá</span><strong>' + formatMoney(line.DON_GIA) + '</strong></div>'
-			+ '</div></div>'
 			+ '<div class="ww-admin-order__line"><span>Thành tiền</span><strong>' + formatMoney(line.THANH_TIEN) + '</strong></div>'
+			+ '</div></div>'
 			+ '</div>';
 	}
 
