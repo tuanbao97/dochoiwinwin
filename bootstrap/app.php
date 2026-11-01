@@ -34,11 +34,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\Cors::class,
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\ShareStorefrontIdentityMiddleware::class,
+            \App\Http\Middleware\NoStoreResponseMiddleware::class,
         ]);
 
         $middleware->group('api', [
             \App\Http\Middleware\Cors::class,
-            \App\Http\Middleware\ForceJsonResponse::class
+            \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\NoStoreResponseMiddleware::class,
         ]);
 
     })

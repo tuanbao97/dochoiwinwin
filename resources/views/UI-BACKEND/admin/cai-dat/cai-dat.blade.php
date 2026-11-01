@@ -434,50 +434,6 @@
 				<div class="row justify-content-between">
 					<div class="col-md-8 col-sm-12">
 						<h4 class="card-title">
-							XÓA CACHE <span class="one-line">FRONTEND</span>
-						</h4>
-					</div>
-				</div>
-
-				<div class="row">
-					<div class="col-12 d-flex justify-content-end">
-						<div class="action-web">
-							<button type="button" class="btn btn-action btn-light btn-icon-text me-1" name="BTN_GO_BACK">
-								<i class="fa fa-caret-left btn-icon-prepend"></i>Quay về
-							</button>
-
-							<button type="button" class="btn btn-action btn-danger btn-icon-text" name="BTN_XOA_CACHE">
-								<i class="fa fa-trash-o btn-icon-prepend"></i>Xóa cache
-							</button>
-						</div>
-						
-						<div class="action-mobile">
-							<button type="button" class="btn btn-action btn-light btn-icon-text me-1" name="BTN_GO_BACK">
-								<i class="fa fa-caret-left btn-icon-prepend"></i>Quay về
-							</button>
-
-							<button type="button" class="btn btn-action btn-danger btn-icon-text" name="BTN_XOA_CACHE">
-								<i class="fa fa-trash-o btn-icon-prepend"></i>Xóa cache
-							</button>
-						</div>
-					</div>
-
-				</div>
-
-				
-
-			</div>
-		</div>
-	</div>
-
-
-
-	<div class="col-lg-12 grid-margin stretch-card">
-		<div class="card">
-			<div class="card-body">
-				<div class="row justify-content-between">
-					<div class="col-md-8 col-sm-12">
-						<h4 class="card-title">
 							FETCH SẢN PHẨM <span class="one-line">SAPO</span>
 						</h4>
 						<label class="ww-sapo-auto" for="SW_SAPO_AUTO">
@@ -1823,40 +1779,6 @@ $(document).ready(function () {
 			}
 		});
 	
-	}
-
-	/* Xử lý event click btn xóa cache */
-	$('button[name="BTN_XOA_CACHE"]').on('click', function() {
-		showSwalWarningPopup(function callback(result) {
-			if (result.isConfirmed === true) {
-				xoaCacheFrontend();
-			}
-		}, 'Bạn có chắc chắn muốn <span style="display: inline-block;">xóa cache frontend?</span>');
-	});
-
-	xoaCacheFrontend = function() {
-		$.ajax({
-			type: "POST",
-			url: '{{ url("/api/cache/evict") }}',
-			contentType: "application/json",
-			showLoading: true,
-			data: JSON.stringify({}),
-			success: function(data, textStatus, request) {
-				// Ajax call completed successfully
-				showToastSuccess('top-right', data.STATUS_DETAIL || 'Xóa cache thành công!');
-			},
-			error: function(request, textStatus, errorThrown) {
-				// Some error in ajax call
-				try {
-					request.responseJSON = request.responseText ? JSON.parse(request.responseText) : null;
-					showToastFailure('top-right', request.responseJSON && !isEmpty(request.responseJSON.STATUS_DETAIL) ? request.responseJSON.STATUS_DETAIL : 'Internal server');
-				} catch(err) {
-					showToastFailure('top-right', 'Internal server');
-				}
-			},
-			complete: function() {
-			}
-		});
 	}
 
 	/* Xử lý event click btn fetch Sapo */

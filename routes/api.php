@@ -135,8 +135,7 @@ Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
 });
 
 
-// Tạm tắt cache UI (public API). Bật lại: thêm middleware 'cache-public-api-response'.
-// Route::prefix('public')->middleware(['cache-public-api-response'])->group(function() {
+// API công khai không cache. Trình duyệt và máy chủ đều lấy dữ liệu mới.
 Route::prefix('public')->middleware([])->group(function() {
     Route::get("/province/list", [ProvinceController::class, 'getListTinhThanh']);
     Route::get("/district/list", [DistrictController::class, 'getListQuanHuyen']);
