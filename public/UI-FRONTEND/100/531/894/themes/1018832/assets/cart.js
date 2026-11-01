@@ -16,6 +16,30 @@ function isCartHtmlFresh(ms) {
   return Date.now() - at < (ms || 5000);
 }
 
+function refreshAllCartForms() {
+  const forms = Array.from(document.querySelectorAll("cart-form"));
+  forms.forEach((form) => {
+    if (typeof form.updateCart === "function") form.updateCart(true);
+  });
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const tick = () => {
+      const busy = forms.some(
+        (form) => form._cartUpdating || form._cartUpdateQueued || form._cartForceRefresh
+      );
+      if (!busy || Date.now() - started > 8000) {
+        forms.forEach((form) => {
+          if (!form._cartUpdating && !form._cartUpdateQueued) form.classList.remove("loading");
+        });
+        resolve();
+        return;
+      }
+      window.setTimeout(tick, 40);
+    };
+    window.setTimeout(tick, 100);
+  });
+}
+
 window.__wwApplyCartHtml = function (html) {
   if (!html || typeof html !== "string") return false;
   let applied = false;
@@ -500,25 +524,34 @@ __wwBootCartComponents(() => {
     }
 
     quantityUpdate(index, quanity) {
-      let line = this.querySelector(`.cart-item[data-line-index="${index}"]`);
+      const button = index instanceof Element ? index : null;
+      const job = () => {
+        if (button && !button.isConnected) return;
+        const lineIndex = button ? button.dataset.lineIndex : index;
+        return this._applyQuantity(lineIndex, quanity);
+      };
+      window.__wwCartChangeChain = (window.__wwCartChangeChain || Promise.resolve()).then(job, job);
+      return window.__wwCartChangeChain;
+    }
+    async _applyQuantity(index, quanity) {
+      const line = this.querySelector(`.cart-item[data-line-index="${index}"]`);
+      if (!line && String(quanity) === "0") return;
       this.classList.add("loading");
-      line.classList.add("loading");
-      fetch(themeApiUrl(`/cart/change?line=${index}&quantity=${quanity}`))
-        .then(async (response) => {
-          if (response.ok) {
-            this.updateCart();
-          } else {
-            const payload = await response.json().catch(() => ({}));
-            throw new Error(payload.message || "Số lượng vượt quá tồn kho");
-          }
-        })
-        .catch((err) => {
-          console.log(err);
-          publish(window.themeConfigs.error, { error: err });
-          this.updateCart();
-          this.classList.remove("loading");
-          line.classList.remove("loading");
-        });
+      if (line) line.classList.add("loading");
+      try {
+        const response = await fetch(themeApiUrl(`/cart/change?line=${index}&quantity=${quanity}`));
+        if (!response.ok && response.status !== 404) {
+          const payload = await response.json().catch(() => ({}));
+          const error = new Error(payload.message || "Số lượng vượt quá tồn kho");
+          console.log(error);
+          if (window.themeConfigs) publish(window.themeConfigs.error, { error });
+        }
+      } catch (err) {
+        console.log(err);
+        if (window.themeConfigs) publish(window.themeConfigs.error, { error: err });
+      }
+      window.__wwCartHtmlFreshAt = 0;
+      await refreshAllCartForms();
     }
     updateCartAttribute() {
       const data = serializeForm(this.form, true);
@@ -537,8 +570,10 @@ __wwBootCartComponents(() => {
           console.log(err);
         });
     }
-    updateCart() {
-      if (isCartHtmlFresh() && this.querySelector(".cart-item")) {
+    updateCart(force) {
+      if (force) this._cartForceRefresh = true;
+      if (!this._cartForceRefresh && isCartHtmlFresh() && this.querySelector(".cart-item")) {
+        this.classList.remove("loading");
         return;
       }
       if (this._cartUpdateQueued) return;
@@ -551,14 +586,18 @@ __wwBootCartComponents(() => {
       }, 80);
     }
     _updateCartNow() {
-      if (isCartHtmlFresh() && this.querySelector(".cart-item")) {
+      const force = !!this._cartForceRefresh;
+      if (!force && isCartHtmlFresh() && this.querySelector(".cart-item")) {
         this._cartUpdateAgain = false;
+        this.classList.remove("loading");
         return;
       }
       if (this._cartUpdating) {
         this._cartUpdateAgain = true;
         return;
       }
+      this._cartForceRefresh = false;
+      this._cartRefreshWasForced = force;
       this._cartUpdating = true;
       this.classList.add("loading");
       fetch(themeApiUrl("/cart?view=data"), {
@@ -574,7 +613,8 @@ __wwBootCartComponents(() => {
           if (
             hadItems &&
             !incomingHasItems &&
-            isCartHtmlFresh()
+            isCartHtmlFresh() &&
+            !this._cartRefreshWasForced
           ) {
             return;
           }
@@ -616,7 +656,6 @@ __wwBootCartComponents(() => {
       const hasItemsNow = !!this.querySelector(".cart-item") || hasItems;
       if (hasItemsNow) {
         this.classList.remove("is-empty");
-        markCartHtmlFresh();
       } else if (markedEmpty) {
         this.classList.add("is-empty");
       }
@@ -732,6 +771,7 @@ __wwBootCartComponents(() => {
   function wwConfirmCartRemove({ title, image } = {}) {
     return new Promise((resolve) => {
       const modal = wwEnsureCartRemoveConfirm();
+      document.body.appendChild(modal);
       const nameEl = modal.querySelector(".ww-cart-remove-confirm__name");
       const thumbEl = modal.querySelector(".ww-cart-remove-confirm__thumb");
       const panel = modal.querySelector(".ww-cart-remove-confirm__panel");
@@ -750,15 +790,25 @@ __wwBootCartComponents(() => {
       }
 
       let settled = false;
+      const session = String(Date.now()) + Math.random();
+      modal.dataset.session = session;
       const cleanup = (confirmed) => {
         if (settled) return;
         settled = true;
         document.removeEventListener("keydown", onKey, true);
         document.removeEventListener("keyup", onKey, true);
         modal.removeEventListener("click", onClick);
-        modal.classList.remove("is-open");
-        panel.classList.remove("is-in");
+        if (modal.dataset.session === session) {
+          modal.classList.remove("is-open");
+          panel.classList.remove("is-in");
+        }
         window.setTimeout(() => {
+          if (modal.dataset.session !== session) {
+            resolve(confirmed);
+            return;
+          }
+          modal.classList.remove("is-open");
+          panel.classList.remove("is-in");
           modal.setAttribute("hidden", "");
           resolve(confirmed);
         }, 180);
@@ -819,8 +869,8 @@ __wwBootCartComponents(() => {
         this.dataset.confirming = "1";
         try {
           const ok = await wwConfirmCartRemove({ title, image });
-          if (ok) {
-            cartForm.quantityUpdate(this.dataset.lineIndex, 0);
+          if (ok && this.isConnected) {
+            await cartForm.quantityUpdate(this, 0);
           }
         } finally {
           this.dataset.confirming = "0";
