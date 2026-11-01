@@ -20,6 +20,7 @@ use App\Support\StorefrontCart;
 use App\Support\StorefrontIdentity;
 use App\Support\StorefrontInventory;
 use App\Support\StorefrontProfileWriter;
+use App\Support\OrderPhoneNotifier;
 use App\Support\StorefrontVoucher;
 use App\Utils\PaginationUtils;
 use Carbon\Carbon;
@@ -357,6 +358,8 @@ class TransactionServiceImpl implements TransactionService
         if ($user instanceof User) {
             $this->cart->clear($user);
         }
+
+        app(OrderPhoneNotifier::class)->notifyNewOrder($transaction);
 
         return response()->json(
             new ApiResponseDto(

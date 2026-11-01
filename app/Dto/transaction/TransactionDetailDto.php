@@ -17,6 +17,13 @@ class TransactionDetailDto implements \JsonSerializable
     public ?string $trangThaiGiaoDichText;
     public ?string $phuongThucThanhToan;
     public ?string $ngayTao;
+    public float $subtotal = 0;
+    public float $shippingFee = 0;
+    public float $discountAmount = 0;
+    public array $vouchers = [];
+    public ?string $nhanVien = null;
+    public ?string $ngayHenGiao = null;
+    public ?string $lyDoHuy = null;
     public array $danhSachSanPham = [];
 
     public static function createEmpty(): TransactionDetailDto
@@ -40,6 +47,13 @@ class TransactionDetailDto implements \JsonSerializable
             'TRANG_THAI_GIAO_DICH_TEXT' => $this->trangThaiGiaoDichText,
             'PHUONG_THUC_THANH_TOAN' => $this->phuongThucThanhToan,
             'NGAY_TAO' => $this->ngayTao,
+            'SUBTOTAL' => $this->subtotal,
+            'SHIPPING_FEE' => $this->shippingFee,
+            'DISCOUNT_AMOUNT' => $this->discountAmount,
+            'VOUCHERS' => $this->vouchers,
+            'NHAN_VIEN' => $this->nhanVien,
+            'NGAY_HEN_GIAO' => $this->ngayHenGiao,
+            'LY_DO_HUY' => $this->lyDoHuy,
             'DANH_SACH_SAN_PHAM' => $this->danhSachSanPham,
         ];
     }

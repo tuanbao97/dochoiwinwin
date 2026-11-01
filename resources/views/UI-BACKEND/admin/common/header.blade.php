@@ -188,6 +188,14 @@
 				</div>
 			</li>
 
+			<li class="nav-item d-flex align-items-center mr-2" id="ww-phone-push">
+				<button type="button" id="ww-phone-push-btn" class="btn btn-sm btn-outline-primary d-flex align-items-center" title="Bật thông báo đơn mới trên điện thoại này">
+					<i class="typcn typcn-bell mr-1"></i>
+					<span class="d-none d-lg-inline">Thông báo điện thoại</span>
+				</button>
+				<button type="button" id="ww-phone-push-test" class="btn btn-sm btn-light ml-1" hidden>Thử</button>
+			</li>
+
 			<li class="nav-item dropdown mr-0" style="margin-left: unset; margin-right: unset;">
 				<div class="section-my-info-dropdown" style="display: none;">
 					<a

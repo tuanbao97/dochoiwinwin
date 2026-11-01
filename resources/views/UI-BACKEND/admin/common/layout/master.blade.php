@@ -1073,7 +1073,8 @@
 
 	@yield('custom-js-for-this-page')
 	<!-- End custom js for this page-->
-	 
+
+	@include('UI-BACKEND.admin.common.phone-push')
 </body>
 
 </html>

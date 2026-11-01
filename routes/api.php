@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminPhonePushController;
 use App\Http\Controllers\Api\AppController;
 use App\Http\Controllers\Api\CategoryNController;
 use App\Http\Controllers\Api\CategoryPController;
@@ -110,6 +111,10 @@ Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
         Route::get('/video/detail/{ID}', [VideoController::class, 'getDetailVideo']);
         Route::delete('/video/delete/{ID}', [VideoController::class, 'deleteVideo']);
         Route::put('/video/active/{ID}', [VideoController::class, 'activeVideo']);
+
+        Route::post('/admin/phone-push', [AdminPhonePushController::class, 'save']);
+        Route::delete('/admin/phone-push', [AdminPhonePushController::class, 'delete']);
+        Route::post('/admin/phone-push/test', [AdminPhonePushController::class, 'test']);
 
         Route::get('/transaction/list', [TransactionController::class, 'getListTransaction']);
         Route::get('/transaction/detail/{ID}', [TransactionController::class, 'getDetailTransaction']);

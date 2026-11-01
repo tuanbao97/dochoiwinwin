@@ -16,6 +16,7 @@
 		"laravel/sanctum": "^4.0",
 		"laravel/socialite": "^5.29",
 		"laravel/tinker": "^2.9",
+		"minishlink/web-push": "^9.0",
 		"nyholm/psr7": "^1.8",
 		"nyholm/psr7-server": "^1.1",
 		"pbmedia/laravel-ffmpeg": "^8.5",

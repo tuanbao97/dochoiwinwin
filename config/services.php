@@ -74,4 +74,10 @@ return [
         'storefront_source' => env('SAPO_STOREFRONT_SOURCE', 'local'),
     ],
 
+    'webpush' => [
+        'subject' => env('WEBPUSH_VAPID_SUBJECT', 'mailto:dochoiwinwin@gmail.com'),
+        'public_key' => env('WEBPUSH_VAPID_PUBLIC_KEY', ''),
+        'private_key' => env('WEBPUSH_VAPID_PRIVATE_KEY', ''),
+    ],
+
 ];
