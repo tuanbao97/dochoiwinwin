@@ -36,6 +36,14 @@
 		margin-left: 0.531rem;
 	}
 }
+#ww-phone-push { position: relative; z-index: 6; }
+#ww-phone-push-btn {
+	min-width: 44px;
+	min-height: 44px;
+	padding: 0 12px;
+	touch-action: manipulation;
+}
+#ww-phone-push-btn i { pointer-events: none; }
 @media (max-width: 991px) {
     .navbar .navbar-brand-wrapper {
         width: 100px;

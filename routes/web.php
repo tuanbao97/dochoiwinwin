@@ -430,6 +430,34 @@ Route::group(['prefix' => 'quan-ly/template'], function () {
 
 })->middleware(Cors::class);
 
+Route::get('/admin-manifest.webmanifest', function () {
+    return response()->json([
+        'name' => 'Đồ Chơi Win Win',
+        'short_name' => 'Win Win',
+        'start_url' => url('/admin/don-hang/danh-sach'),
+        'scope' => url('/'),
+        'display' => 'standalone',
+        'background_color' => '#ffffff',
+        'theme_color' => '#1d4ed8',
+        'icons' => [
+            [
+                'src' => storefrontLogoUrl(),
+                'sizes' => '192x192',
+                'type' => 'image/png',
+                'purpose' => 'any',
+            ],
+            [
+                'src' => storefrontLogoUrl(),
+                'sizes' => '512x512',
+                'type' => 'image/png',
+                'purpose' => 'any',
+            ],
+        ],
+    ], 200, [
+        'Content-Type' => 'application/manifest+json',
+    ]);
+});
+
 Route::get('/login', function() {
     return redirect('/admin/login');
 });
