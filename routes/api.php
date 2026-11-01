@@ -129,6 +129,8 @@ Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
         Route::post('/cache/evict', [AppController::class, 'evictCache']);
         Route::post('/sapo/sync', [AppController::class, 'syncSapoCatalog']);
         Route::get('/sapo/sync/status', [AppController::class, 'getSapoSyncStatus']);
+        Route::get('/sapo/auto-fetch', [AppController::class, 'getSapoAutoFetch']);
+        Route::put('/sapo/auto-fetch', [AppController::class, 'saveSapoAutoFetch']);
     });
 });
 

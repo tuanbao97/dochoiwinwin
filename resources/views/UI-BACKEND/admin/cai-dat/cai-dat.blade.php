@@ -30,6 +30,52 @@
 			width: calc(100% - 300px);
 		}
 	}
+	.ww-sapo-auto {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin: 12px 0 0;
+		cursor: pointer;
+		width: fit-content;
+		max-width: 100%;
+	}
+	.ww-sapo-auto input {
+		position: absolute;
+		opacity: 0;
+		width: 1px;
+		height: 1px;
+	}
+	.ww-sapo-auto__track {
+		width: 52px;
+		height: 30px;
+		border-radius: 999px;
+		background: #cbd5e1;
+		position: relative;
+		flex: 0 0 auto;
+		transition: background .2s ease;
+	}
+	.ww-sapo-auto__track::after {
+		content: "";
+		position: absolute;
+		top: 3px;
+		left: 3px;
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		background: #fff;
+		box-shadow: 0 1px 3px rgba(15, 23, 42, .25);
+		transition: transform .2s ease;
+	}
+	.ww-sapo-auto input:checked + .ww-sapo-auto__track { background: #16a34a; }
+	.ww-sapo-auto input:checked + .ww-sapo-auto__track::after { transform: translateX(22px); }
+	.ww-sapo-auto input:focus-visible + .ww-sapo-auto__track {
+		outline: 2px solid #1d4ed8;
+		outline-offset: 2px;
+	}
+	.ww-sapo-auto__text { display: flex; flex-direction: column; min-width: 0; }
+	.ww-sapo-auto__text strong { font-size: 14px; color: #0f172a; }
+	.ww-sapo-auto__text small { color: #64748b; line-height: 1.35; }
+	#ww-sapo-auto-status { margin: 8px 0 0; color: #475569; font-size: 13px; }
  
 </style>
 @stop 
@@ -434,6 +480,15 @@
 						<h4 class="card-title">
 							FETCH SẢN PHẨM <span class="one-line">SAPO</span>
 						</h4>
+						<label class="ww-sapo-auto" for="SW_SAPO_AUTO">
+							<input type="checkbox" id="SW_SAPO_AUTO">
+							<span class="ww-sapo-auto__track" aria-hidden="true"></span>
+							<span class="ww-sapo-auto__text">
+								<strong>Tự fetch mỗi 60 giây</strong>
+								<small>Tiến trình nền kiểm tra công tắc này mỗi 60 giây.</small>
+							</span>
+						</label>
+						<p id="ww-sapo-auto-status">Đang tắt.</p>
 					</div>
 				</div>
 
@@ -1838,10 +1893,14 @@ $(document).ready(function () {
 				var st = (data && data.DATAS && data.DATAS.SAPO_SYNC_STATUS) || {};
 				if (st.STATE === 'running') {
 					setSapoSyncRunning(true);
-					sapoSyncPollTimer = setTimeout(function() { pollSapoSyncStatus(true); }, 3000);
+					setSapoAutoStatus(st.STATUS_DETAIL || 'Đang fetch sản phẩm vừa đổi...');
+					sapoSyncPollTimer = setTimeout(function() { pollSapoSyncStatus(notifyWhenDone); }, 3000);
 					return;
 				}
 				setSapoSyncRunning(false);
+				if (window.__wwSapoAutoOn && st.STATUS_DETAIL) {
+					setSapoAutoStatus(st.STATUS_DETAIL);
+				}
 				if (!notifyWhenDone) return;
 				if (st.STATE === 'done') {
 					showToastSuccess('top-right', st.STATUS_DETAIL || 'Fetch Sapo thành công!');
@@ -1885,6 +1944,55 @@ $(document).ready(function () {
 			}
 		});
 	}
+
+	setSapoAutoStatus = function(text) {
+		var el = document.getElementById('ww-sapo-auto-status');
+		if (el && text) el.textContent = text;
+	}
+
+	$('#SW_SAPO_AUTO').on('change', function() {
+		var input = this;
+		var enabled = input.checked === true;
+		input.disabled = true;
+		$.ajax({
+			type: 'PUT',
+			url: '{{ url("/api/sapo/auto-fetch") }}',
+			contentType: 'application/json',
+			data: JSON.stringify({ ENABLED: enabled }),
+			success: function(data) {
+				if (!data || data.STATUS === false) {
+					input.checked = !enabled;
+					showToastFailure('top-right', (data && data.STATUS_DETAIL) || 'Không lưu được công tắc.');
+					return;
+				}
+				if (typeof window.wwSapoAutoFetch === 'function') {
+					window.wwSapoAutoFetch(enabled, enabled);
+				}
+				setSapoAutoStatus(enabled ? 'Đang bật. Tiến trình nền sẽ fetch mỗi 60 giây.' : 'Đang tắt. Tiến trình nền bỏ qua việc này.');
+				showToastSuccess('top-right', data.STATUS_DETAIL || (enabled ? 'Đã bật tự fetch.' : 'Đã tắt tự fetch.'));
+			},
+			error: function(request) {
+				input.checked = !enabled;
+				try {
+					request.responseJSON = request.responseText ? JSON.parse(request.responseText) : null;
+				} catch (e) {}
+				showToastFailure('top-right', request.responseJSON && request.responseJSON.STATUS_DETAIL ? request.responseJSON.STATUS_DETAIL : 'Không lưu được công tắc.');
+			},
+			complete: function() {
+				input.disabled = false;
+			}
+		});
+	});
+
+	$.ajax({
+		type: 'GET',
+		url: '{{ url("/api/sapo/auto-fetch") }}',
+		success: function(data) {
+			var enabled = !!(data && data.DATAS && data.DATAS.ENABLED);
+			$('#SW_SAPO_AUTO').prop('checked', enabled);
+			setSapoAutoStatus(enabled ? 'Đang bật. Tiến trình nền sẽ fetch mỗi 60 giây.' : 'Đang tắt. Tiến trình nền bỏ qua việc này.');
+		}
+	});
 
 	pollSapoSyncStatus(false);
 

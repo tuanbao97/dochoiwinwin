@@ -28,4 +28,8 @@ interface AppService
 
     public function getSapoSyncStatus(Request $request);
 
+    public function getSapoAutoFetch(Request $request);
+
+    public function saveSapoAutoFetch(Request $request);
+
 }

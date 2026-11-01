@@ -534,6 +534,12 @@ class SapoOrderSyncTest extends TestCase
             'confirmed order' => [['status' => 'open', 'confirmed_on' => '2026-08-17T06:49:49Z'], 'CONFIRMED'],
             'shipping order' => [['status' => 'open', 'fulfillment_status' => 'partial'], 'SHIPPING'],
             'fulfilled order' => [['status' => 'closed', 'fulfillment_status' => 'fulfilled'], 'COMPLETED'],
+            'fulfilled open order' => [['status' => 'open', 'fulfillment_status' => 'fulfilled'], 'COMPLETED'],
+            'website shipping marker' => [[
+                'status' => 'open',
+                'fulfillment_status' => 'fulfilled',
+                'note_attributes' => [['name' => 'website_status', 'value' => 'SHIPPING']],
+            ], 'SHIPPING'],
             'cancelled order' => [
                 ['status' => 'cancelled', 'cancelled_on' => '2026-08-17T06:40:32Z', 'financial_status' => 'paid'],
                 'CANCELLED',

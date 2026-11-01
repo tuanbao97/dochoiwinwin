@@ -31,4 +31,12 @@ class AppController extends Controller
     public function getSapoSyncStatus(Request $request) {
         return $this->appService->getSapoSyncStatus($request);
     }
+
+    public function getSapoAutoFetch(Request $request) {
+        return $this->appService->getSapoAutoFetch($request);
+    }
+
+    public function saveSapoAutoFetch(Request $request) {
+        return $this->appService->saveSapoAutoFetch($request);
+    }
 }

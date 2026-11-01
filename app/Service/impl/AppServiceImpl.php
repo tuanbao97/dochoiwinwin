@@ -4,6 +4,8 @@ namespace App\Service\impl;
 
 use App\Jobs\SyncSapoCatalogJob;
 use App\Service\AppService;
+use App\Support\BackgroundTasks;
+use App\Support\SapoAutoFetch;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Dto\response\ApiResponseDto;
@@ -127,13 +129,29 @@ class AppServiceImpl implements AppService
     public function syncSapoCatalog(Request $request)
     {
         $forceFull = filter_var($request->input('FULL', false), FILTER_VALIDATE_BOOLEAN);
+        $auto = filter_var($request->input('AUTO', false), FILTER_VALIDATE_BOOLEAN);
+        if ($auto) {
+            $forceFull = false;
+            if (! SapoAutoFetch::enabled()) {
+                return response()->json(
+                    new ApiResponseDto(AppConstant::STATUS_SUCCESS, 'Tự fetch đang tắt.', [
+                        'SAPO_SYNC_STATUS' => ['STATE' => 'idle'],
+                        'ENABLED' => false,
+                    ])
+                )->setStatusCode(JsonResponse::HTTP_OK);
+            }
+        }
 
         $current = $this->sapoSyncState();
         if (($current['STATE'] ?? '') === 'running') {
             return response()->json(
-                new ApiResponseDto(AppConstant::STATUS_FAILURE, 'Đang có tiến trình fetch Sapo chạy nền, vui lòng đợi.', [
-                    'SAPO_SYNC_STATUS' => $current,
-                ])
+                new ApiResponseDto(
+                    $auto ? AppConstant::STATUS_SUCCESS : AppConstant::STATUS_FAILURE,
+                    $auto ? 'Đang fetch sản phẩm Sapo.' : 'Đang có tiến trình fetch Sapo chạy nền, vui lòng đợi.',
+                    [
+                        'SAPO_SYNC_STATUS' => $current,
+                    ]
+                )
             )->setStatusCode(JsonResponse::HTTP_OK);
         }
 
@@ -145,20 +163,53 @@ class AppServiceImpl implements AppService
             'STARTED_AT' => time(),
             'FINISHED_AT' => null,
             'STATUS' => null,
-            'STATUS_DETAIL' => $forceFull ? 'Đang fetch FULL sản phẩm Sapo...' : 'Đang fetch sản phẩm Sapo...',
+            'STATUS_DETAIL' => $forceFull
+                ? 'Đang fetch FULL sản phẩm Sapo...'
+                : ($auto ? 'Đang fetch sản phẩm vừa đổi...' : 'Đang fetch sản phẩm Sapo...'),
         ];
         Cache::put(self::SAPO_SYNC_STATUS_KEY, $state, self::SAPO_SYNC_STATUS_TTL);
 
-        app()->terminating(function () use ($forceFull, $runId) {
+        app()->terminating(function () use ($forceFull, $runId, $auto) {
             ignore_user_abort(true);
             @set_time_limit(0);
-            $this->runSapoSync($forceFull, $runId);
+            $this->runSapoSync($forceFull, $runId, ! $auto);
         });
 
         return response()->json(
             new ApiResponseDto(AppConstant::STATUS_SUCCESS, 'Đã bắt đầu fetch Sapo chạy nền.', [
                 'SAPO_SYNC_STATUS' => $state,
             ])
+        )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    public function getSapoAutoFetch(Request $request)
+    {
+        BackgroundTasks::ensureRunning();
+
+        return response()->json(
+            new ApiResponseDto(AppConstant::STATUS_SUCCESS, 'Truy vấn thành công.', [
+                'ENABLED' => SapoAutoFetch::enabled(),
+                'INTERVAL_SECONDS' => BackgroundTasks::INTERVAL_SECONDS,
+            ])
+        )->setStatusCode(JsonResponse::HTTP_OK);
+    }
+
+    public function saveSapoAutoFetch(Request $request)
+    {
+        $enabled = filter_var($request->input('ENABLED', false), FILTER_VALIDATE_BOOLEAN);
+        SapoAutoFetch::setEnabled($enabled);
+
+        return response()->json(
+            new ApiResponseDto(
+                AppConstant::STATUS_SUCCESS,
+                $enabled
+                    ? 'Đã bật. Tiến trình nền sẽ fetch mỗi 60 giây.'
+                    : 'Đã tắt. Tiến trình nền bỏ qua việc này.',
+                [
+                    'ENABLED' => $enabled,
+                    'INTERVAL_SECONDS' => BackgroundTasks::INTERVAL_SECONDS,
+                ]
+            )
         )->setStatusCode(JsonResponse::HTTP_OK);
     }
 
@@ -189,10 +240,10 @@ class AppServiceImpl implements AppService
         return $state;
     }
 
-    private function runSapoSync(bool $forceFull, string $runId): void
+    private function runSapoSync(bool $forceFull, string $runId, bool $ignoreMinInterval = true): void
     {
         try {
-            $result = SyncSapoCatalogJob::dispatchSync($forceFull, true, false);
+            $result = SyncSapoCatalogJob::dispatchSync($forceFull, $ignoreMinInterval, false);
             [$status, $detail] = $this->sapoSyncSummary($result);
             $state = $status === AppConstant::STATUS_SUCCESS ? 'done' : 'failed';
         } catch (\Throwable $e) {

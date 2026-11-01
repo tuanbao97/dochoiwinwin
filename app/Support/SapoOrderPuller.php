@@ -718,6 +718,30 @@ class SapoOrderPuller
     /**
      * @param  array<string, mixed>  $order
      */
+    public function statusOf(array $order): TransactionStatusEnum
+    {
+        return $this->mapStatus($order);
+    }
+
+    /**
+     * @param  array<string, mixed>  $order
+     */
+    private function websiteStatus(array $order): string
+    {
+        foreach ($order['note_attributes'] ?? [] as $attribute) {
+            if (! is_array($attribute) || ($attribute['name'] ?? null) !== 'website_status') {
+                continue;
+            }
+
+            return strtoupper(trim((string) ($attribute['value'] ?? '')));
+        }
+
+        return '';
+    }
+
+    /**
+     * @param  array<string, mixed>  $order
+     */
     private function mapStatus(array $order): TransactionStatusEnum
     {
         $status = $this->lower($order['status'] ?? null);
@@ -734,15 +758,23 @@ class SapoOrderPuller
 
         if (
             $status === 'closed'
-            || $fulfillment === 'fulfilled'
             || ! empty($order['delivered_on'])
             || ! empty($order['completed_on'])
         ) {
             return TransactionStatusEnum::COMPLETED;
         }
 
-        if (in_array($fulfillment, ['partial', 'packed', 'shipped', 'shipping'], true)) {
+        // Giao hết một đơn một món trên Sapo cũng thành fulfilled.
+        // Dấu website_status giữ "Đang giao" cho đến khi đơn được lưu trữ hoặc hủy.
+        if (
+            $this->websiteStatus($order) === TransactionStatusEnum::SHIPPING->value
+            || in_array($fulfillment, ['partial', 'packed', 'shipped', 'shipping'], true)
+        ) {
             return TransactionStatusEnum::SHIPPING;
+        }
+
+        if ($fulfillment === 'fulfilled') {
+            return TransactionStatusEnum::COMPLETED;
         }
 
         if (! empty($order['confirmed_on']) || $financial === 'paid') {

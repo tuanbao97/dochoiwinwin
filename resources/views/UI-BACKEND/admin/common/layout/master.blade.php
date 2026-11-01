@@ -1079,6 +1079,15 @@
 	@yield('custom-js-for-this-page')
 	<!-- End custom js for this page-->
 
+	<script>
+	$(function () {
+		$.ajax({
+			type: 'GET',
+			url: @json(url('/api/sapo/auto-fetch'))
+		});
+	});
+	</script>
+
 	@include('UI-BACKEND.admin.common.phone-push')
 </body>
 

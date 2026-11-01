@@ -15,6 +15,8 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\TransactionRepository;
 use App\Service\TransactionService;
+use App\Exceptions\BadRequestException;
+use App\Support\SapoOrderStatusPusher;
 use App\Support\SapoVoucherSynchronizer;
 use App\Support\StorefrontCart;
 use App\Support\StorefrontIdentity;
@@ -42,6 +44,7 @@ class TransactionServiceImpl implements TransactionService
         private readonly StorefrontVoucher $voucher,
         private readonly StorefrontCart $cart,
         private readonly SapoVoucherSynchronizer $voucherSync,
+        private readonly SapoOrderStatusPusher $sapoStatus,
     ) {
         $this->transactionRepository = $transactionRepository;
     }
@@ -106,17 +109,27 @@ class TransactionServiceImpl implements TransactionService
     {
         DB::beginTransaction();
 
-        $transaction = $this->transactionRepository->getDetail((int) $id);
-        $transaction->TRANSACTION_STATUS = $request->input('TRANSACTION_STATUS');
-        $this->setAuditFields($transaction, false);
-        $transaction->save();
-
-        DB::commit();
+        try {
+            $transaction = $this->transactionRepository->getDetail((int) $id);
+            $transaction->TRANSACTION_STATUS = $request->input('TRANSACTION_STATUS');
+            $this->setAuditFields($transaction, false);
+            $transaction->save();
+            $synced = $this->sapoStatus->push($transaction);
+            DB::commit();
+        } catch (Throwable $e) {
+            DB::rollBack();
+            $message = trim($e->getMessage()) !== ''
+                ? $e->getMessage()
+                : 'Sapo không cập nhật được đơn.';
+            throw new BadRequestException($message, $message);
+        }
 
         return response()->json(
             new ApiResponseDto(
                 AppConstant::STATUS_SUCCESS,
-                'Cập nhật trạng thái thành công.',
+                $synced
+                    ? 'Đã cập nhật trạng thái trên website và Sapo.'
+                    : 'Cập nhật trạng thái thành công.',
                 [
                     camelToSnakeUpper(class_basename(Transaction::class)) => TransactionMapper::mapFromEntity($transaction, false),
                 ]
