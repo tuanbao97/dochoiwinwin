@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Win Win">
 <link rel="manifest" href="{{ url('/admin-manifest.webmanifest') }}">
-<link rel="apple-touch-icon" href="{{ storefrontLogoUrl() }}">
+<link rel="apple-touch-icon" href="{{ storefrontFaviconUrl() }}">
 <title>Đồ Chơi Win Win - Quản trị hệ thống</title>
 <meta name="description" content="Trang quản trị Đồ Chơi Win Win giúp quản lý sản phẩm đồ chơi và nội dung website một cách thuận tiện, hiệu quả.">
 <meta name="keywords" content="Đồ Chơi Win Win, quản trị cửa hàng, quản lý sản phẩm, đồ chơi trẻ em">

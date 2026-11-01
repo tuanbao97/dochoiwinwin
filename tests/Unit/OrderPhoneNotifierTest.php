@@ -23,5 +23,6 @@ class OrderPhoneNotifierTest extends TestCase
         $this->assertSame('Lan · 4 sản phẩm · 486.000 ₫', $payload['body']);
         $this->assertStringEndsWith('/admin/don-hang/chi-tiet/dh-14', $payload['url']);
         $this->assertSame('ww-order-14', $payload['tag']);
+        $this->assertStringContainsString('favicon-win-win.png', $payload['icon']);
     }
 }

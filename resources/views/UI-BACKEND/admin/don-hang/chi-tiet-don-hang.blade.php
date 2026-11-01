@@ -193,10 +193,33 @@
 }
 .ww-admin-order__side .card { border-radius: 16px; }
 @media (max-width: 767px) {
-	.ww-admin-order__product { grid-template-columns: 64px minmax(0, 1fr); }
-	.ww-admin-order__facts { gap: 6px; }
-	.ww-admin-order__fact, .ww-admin-order__line { padding: 6px 8px 7px; }
-	.ww-admin-order__fact strong, .ww-admin-order__line strong { font-size: 16px; }
+	.ww-admin-order__product {
+		grid-template-columns: 56px minmax(0, 1fr);
+		gap: 10px;
+		padding: 12px 8px;
+	}
+	.ww-admin-order__image { width: 56px; height: 56px; grid-column: 1; grid-row: 1; }
+	.ww-admin-order__body { display: contents; }
+	.ww-admin-order__name { grid-column: 2; grid-row: 1; align-self: center; }
+	.ww-admin-order__facts {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		flex-direction: column;
+		gap: 6px;
+		margin-top: 2px;
+	}
+	.ww-admin-order__fact,
+	.ww-admin-order__line {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 8px 12px;
+	}
+	.ww-admin-order__fact span,
+	.ww-admin-order__line span { letter-spacing: 0.02em; }
+	.ww-admin-order__fact strong,
+	.ww-admin-order__line strong { font-size: 18px; text-align: right; }
 	.ww-admin-order__delivery, .ww-admin-order__track { grid-template-columns: 1fr; }
 }
 </style>
@@ -312,7 +335,7 @@ $(document).ready(function () {
 			: '<div class="ww-admin-order__image">🧸</div>';
 		return '<div class="ww-admin-order__product">'
 			+ thumb
-			+ '<div><a class="ww-admin-order__name" href="' + escapeHtml(href) + '" target="_blank" rel="noopener" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</a>'
+			+ '<div class="ww-admin-order__body"><a class="ww-admin-order__name" href="' + escapeHtml(href) + '" target="_blank" rel="noopener" title="' + escapeHtml(name) + '">' + escapeHtml(name) + '</a>'
 			+ '<div class="ww-admin-order__facts">'
 			+ '<div class="ww-admin-order__fact"><span>Số lượng</span><strong>' + escapeHtml(line.SO_LUONG || 0) + '</strong></div>'
 			+ '<div class="ww-admin-order__fact ww-admin-order__fact--price"><span>Đơn giá</span><strong>' + formatMoney(line.DON_GIA) + '</strong></div>'

@@ -6,9 +6,12 @@ self.addEventListener('push', function (event) {
     data = { title: 'Đồ Chơi Win Win', body: event.data ? event.data.text() : '' };
   }
 
+  var icon = data.icon || new URL('UI-FRONTEND/images/favicon-win-win.png', self.location).href;
+
   event.waitUntil(self.registration.showNotification(data.title || 'Đồ Chơi Win Win', {
     body: data.body || '',
-    icon: data.icon || undefined,
+    icon: icon,
+    badge: icon,
     data: { url: data.url || '/' },
     tag: data.tag || 'ww-order',
     renotify: true

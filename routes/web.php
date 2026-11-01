@@ -441,13 +441,13 @@ Route::get('/admin-manifest.webmanifest', function () {
         'theme_color' => '#1d4ed8',
         'icons' => [
             [
-                'src' => storefrontLogoUrl(),
+                'src' => storefrontFaviconUrl(),
                 'sizes' => '192x192',
                 'type' => 'image/png',
                 'purpose' => 'any',
             ],
             [
-                'src' => storefrontLogoUrl(),
+                'src' => storefrontFaviconUrl(),
                 'sizes' => '512x512',
                 'type' => 'image/png',
                 'purpose' => 'any',

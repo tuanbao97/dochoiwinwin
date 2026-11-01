@@ -12,7 +12,7 @@ use Throwable;
 class OrderPhoneNotifier
 {
     /**
-     * @return array{title: string, body: string, url: string, tag: string}
+     * @return array{title: string, body: string, url: string, tag: string, icon: string}
      */
     public static function payloadFor(Transaction $transaction): array
     {
@@ -31,7 +31,16 @@ class OrderPhoneNotifier
             'body' => implode(' · ', $parts),
             'url' => url('/admin/don-hang/chi-tiet/dh-'.$transaction->ID),
             'tag' => 'ww-order-'.$transaction->ID,
+            'icon' => self::notificationIcon(),
         ];
+    }
+
+    /**
+     * Cùng ảnh favicon trên tab trình duyệt.
+     */
+    private static function notificationIcon(): string
+    {
+        return storefrontFaviconUrl();
     }
 
     public function notifyNewOrder(Transaction $transaction): void
@@ -53,14 +62,17 @@ class OrderPhoneNotifier
             'body' => 'Điện thoại đã nhận thông báo đơn hàng.',
             'url' => url('/admin/don-hang/danh-sach'),
             'tag' => 'ww-push-test',
+            'icon' => self::notificationIcon(),
         ]);
     }
 
     /**
-     * @param  array{title: string, body: string, url: string, tag: string}  $payload
+     * @param  array{title: string, body: string, url: string, tag: string, icon?: string}  $payload
      */
     public function send(array $payload): int
     {
+        $payload['icon'] = $payload['icon'] ?? self::notificationIcon();
+
         if (PHP_OS_FAMILY === 'Windows' && PHP_SAPI !== 'cli') {
             return $this->sendViaCli($payload);
         }
@@ -72,7 +84,7 @@ class OrderPhoneNotifier
      * Apache trên XAMPP không đưa OPENSSL_CONF tới thư viện OpenSSL.
      * Bản CLI có biến này ký được thông báo.
      *
-     * @param  array{title: string, body: string, url: string, tag: string}  $payload
+     * @param  array{title: string, body: string, url: string, tag: string, icon?: string}  $payload
      */
     private function sendViaCli(array $payload): int
     {
@@ -125,7 +137,7 @@ class OrderPhoneNotifier
     }
 
     /**
-     * @param  array{title: string, body: string, url: string, tag: string}  $payload
+     * @param  array{title: string, body: string, url: string, tag: string, icon?: string}  $payload
      */
     public function deliver(array $payload): int
     {
