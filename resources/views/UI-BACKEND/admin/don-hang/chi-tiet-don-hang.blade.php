@@ -294,8 +294,8 @@ $(document).ready(function () {
 
 	function dateTime(value) {
 		if (!value) return '';
-		const date = new Date(value);
-		return isNaN(date.getTime()) ? String(value) : date.toLocaleString('vi-VN');
+		if (typeof formatDateTimeVN === 'function') return formatDateTimeVN(value);
+		return String(value);
 	}
 
 	function imageUrl(value) {

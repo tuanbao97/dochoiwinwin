@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminCustomerController;
 use App\Http\Controllers\Api\AdminPhonePushController;
 use App\Http\Controllers\Api\AppController;
 use App\Http\Controllers\Api\CategoryNController;
@@ -115,6 +116,9 @@ Route::middleware(['api', 'custom-validate-oauth-token'])->group(function() {
         Route::post('/admin/phone-push', [AdminPhonePushController::class, 'save']);
         Route::delete('/admin/phone-push', [AdminPhonePushController::class, 'delete']);
         Route::post('/admin/phone-push/test', [AdminPhonePushController::class, 'test']);
+
+        Route::get('/customer/list', [AdminCustomerController::class, 'index']);
+        Route::get('/customer/{key}', [AdminCustomerController::class, 'show'])->where('key', '[A-Za-z0-9\-_]+');
 
         Route::get('/transaction/list', [TransactionController::class, 'getListTransaction']);
         Route::get('/transaction/detail/{ID}', [TransactionController::class, 'getDetailTransaction']);

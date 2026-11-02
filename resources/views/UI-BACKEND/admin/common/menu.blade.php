@@ -19,6 +19,9 @@
           <li class="nav-item" id="MENU_DON_HANG" style="display: none;">
             <a class="nav-link" href="{{ url('/admin/don-hang/danh-sach') }}">Danh sách đơn hàng</a>
           </li>
+          <li class="nav-item" id="MENU_KHACH_HANG" style="display: none;">
+            <a class="nav-link" href="{{ url('/admin/khach-hang/danh-sach') }}">Khách hàng</a>
+          </li>
         </ul>
       </div>
     </li>

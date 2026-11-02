@@ -700,8 +700,9 @@
 							case 'QL_DON_HANG_CHINH_SUA':
 							case 'QL_DON_HANG_XEM':
 								$('#MENU_DON_HANG').show();
+								$('#MENU_KHACH_HANG').show();
 								$('#MENU_PARENT_LIEN_QUAN_DON_HANG').show();
-								if (routeUri === 'admin/don-hang/danh-sach' || routeUri === 'admin/don-hang/chi-tiet/{transactionId}' || routeUri === 'admin/don-hang/chi-tiet') {
+								if (routeUri === 'admin/don-hang/danh-sach' || routeUri === 'admin/don-hang/chi-tiet/{transactionId}' || routeUri === 'admin/don-hang/chi-tiet' || routeUri === 'admin/khach-hang/danh-sach' || routeUri === 'admin/khach-hang/chi-tiet/{key}') {
 									isShowMasterBody = true;
 								}
 								break;

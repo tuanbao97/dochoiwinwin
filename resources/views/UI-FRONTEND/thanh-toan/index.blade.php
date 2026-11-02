@@ -745,9 +745,16 @@
 
     function voucherDate(value) {
       if (!value) return '';
-      var date = new Date(value);
+      var raw = String(value).trim();
+      var hasZone = /(?:Z|[+\-]\d{2}:?\d{2})$/i.test(raw);
+      var normalized = raw.indexOf('T') === -1 ? raw.replace(' ', 'T') : raw;
+      if (!hasZone && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) normalized += '+07:00';
+      var date = new Date(normalized);
       if (Number.isNaN(date.getTime())) return '';
-      return date.toLocaleDateString('vi-VN');
+      return new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        day: '2-digit', month: '2-digit', year: 'numeric'
+      }).format(date);
     }
 
     function voucherMeta(voucher) {

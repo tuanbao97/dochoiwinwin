@@ -55,6 +55,7 @@ use App\Service\SettingService;
 use App\Service\TitleService;
 use App\Service\UserService;
 use App\Support\PassportKeys;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -235,6 +236,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
+        Carbon::serializeUsing(function (Carbon $date) {
+            return $date->copy()->timezone('Asia/Ho_Chi_Minh')->format('Y-m-d\TH:i:sP');
+        });
+
         // Force HTTPS chỉ khi ACTIVE_PROFILE = 'PROD'
         if (config('app.active_profile') === 'PROD') {
             URL::forceScheme('https');

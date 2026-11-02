@@ -647,6 +647,20 @@ Route::group(['prefix' => '/admin'], function() {
         return redirect('/admin/don-hang/danh-sach');
     });
 
+    Route::get('/khach-hang/danh-sach/{filters?}', function() {
+        return view('UI-BACKEND/admin/khach-hang/danh-sach-khach-hang');
+    })->where('filters', '.*');
+
+    Route::get('/khach-hang', function() {
+        return redirect('/admin/khach-hang/danh-sach');
+    });
+
+    Route::get('/khach-hang/chi-tiet/{key}', function($key) {
+        return view('UI-BACKEND/admin/khach-hang/chi-tiet-khach-hang', [
+            'customerKey' => $key,
+        ]);
+    })->where('key', '[A-Za-z0-9\-_]+');
+
     Route::get('/don-hang/chi-tiet/{transactionId}', function($transactionId) {
         $arrId = explode('-', $transactionId);
         return view('UI-BACKEND/admin/don-hang/chi-tiet-don-hang',

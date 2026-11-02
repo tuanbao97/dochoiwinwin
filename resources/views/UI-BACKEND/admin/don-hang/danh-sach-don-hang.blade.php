@@ -377,6 +377,10 @@ $(document).ready(function () {
 				, "orderable": false
 				, "width": "160px"
 				, "defaultContent": ""
+				, "render": function (data) {
+					if (isEmpty(data)) return '';
+					return typeof formatDateTimeVN === 'function' ? formatDateTimeVN(data) : data;
+				}
 			}
 			, {
 				"title": "Email"

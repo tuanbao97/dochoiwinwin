@@ -85,8 +85,17 @@
 
     function dateTime(value) {
       if (!value) return '';
-      var date = new Date(value);
-      return isNaN(date.getTime()) ? '' : date.toLocaleString('vi-VN');
+      var raw = String(value).trim();
+      var hasZone = /(?:Z|[+\-]\d{2}:?\d{2})$/i.test(raw);
+      var normalized = raw.indexOf('T') === -1 ? raw.replace(' ', 'T') : raw;
+      if (!hasZone && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) normalized += '+07:00';
+      var date = new Date(normalized);
+      if (isNaN(date.getTime())) return raw;
+      return new Intl.DateTimeFormat('vi-VN', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date);
     }
 
     function imageUrl(value) {

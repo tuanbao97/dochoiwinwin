@@ -3,6 +3,35 @@ function recoverTagHtml(escapedHTML) {
     return escapedHTML.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
 }
 
+function formatDateTimeVN(value, withTime) {
+    if (value == null || value === '') return '';
+    var raw = String(value).trim();
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) return raw;
+
+    var hasZone = /(?:Z|[+\-]\d{2}:?\d{2})$/i.test(raw);
+    var normalized = raw.indexOf('T') === -1 ? raw.replace(' ', 'T') : raw;
+    if (!hasZone && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(normalized)) {
+        normalized += '+07:00';
+    }
+
+    var date = new Date(normalized);
+    if (isNaN(date.getTime())) return raw;
+
+    var options = {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    };
+    if (withTime !== false) {
+        options.hour = '2-digit';
+        options.minute = '2-digit';
+        options.hour12 = false;
+    }
+
+    return new Intl.DateTimeFormat('vi-VN', options).format(date);
+}
+
 function formatPhoneNumber(phone) {
     // Xoá tất cả ký tự không phải số
     phone = phone.replace(/\D/g, '');
