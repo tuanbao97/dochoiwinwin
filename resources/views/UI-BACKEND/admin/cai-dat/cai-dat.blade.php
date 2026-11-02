@@ -1815,14 +1815,10 @@ $(document).ready(function () {
 				var st = (data && data.DATAS && data.DATAS.SAPO_SYNC_STATUS) || {};
 				if (st.STATE === 'running') {
 					setSapoSyncRunning(true);
-					setSapoAutoStatus(st.STATUS_DETAIL || 'Đang fetch sản phẩm vừa đổi...');
 					sapoSyncPollTimer = setTimeout(function() { pollSapoSyncStatus(notifyWhenDone); }, 3000);
 					return;
 				}
 				setSapoSyncRunning(false);
-				if (window.__wwSapoAutoOn && st.STATUS_DETAIL) {
-					setSapoAutoStatus(st.STATUS_DETAIL);
-				}
 				if (!notifyWhenDone) return;
 				if (st.STATE === 'done') {
 					showToastSuccess('top-right', st.STATUS_DETAIL || 'Fetch Sapo thành công!');
@@ -1910,11 +1906,23 @@ $(document).ready(function () {
 		type: 'GET',
 		url: '{{ url("/api/sapo/auto-fetch") }}',
 		success: function(data) {
-			var enabled = !!(data && data.DATAS && data.DATAS.ENABLED);
+			var datas = (data && data.DATAS) || {};
+			var enabled = !!datas.ENABLED;
 			$('#SW_SAPO_AUTO').prop('checked', enabled);
-			setSapoAutoStatus(enabled ? 'Đang bật. Tiến trình nền sẽ fetch mỗi 60 giây.' : 'Đang tắt. Tiến trình nền bỏ qua việc này.');
+			setSapoAutoStatus(datas.STATUS_LINE || (enabled ? 'Đang bật. Tiến trình nền sẽ fetch mỗi 60 giây.' : 'Đang tắt. Tiến trình nền bỏ qua việc này.'));
 		}
 	});
+
+	setInterval(function() {
+		$.ajax({
+			type: 'GET',
+			url: '{{ url("/api/sapo/auto-fetch") }}',
+			success: function(data) {
+				var line = data && data.DATAS && data.DATAS.STATUS_LINE;
+				if (line) setSapoAutoStatus(line);
+			}
+		});
+	}, 30000);
 
 	pollSapoSyncStatus(false);
 

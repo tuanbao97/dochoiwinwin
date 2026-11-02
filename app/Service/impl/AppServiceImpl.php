@@ -186,10 +186,14 @@ class AppServiceImpl implements AppService
     {
         BackgroundTasks::ensureRunning();
 
+        $enabled = SapoAutoFetch::enabled();
+
         return response()->json(
             new ApiResponseDto(AppConstant::STATUS_SUCCESS, 'Truy vấn thành công.', [
-                'ENABLED' => SapoAutoFetch::enabled(),
+                'ENABLED' => $enabled,
                 'INTERVAL_SECONDS' => BackgroundTasks::INTERVAL_SECONDS,
+                'DAEMON' => BackgroundTasks::isRunning(),
+                'STATUS_LINE' => BackgroundTasks::statusLine($enabled),
             ])
         )->setStatusCode(JsonResponse::HTTP_OK);
     }
