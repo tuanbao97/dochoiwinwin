@@ -157,15 +157,14 @@
     @endif
     <div class="ww-sum__row">
       <span>Phí vận chuyển</span>
-      <span id="ww-checkout-shipping">Chi phí thỏa thuận</span>
+      <span id="ww-checkout-shipping">Thỏa thuận</span>
     </div>
     <div class="ww-sum__discounts" id="ww-checkout-discount-rows"></div>
     <div class="ww-sum__row ww-sum__row--total">
       <span>Tổng cộng</span>
       <span id="ww-checkout-total">{{ $formatPrice($grandTotal) }}</span>
     </div>
-    <p class="ww-sum__vat">Đã bao gồm VAT (nếu có). Phí vận chuyển được chốt khi shop xác nhận đơn.</p>
-    <p class="ww-sum__hold">Chúng tôi sẽ giữ đơn và xác nhận với quý khách trong vòng 15-20 phút tới. Vui lòng để ý điện thoại và Zalo.</p>
+    <p class="ww-sum__vat">Phí ship sẽ chốt với bạn qua điện thoại hoặc Zalo.</p>
   </div>
 
   <button type="submit" form="ww-checkout-form" class="ww-sum__submit" id="ww-checkout-submit">
@@ -173,9 +172,8 @@
   </button>
 
   <ul class="ww-sum__trust">
-    <li><i class="icon icon-truck-fast" aria-hidden="true"></i> Giao nhanh toàn quốc, kiểm tra hàng trước khi thanh toán</li>
-    <li><i class="icon icon-tick" aria-hidden="true"></i> Hàng chính hãng 100%, vật liệu an toàn cho bé</li>
-    <li><i class="icon icon-refresh" aria-hidden="true"></i> Đổi trả trong 7 ngày nếu lỗi nhà sản xuất</li>
+    <li><i class="icon icon-truck-fast" aria-hidden="true"></i> Kiểm tra hàng trước khi trả tiền</li>
+    <li><i class="icon icon-tick" aria-hidden="true"></i> Hàng chính hãng</li>
   </ul>
 </div>
 

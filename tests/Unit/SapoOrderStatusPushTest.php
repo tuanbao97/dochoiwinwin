@@ -69,7 +69,13 @@ class SapoOrderStatusPushTest extends TestCase
         $this->assertSame([[
             'post',
             '/admin/orders/55/cancel.json',
-            ['reason' => 'other', 'email' => false, 'restock' => true],
+            [
+                'order_cancel' => [
+                    'reason' => 'other',
+                    'email' => false,
+                    'restock' => true,
+                ],
+            ],
         ]], $calls);
     }
 

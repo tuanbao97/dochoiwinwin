@@ -91,15 +91,17 @@
                     <input id="checkout-name" name="name" type="text" placeholder="Nhập họ tên người nhận" autocomplete="name" value="{{ $storefrontUser['FULL_NAME'] ?? '' }}">
                     <span class="ww-co-error" id="MSG_HO_TEN"></span>
                   </div>
-                  <div class="ww-co-field">
-                    <label for="checkout-phone">Số điện thoại <span class="ww-co-req">*</span></label>
-                    <input id="checkout-phone" name="phone" type="tel" placeholder="Ví dụ: 0909 123 456" autocomplete="tel" inputmode="tel" value="{{ $storefrontUser['PHONE'] ?? '' }}">
-                    <span class="ww-co-error" id="MSG_SO_DIEN_THOAI"></span>
-                  </div>
-                  <div class="ww-co-field">
-                    <label for="checkout-email">Email <span class="ww-co-optional">(không bắt buộc)</span></label>
-                    <input id="checkout-email" name="email" type="text" placeholder="email@example.com" autocomplete="email" value="{{ $storefrontUser['EMAIL'] ?? '' }}">
-                    <span class="ww-co-error" id="MSG_EMAIL"></span>
+                  <div class="ww-co-split">
+                    <div class="ww-co-field">
+                      <label for="checkout-phone">Số điện thoại <span class="ww-co-req">*</span></label>
+                      <input id="checkout-phone" name="phone" type="tel" placeholder="0909 123 456" autocomplete="tel" inputmode="tel" value="{{ $storefrontUser['PHONE'] ?? '' }}">
+                      <span class="ww-co-error" id="MSG_SO_DIEN_THOAI"></span>
+                    </div>
+                    <div class="ww-co-field">
+                      <label for="checkout-email">Email <span class="ww-co-optional">(không bắt buộc)</span></label>
+                      <input id="checkout-email" name="email" type="text" placeholder="email@example.com" autocomplete="email" value="{{ $storefrontUser['EMAIL'] ?? '' }}">
+                      <span class="ww-co-error" id="MSG_EMAIL"></span>
+                    </div>
                   </div>
                   <div class="ww-co-field ww-co-field--full">
                     <span class="ww-co-field__label">Hình thức nhận hàng <span class="ww-co-req">*</span></span>
@@ -107,45 +109,25 @@
                       <label class="ww-co-ship__option is-active">
                         <input type="radio" name="delivery_method" value="ship" checked>
                         <span class="ww-co-ship__check" aria-hidden="true"></span>
-                        <span class="ww-co-ship__head">
-                          <span class="ww-co-ship__icon" aria-hidden="true">
-                            <i class="icon icon-truck-fast"></i>
-                          </span>
-                          <strong class="ww-co-ship__title">Giao hàng tận nơi</strong>
+                        <span class="ww-co-ship__icon" aria-hidden="true">
+                          <i class="icon icon-truck-fast"></i>
                         </span>
-                        <span class="ww-co-ship__body">
-                          <em>Ship đến địa chỉ của bạn</em>
-                        </span>
+                        <strong class="ww-co-ship__title">Giao tận nơi</strong>
+                        <span class="ww-co-ship__sub">Ship đến địa chỉ của bạn</span>
                       </label>
                       <label class="ww-co-ship__option ww-co-ship__option--pickup">
                         <input type="radio" name="delivery_method" value="pickup">
                         <span class="ww-co-ship__check" aria-hidden="true"></span>
-                        <span class="ww-co-ship__head">
-                          <span class="ww-co-ship__icon" aria-hidden="true">
-                            <i class="icon icon-location"></i>
-                          </span>
-                          <strong class="ww-co-ship__title">Nhận tại cửa hàng</strong>
-                          <span class="ww-co-ship__badge">FREESHIP</span>
+                        <span class="ww-co-ship__icon" aria-hidden="true">
+                          <i class="icon icon-location"></i>
                         </span>
-                        <span class="ww-co-ship__body">
-                          <span class="ww-co-ship__place">
-                            <strong class="ww-co-ship__place-name">{{ $storePickupName }}</strong>
-                            @if($storePickupStreet !== '')
-                              <span class="ww-co-ship__place-line">{{ $storePickupStreet }}</span>
-                            @endif
-                            @if($storePickupNote !== '')
-                              <span class="ww-co-ship__place-note">{{ $storePickupNote }}</span>
-                            @endif
-                            @if($storePickupPhones !== [])
-                              <span class="ww-co-ship__place-phone">{{ implode(' · ', $storePickupPhones) }}</span>
-                            @endif
-                          </span>
-                        </span>
+                        <strong class="ww-co-ship__title">Nhận tại shop</strong>
+                        <span class="ww-co-ship__sub">{{ $storePickupStreet !== '' ? $storePickupStreet : $storePickupName }}</span>
+                        <span class="ww-co-ship__badge">Freeship</span>
                       </label>
                     </div>
                   </div>
-                  <div class="ww-co-field ww-co-field--full" id="ww-checkout-address-field">
-                    <span class="ww-co-field__label" id="ww-checkout-address-label">Địa chỉ nhận hàng <span class="ww-co-req">*</span></span>
+                  <div class="ww-co-address" id="ww-checkout-address-field">
                     <div class="ww-co-area" id="ww-checkout-area">
                       <div>
                         <label for="checkout-province">Tỉnh/Thành phố <span class="ww-co-req">*</span></label>
@@ -158,15 +140,29 @@
                         <span class="ww-co-error" id="MSG_PHUONG_XA"></span>
                       </div>
                     </div>
-                    <label for="checkout-address" id="ww-checkout-street-label">Số nhà, tên đường <span class="ww-co-req">*</span></label>
-                    <textarea id="checkout-address" name="address" rows="2" placeholder="Số nhà, tên đường" autocomplete="street-address">{{ $savedShipAddress['street'] ?? '' }}</textarea>
-                    <p class="ww-co-ship__hint" id="ww-checkout-pickup-hint" hidden>Miễn phí vận chuyển khi nhận tại cửa hàng.</p>
-                    <span class="ww-co-error" id="MSG_DIA_CHI"></span>
+                    <div class="ww-co-field">
+                      <label for="checkout-address" id="ww-checkout-street-label">Số nhà, tên đường <span class="ww-co-req">*</span></label>
+                      <input id="checkout-address" name="address" type="text" placeholder="Số nhà, tên đường" autocomplete="street-address" value="{{ $savedShipAddress['street'] ?? '' }}">
+                      <span class="ww-co-error" id="MSG_DIA_CHI"></span>
+                    </div>
+                  </div>
+                  <div class="ww-co-store" id="ww-checkout-pickup-box" hidden>
+                    <strong>{{ $storePickupName }}</strong>
+                    @if($storePickupStreet !== '')
+                      <span>{{ $storePickupStreet }}</span>
+                    @endif
+                    @if($storePickupNote !== '')
+                      <span>{{ $storePickupNote }}</span>
+                    @endif
+                    @if($storePickupPhones !== [])
+                      <span class="ww-co-store__phone">{{ implode(' · ', $storePickupPhones) }}</span>
+                    @endif
+                    <span class="ww-co-store__free">Miễn phí vận chuyển. Thanh toán khi đến lấy hàng.</span>
                   </div>
                   <input type="hidden" name="pickup" id="checkout-pickup" value="0">
                   <div class="ww-co-field ww-co-field--full">
-                    <label for="checkout-note">Ghi chú đơn hàng <span class="ww-co-optional">(không bắt buộc)</span></label>
-                    <textarea id="checkout-note" name="note" rows="2" placeholder="Thời gian muốn nhận hàng, lời nhắn cho shop..."></textarea>
+                    <label for="checkout-note">Ghi chú <span class="ww-co-optional">(không bắt buộc)</span></label>
+                    <textarea id="checkout-note" name="note" rows="2" placeholder="Thời gian muốn nhận, lời nhắn cho shop..."></textarea>
                     <span class="ww-co-error" id="MSG_GHI_CHU"></span>
                   </div>
                   <span class="ww-co-error ww-co-field--full" id="MSG_ITEMS"></span>
@@ -183,7 +179,7 @@
                     <p id="ww-checkout-pay-desc">Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.</p>
                   </div>
                 </div>
-                <p class="ww-co-pay__note">Cần chuyển khoản trước hoặc xuất hóa đơn VAT? Ghi chú giúp shop ở mục Ghi chú đơn hàng, nhân viên sẽ liên hệ xác nhận.</p>
+                <p class="ww-co-pay__note">Cần chuyển khoản trước hoặc xuất hóa đơn VAT? Ghi chú giúp shop ở mục Ghi chú, nhân viên sẽ liên hệ xác nhận.</p>
               </div>
             </div>
 
@@ -304,13 +300,11 @@
     var savedShipParts = @json($savedShipAddress ?? ['street' => '', 'ward' => '', 'province' => '']);
     var savedShipAddress = savedShipParts.street ? String(savedShipParts.street) : (form.address ? String(form.address.value || '') : '');
     var rememberTimer = null;
-    var addressLabelEl = document.getElementById('ww-checkout-address-label');
-    var areaEl = document.getElementById('ww-checkout-area');
+    var addressFieldEl = document.getElementById('ww-checkout-address-field');
     var provinceSelect = document.getElementById('checkout-province');
     var wardSelect = document.getElementById('checkout-ward');
     var vnAreas = @json(json_decode(file_get_contents(resource_path('data/vn-provinces-wards.json')), true) ?: []);
-    var streetLabelEl = document.getElementById('ww-checkout-street-label');
-    var pickupHintEl = document.getElementById('ww-checkout-pickup-hint');
+    var pickupBoxEl = document.getElementById('ww-checkout-pickup-box');
     var pickupInput = document.getElementById('checkout-pickup');
     var payTitleEl = document.getElementById('ww-checkout-pay-title');
     var payDescEl = document.getElementById('ww-checkout-pay-desc');
@@ -432,7 +426,7 @@
         shippingEl.classList.add('is-free');
         return;
       }
-      shippingEl.textContent = 'Chi phí thỏa thuận';
+        shippingEl.textContent = 'Thỏa thuận';
       shippingEl.classList.remove('is-free');
     }
 
@@ -471,62 +465,35 @@
       });
 
       if (pickup) {
-        if (areaEl) areaEl.hidden = true;
-        if (streetLabelEl) streetLabelEl.hidden = true;
+        if (addressFieldEl) addressFieldEl.hidden = true;
+        if (pickupBoxEl) pickupBoxEl.hidden = false;
         if (form.address && !form.address.readOnly) {
           savedShipAddress = String(form.address.value || '');
         }
         if (form.address) {
-          form.address.value = storePickupAddress;
+          form.address.value = String(storePickupAddress || '').replace(/\s+/g, ' ').trim();
           form.address.readOnly = true;
-          form.address.rows = 3;
           form.address.classList.remove('is-invalid');
         }
-        if (addressLabelEl) {
-          addressLabelEl.innerHTML = 'Địa chỉ cửa hàng <span class="ww-co-req">*</span>';
-        }
-        if (pickupHintEl) pickupHintEl.hidden = false;
         if (payTitleEl) payTitleEl.textContent = 'Thanh toán tại cửa hàng';
         if (payDescEl) payDescEl.textContent = 'Bạn đến nhận hàng và thanh toán trực tiếp tại cửa hàng.';
         state.shipping = 0;
-
-        var hadVoucher = appliedVoucherCodes.length > 0 || pendingVoucherCodes.length > 0;
-        appliedVoucherCodes = [];
-        pendingVoucherCodes = [];
-
-        updateShippingDisplay();
-        voucherCache = null;
-        if (hadVoucher) {
-          resetVoucher('Voucher đã được gỡ. Vui lòng chọn lại.');
-        } else {
-          refreshTotalsWithoutVoucher();
-          setVoucherMessage('', '');
-        }
-        refreshVoucherHighlight();
-        return;
-      }
-
-      if (areaEl) areaEl.hidden = false;
-      if (streetLabelEl) streetLabelEl.hidden = false;
-      if (form.address) {
-        form.address.readOnly = false;
-        form.address.rows = 2;
-        if (String(form.address.value || '') === storePickupAddress) {
+      } else {
+        if (addressFieldEl) addressFieldEl.hidden = false;
+        if (pickupBoxEl) pickupBoxEl.hidden = true;
+        if (form.address) {
+          form.address.readOnly = false;
           form.address.value = savedShipAddress;
         }
+        if (payTitleEl) payTitleEl.textContent = 'Thanh toán khi nhận hàng (COD)';
+        if (payDescEl) payDescEl.textContent = 'Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.';
+        state.shipping = baseShipping;
       }
-      if (addressLabelEl) {
-        addressLabelEl.innerHTML = 'Địa chỉ nhận hàng <span class="ww-co-req">*</span>';
-      }
-      if (pickupHintEl) pickupHintEl.hidden = true;
-      if (payTitleEl) payTitleEl.textContent = 'Thanh toán khi nhận hàng (COD)';
-      if (payDescEl) payDescEl.textContent = 'Bạn kiểm tra hàng rồi mới thanh toán cho đơn vị vận chuyển.';
-      state.shipping = baseShipping;
 
       updateShippingDisplay();
       voucherCache = null;
       if (appliedVoucherCodes.length) {
-        applyVoucherCodes(appliedVoucherCodes, true);
+        applyVoucherCodes(appliedVoucherCodes.slice(), true, true);
       } else {
         refreshTotalsWithoutVoucher();
       }
@@ -888,9 +855,10 @@
 
       chips.hidden = list.length === 0;
       chips.innerHTML = list.map(function (code) {
-        return '<span class="ww-voucher-chip">' + escapeHtml(code) +
+        var label = voucherBenefit(code) || 'Voucher';
+        return '<span class="ww-voucher-chip">' + escapeHtml(label) +
           '<button type="button" data-ww-remove-voucher="' + escapeHtml(code) +
-          '" aria-label="Bỏ mã ' + escapeHtml(code) + '">×</button></span>';
+          '" aria-label="Bỏ mã giảm giá">×</button></span>';
       }).join('');
     }
 
@@ -1135,12 +1103,12 @@
       applyVoucherCodes(mergeVoucherCodes(rawCode), silent);
     }
 
-    function applyVoucherCodes(codes, silent) {
+    function applyVoucherCodes(codes, silent, preserveSelection) {
       codes = (codes || []).map(function (code) {
         return String(code || '').trim().toUpperCase();
       }).filter(Boolean);
       var strippedFreeship = false;
-      if (isPickup()) {
+      if (isPickup() && !preserveSelection) {
         var beforeCount = codes.length;
         codes = stripFreeShippingVouchers(codes);
         strippedFreeship = codes.length !== beforeCount;
@@ -1208,12 +1176,12 @@
           var totalEl = el('ww-checkout-total');
           if (totalEl) totalEl.textContent = money(quote.total);
           setAppliedVoucherUi(appliedVoucherCodes);
-          setVoucherMessage('Đã áp dụng ' + appliedVoucherCodes.join(' + ') +
-            ', giảm ' + money(quote.discount_amount) + '.', 'success');
+          setVoucherMessage('', '');
           updateShippingDisplay();
           syncBar();
         })
         .catch(function (error) {
+          if (silent && preserveSelection) return;
           setVoucherMessage(error && error.message ? error.message : 'Không thể áp dụng mã giảm giá.', 'error');
         })
         .finally(function () {
@@ -1236,20 +1204,13 @@
         return Number(part.discount_amount || 0) > 0;
       });
 
-      host.innerHTML = rows.map(function (part) {
-        var code = String(part.code || '').toUpperCase();
-        var benefit = voucherBenefit(code);
-
-        return '<div class="ww-sum__row ww-sum__row--saving">' +
-          '<span class="ww-sum__discount-label">' +
-            '<i class="icon icon-ticket-discount" aria-hidden="true"></i>' +
-            '<span><strong>' + escapeHtml(code) + '</strong>' +
-              (benefit ? '<em>' + escapeHtml(benefit) + '</em>' : '') +
-            '</span>' +
-          '</span>' +
-          '<span>-' + money(part.discount_amount) + '</span>' +
-        '</div>';
-      }).join('');
+      var discount = rows.reduce(function (sum, part) {
+        return sum + Number(part.discount_amount || 0);
+      }, 0);
+      if (discount <= 0 && quote) discount = Number(quote.discount_amount || 0);
+      host.innerHTML = discount > 0
+        ? '<div class="ww-sum__row ww-sum__row--saving"><span>Giảm giá</span><span>-' + money(discount) + '</span></div>'
+        : '';
     }
 
     function voucherBenefit(code) {

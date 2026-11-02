@@ -61,9 +61,11 @@ class SapoOrderStatusPusher
         }
 
         $this->sapo->post('/admin/orders/'.$sapoId.'/cancel.json', [
-            'reason' => 'other',
-            'email' => false,
-            'restock' => true,
+            'order_cancel' => [
+                'reason' => 'other',
+                'email' => false,
+                'restock' => true,
+            ],
         ]);
     }
 
