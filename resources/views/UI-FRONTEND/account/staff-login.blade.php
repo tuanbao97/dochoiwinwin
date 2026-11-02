@@ -154,13 +154,13 @@
         function redirectTarget() {
           var params = new URLSearchParams(window.location.search);
           var target = params.get('redirect');
-          if (!target) return @json(url('/admin/san-pham/danh-sach'));
+          if (!target) return @json(url('/admin/don-hang/danh-sach'));
           try {
             var url = new URL(target, window.location.origin);
-            if (url.origin !== window.location.origin) return @json(url('/admin/san-pham/danh-sach'));
+            if (url.origin !== window.location.origin) return @json(url('/admin/don-hang/danh-sach'));
             return url.href;
           } catch (e) {
-            return @json(url('/admin/san-pham/danh-sach'));
+            return @json(url('/admin/don-hang/danh-sach'));
           }
         }
 

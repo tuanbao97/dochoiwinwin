@@ -116,6 +116,10 @@ Route::middleware(['count-client-view-website'])->group(function() {
     Route::get('san-pham/chi-tiet/{productKey}', [ThemeStorefrontController::class, 'productDetail'])
         ->where('productKey', '.+');
 
+    Route::get('admin', function () {
+        return redirect('/admin/don-hang/danh-sach');
+    });
+
     Route::get('{themeProductSlug}', [ThemeStorefrontController::class, 'productOrQuickview'])
         ->where('themeProductSlug', '[a-z0-9][a-z0-9\-]{0,200}');
 
@@ -471,7 +475,7 @@ Route::get('/dang-nhap', function() {
 });
 
 Route::group(['prefix' => '/admin'], function() {
-    
+
     Route::get('/login', function() {
         return view('UI-BACKEND/admin/auth/login/login');
     });

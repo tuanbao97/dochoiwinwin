@@ -63,7 +63,7 @@
         <li data-ww-account-admin @unless($wwUser && $wwUser['IS_ADMIN']) hidden @endunless>
           <a
             class="ww-account__menu-link ww-account__admin"
-            href="{{ url('/admin/san-pham/danh-sach') }}"
+            href="{{ url('/admin/don-hang/danh-sach') }}"
             data-ww-account-admin-link
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

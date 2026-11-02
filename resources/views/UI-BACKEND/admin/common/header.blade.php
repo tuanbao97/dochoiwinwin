@@ -64,9 +64,9 @@
 	<div class="navbar-brand-wrapper d-flex justify-content-center">
 		<div
 			class="navbar-brand-inner-wrapper d-flex justify-content-between align-items-center w-100">
-			<a class="navbar-brand brand-logo" href="{{ url('/admin/san-pham/danh-sach') }}"><img
+			<a class="navbar-brand brand-logo" href="{{ url('/admin/don-hang/danh-sach') }}"><img
 				src="{{ storefrontLogoWideUrl() }}" alt="Đồ Chơi Win Win" style="width: auto; max-width: 100%; height: 42px;" /></a>
-			<a class="navbar-brand brand-logo-mini" href="{{ url('/admin/san-pham/danh-sach') }}"><img
+			<a class="navbar-brand brand-logo-mini" href="{{ url('/admin/don-hang/danh-sach') }}"><img
 				src="{{ storefrontLogoWideUrl() }}" alt="Đồ Chơi Win Win" style="width: auto; max-width: 100%; height: 42px;" /></a>
 			<button class="navbar-toggler navbar-toggler align-self-center"
 				type="button" data-toggle="minimize">

@@ -31,7 +31,7 @@ class StorefrontAccountPageController extends Controller
     {
         if ($this->identity->check()) {
             $fallback = $this->identity->payload()['IS_ADMIN'] ?? false
-                ? url('/admin/san-pham/danh-sach')
+                ? url('/admin/don-hang/danh-sach')
                 : url('/');
 
             return redirect($this->safeRedirect($request, $fallback));

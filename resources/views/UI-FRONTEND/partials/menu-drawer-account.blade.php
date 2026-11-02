@@ -48,7 +48,7 @@
       <li data-ww-drawer-admin @unless($wwDrawerUser && $wwDrawerUser['IS_ADMIN']) hidden @endunless>
         <a
           class="ww-drawer-account__link ww-drawer-account__link--admin"
-          href="{{ url('/admin/san-pham/danh-sach') }}"
+          href="{{ url('/admin/don-hang/danh-sach') }}"
           data-ww-drawer-admin-link
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

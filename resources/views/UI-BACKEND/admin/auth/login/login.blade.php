@@ -190,7 +190,7 @@
 						
 
 						// Về trang danh sách sản phẩm
-						window.location = '{{ url('/admin/san-pham/danh-sach') }}';
+						window.location = '{{ url('/admin/don-hang/danh-sach') }}';
 						
 					},
 					error: function(request, textStatus, errorThrown) {
