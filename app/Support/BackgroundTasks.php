@@ -128,16 +128,15 @@ class BackgroundTasks
             ? Carbon::createFromTimestamp((int) $status['at'])->timezone('Asia/Ho_Chi_Minh')->format('d/m/Y H:i:s')
             : null;
         $detail = $status['results']['fetch-sapo']['detail'] ?? null;
-        $last = ($when && $detail) ? ' Lần fetch gần nhất '.$when.': '.$detail : '';
+        $last = ($when && $detail) ? 'Lần fetch gần nhất '.$when.': '.$detail.'.' : 'Chưa có lần fetch nào.';
 
         if (self::isRunning()) {
-            return 'Tiến trình nền đang chạy.'.$last;
+            return 'Đang chạy, mỗi 60 giây fetch một lần. '.$last;
         }
 
         $error = (string) (self::readSpawnAttempt()['error'] ?? '');
-        $why = $error !== '' ? ' '.$error : '';
 
-        return 'Tiến trình nền chưa chạy trên server.'.$why.$last.' Mỗi lượt vào web vẫn fetch khi đã quá 60 giây.';
+        return 'Đang bật lại. '.$last.($error !== '' ? ' '.$error : '');
     }
 
     public static function beat(): void
@@ -145,17 +144,23 @@ class BackgroundTasks
         $path = self::heartbeatPath();
         $directory = dirname($path);
         if (! is_dir($directory)) {
-            mkdir($directory, 0777, true);
+            @mkdir($directory, 0777, true);
         }
 
-        file_put_contents($path, (string) getmypid());
+        $payload = (string) getmypid();
+        for ($try = 0; $try < 5; $try++) {
+            if (@file_put_contents($path, $payload) !== false) {
+                return;
+            }
+            usleep(100000);
+        }
     }
 
     public static function forgetBeat(): void
     {
         $path = self::heartbeatPath();
         if (is_file($path)) {
-            unlink($path);
+            @unlink($path);
         }
     }
 

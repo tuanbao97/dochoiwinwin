@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Support\BackgroundTasks;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SuperviseBackgroundTasksCommand extends Command
 {
@@ -13,20 +15,20 @@ class SuperviseBackgroundTasksCommand extends Command
 
     public function handle(): int
     {
-        BackgroundTasks::beat();
-
-        try {
-            while (true) {
+        while (true) {
+            try {
                 BackgroundTasks::beat();
                 BackgroundTasks::tick();
-
-                for ($second = 0; $second < BackgroundTasks::INTERVAL_SECONDS; $second++) {
-                    BackgroundTasks::beat();
-                    sleep(1);
-                }
+            } catch (Throwable $e) {
+                Log::warning('Tiến trình nền lỗi', ['message' => $e->getMessage()]);
             }
-        } finally {
-            BackgroundTasks::forgetBeat();
+
+            for ($second = 0; $second < BackgroundTasks::INTERVAL_SECONDS; $second++) {
+                if ($second % 10 === 0) {
+                    BackgroundTasks::beat();
+                }
+                sleep(1);
+            }
         }
     }
 }
