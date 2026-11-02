@@ -146,7 +146,7 @@
           <li class="menu-item px-6 group hover:bg-neutral-50 -mt-[1px]">
             <a href="{{ url('/chinh-sach-bao-hanh') }}" data-prefetch="/chinh-sach-bao-hanh" class="menu-item__link flex items-center gap-3.5 py-2 font-semibold " title="BẢO HÀNH">
               <span>
-                Báº¢O HÃ€NH              </span>
+                BẢO HÀNH              </span>
 
             </a>
 

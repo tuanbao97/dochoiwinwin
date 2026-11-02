@@ -108,7 +108,6 @@
                     <div class="ww-co-ship" role="radiogroup" aria-label="Hình thức nhận hàng">
                       <label class="ww-co-ship__option is-active">
                         <input type="radio" name="delivery_method" value="ship" checked>
-                        <span class="ww-co-ship__check" aria-hidden="true"></span>
                         <span class="ww-co-ship__icon" aria-hidden="true">
                           <i class="icon icon-truck-fast"></i>
                         </span>
@@ -117,7 +116,6 @@
                       </label>
                       <label class="ww-co-ship__option ww-co-ship__option--pickup">
                         <input type="radio" name="delivery_method" value="pickup">
-                        <span class="ww-co-ship__check" aria-hidden="true"></span>
                         <span class="ww-co-ship__icon" aria-hidden="true">
                           <i class="icon icon-location"></i>
                         </span>

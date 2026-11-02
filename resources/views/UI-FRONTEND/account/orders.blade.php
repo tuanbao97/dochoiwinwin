@@ -46,7 +46,6 @@
     </section>
   </main>
 
-  @include('UI-FRONTEND.common.footer')
   @include('UI-FRONTEND.common.theme-portals')
 
   <script>

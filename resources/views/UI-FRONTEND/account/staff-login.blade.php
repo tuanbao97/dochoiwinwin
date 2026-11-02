@@ -236,7 +236,6 @@
     </script>
   </main>
 
-  @include('UI-FRONTEND.common.footer')
   @include('UI-FRONTEND.common.theme-portals')
   <script src="{{ storefrontThemeAsset('main.js') }}" defer fetchpriority="low"></script>
   @include('UI-FRONTEND.common.cart-scripts')

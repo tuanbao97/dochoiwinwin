@@ -1,6 +1,6 @@
 @php
   $seoTitle = 'Chính sách bảo hành — Win Win';
-  $seoDescription = 'Chính sách bảo hành và hỗ trợ sau mua tại Đồ Chơi Win Win. Hotline 0905 454 775 - 0905 09 09 10.';
+  $seoDescription = 'Chính sách bảo hành tại Đồ Chơi Win Win: kiểm tra khi nhận hàng, video mở hộp và điều kiện hỗ trợ lỗi nhà sản xuất.';
 @endphp
 @include('UI-FRONTEND.san-pham.partials.product-detail-head')
 
@@ -34,81 +34,57 @@
 
             <div class="ww-policy__body prose text-base">
               <p>
-                Đồ Chơi Win Win cam kết mang đến sản phẩm chất lượng và hỗ trợ
-                khách hàng sau khi mua hàng một cách rõ ràng, minh bạch. Chính sách bảo hành dưới đây
-                áp dụng cho các sản phẩm mua tại cửa hàng hoặc đặt hàng qua website / Zalo / Messenger / hotline.
+                Đồ chơi là sản phẩm thường xuyên tiếp xúc, va chạm khi trẻ chơi.
+                Win Win hỗ trợ bảo hành theo điều kiện rõ ràng dưới đây để bảo vệ quyền lợi khách hàng
+                và đảm bảo sản phẩm lỗi từ nhà sản xuất được xử lý công bằng.
               </p>
 
-              <h2>1. Phạm vi hỗ trợ</h2>
-              <p>Tùy theo nhóm sản phẩm, Win Win áp dụng hình thức hỗ trợ như sau:</p>
+              <h2>1. Điều kiện được bảo hành</h2>
+              <p>Win Win chỉ tiếp nhận bảo hành khi đồng thời đáp ứng các điều kiện sau:</p>
               <ul>
                 <li>
-                  <strong>Đồ chơi điện tử / điều khiển:</strong> được kiểm tra hoạt động trước khi giao. Nếu sản phẩm
-                  không khởi động, lỗi điều khiển hoặc thiếu phụ kiện so với mô tả, quý khách vui lòng báo trong vòng
-                  <strong>48 giờ</strong> kể từ khi nhận hàng để được kiểm tra và hỗ trợ.
+                  Quý khách có <strong>video mở hộp sản phẩm và test trực tiếp ngay lúc đó</strong>
+                  (quay liền mạch, thấy rõ bao bì, tem, tình trạng sản phẩm và quá trình kiểm tra).
                 </li>
                 <li>
-                  <strong>Đồ chơi lắp ghép / mô hình:</strong> quý khách nên kiểm tra số lượng chi tiết, bao bì và
-                  phụ kiện ngay khi nhận. Win Win hỗ trợ đổi hoặc bổ sung khi giao sai hàng, thiếu chi tiết do nhà
-                  sản xuất hoặc hư hỏng trong quá trình vận chuyển.
+                  Lỗi thuộc về <strong>nhà sản xuất</strong>
+                  (không khởi động, lỗi linh kiện, thiếu phụ kiện so với mô tả, lỗi kỹ thuật sẵn có…).
                 </li>
                 <li>
-                  <strong>Đồ chơi không dùng điện:</strong> được hỗ trợ khi có lỗi kỹ thuật, sai mẫu, sai màu hoặc
-                  không đúng thông tin đơn hàng. Sản phẩm cần còn nguyên tem, bao bì và chưa qua sử dụng.
-                </li>
-                <li>
-                  <strong>Sản phẩm khác:</strong> điều kiện hỗ trợ sẽ được nhân viên tư vấn rõ khi bán hàng
-                  hoặc khi xác nhận đơn.
+                  Còn thông tin mua hàng: hóa đơn, tin nhắn xác nhận đơn, hoặc đơn hàng trên hệ thống.
                 </li>
               </ul>
 
-              <h2>2. Thời hạn tiếp nhận yêu cầu</h2>
+              <h2>2. Trường hợp không bảo hành</h2>
               <ul>
-                <li><strong>Lỗi khi nhận hàng / thiếu phụ kiện:</strong> trong vòng <strong>48 giờ</strong> sau khi nhận hàng.</li>
-                <li><strong>Yêu cầu bảo hành kỹ thuật:</strong> theo thời hạn của từng sản phẩm hoặc nhà sản xuất.</li>
-                <li>Quá thời hạn trên, Win Win vẫn tiếp nhận phản ánh để hỗ trợ tư vấn, nhưng có thể không áp dụng đổi/bù.</li>
+                <li>Hàng đã qua sử dụng.</li>
+                <li>Hư hỏng do đâm va, rơi vỡ, ngấm nước, cháy chập hoặc sử dụng sai hướng dẫn.</li>
+                <li>Không có video mở hộp và test ngay khi nhận hàng.</li>
+                <li>Lỗi phát sinh sau khi sản phẩm đã hoạt động bình thường lúc kiểm tra.</li>
               </ul>
 
-              <h2>3. Điều kiện tiếp nhận bảo hành / đổi hàng</h2>
+              <h2>3. Kiểm tra tại cửa hàng</h2>
               <ul>
-                <li>Còn hóa đơn, biên nhận, tin nhắn xác nhận đơn hoặc thông tin đơn hàng trên hệ thống.</li>
-                <li>Cung cấp hình ảnh/video sản phẩm rõ nét thể hiện tình trạng lỗi (nếu yêu cầu đổi/bù).</li>
-                <li>Sản phẩm còn nguyên trạng theo điều kiện từng nhóm hàng (tem, bao bì, hạn sử dụng…).</li>
-                <li>Lỗi phát sinh không do bảo quản sai hướng dẫn, va đập sau khi nhận, hoặc sử dụng không đúng cách.</li>
-              </ul>
-
-              <h2>4. Trường hợp từ chối bảo hành</h2>
-              <p>Win Win xin phép <strong>từ chối bảo hành / đổi trả</strong> trong các trường hợp sau:</p>
-              <ul>
-                <li>Sản phẩm bị rơi vỡ, ngấm nước, cháy chập hoặc biến dạng do sử dụng sai hướng dẫn.</li>
-                <li>Sản phẩm đã qua sử dụng, đã mở bao bì/niêm phong (đối với hàng đóng gói) mà không phải lỗi từ cửa hàng.</li>
-                <li>Hư hỏng do bảo quản sai (để ngoài nắng, nhiệt độ cao, ẩm ướt, gần nguồn nhiệt…).</li>
-                <li>Hư hỏng do vận chuyển lại bởi bên thứ ba sau khi khách đã nhận hàng.</li>
-                <li>Không cung cấp được thông tin đơn hàng / bằng chứng mua hàng cần thiết.</li>
-                <li>Yêu cầu vượt quá thời hạn tiếp nhận quy định tại mục 2.</li>
-              </ul>
-
-              <h2>5. Hình thức hỗ trợ</h2>
-              <p>Tùy tình trạng thực tế và thỏa thuận với khách hàng, Win Win có thể hỗ trợ một trong các hình thức:</p>
-              <ul>
-                <li>Đổi sản phẩm tương đương.</li>
-                <li>Bù sản phẩm / bổ sung phần bị thiếu hoặc lỗi.</li>
-                <li>Giảm giá / hoàn tiền một phần hoặc toàn bộ (theo từng trường hợp).</li>
+                <li>
+                  Khi quý khách <strong>test trực tiếp tại cửa hàng</strong> và sản phẩm hoạt động bình thường,
+                  sản phẩm được xem là <strong>đã đạt chuẩn</strong>.
+                </li>
+                <li>
+                  Sau khi mang sản phẩm ra khỏi cửa hàng, Win Win
+                  <strong>không bảo hành</strong> các trường hợp lỗi phát sinh sau đó,
+                  trừ khi có thỏa thuận riêng bằng văn bản hoặc tin nhắn xác nhận từ shop.
+                </li>
               </ul>
               <p>
-                Thời gian xử lý thông thường từ <strong>01 – 03 ngày làm việc</strong> sau khi tiếp nhận đủ thông tin.
-                Với lỗi phát hiện ngay khi mở hộp, cửa hàng ưu tiên kiểm tra và phản hồi trong ngày.
+                Đồ chơi là món đồ tiếp xúc, va chạm trong quá trình chơi nên rất dễ phát sinh hư hỏng ngoài lỗi nhà sản xuất.
+                Mong quý khách thông cảm và kiểm tra kỹ ngay khi nhận hàng hoặc tại cửa hàng.
               </p>
 
-              <h2>6. Hướng dẫn bảo quản (khuyến nghị)</h2>
-              <ul>
-                <li>Đồ chơi điện tử: để nơi khô ráo, tránh nước, nguồn nhiệt và tháo pin khi không sử dụng lâu ngày.</li>
-                <li>Đồ chơi lắp ghép: cất chi tiết nhỏ đúng hộp, tránh xa trẻ dưới độ tuổi khuyến nghị.</li>
-                <li>Luôn đọc hướng dẫn, cảnh báo độ tuổi và vệ sinh sản phẩm theo thông tin trên bao bì.</li>
-              </ul>
-
-              <h2>7. Cách liên hệ bảo hành / hỗ trợ</h2>
-              <p>Khi cần hỗ trợ, quý khách vui lòng cung cấp: họ tên, số điện thoại, mã/đơn hàng (nếu có), mô tả lỗi và hình ảnh/video.</p>
+              <h2>4. Cách liên hệ hỗ trợ</h2>
+              <p>
+                Khi cần hỗ trợ, quý khách vui lòng gửi kèm: họ tên, số điện thoại, thông tin đơn hàng,
+                mô tả lỗi và video mở hộp / test.
+              </p>
               <ul>
                 <li>
                   Hotline:
@@ -127,7 +103,7 @@
               </ul>
 
               <p class="mb-0">
-                Win Win luôn sẵn sàng lắng nghe và hỗ trợ quý khách để mang lại trải nghiệm mua sắm tốt nhất.
+                Cảm ơn quý khách đã tin tưởng và mua sắm tại Đồ Chơi Win Win.
               </p>
             </div>
           </div>
