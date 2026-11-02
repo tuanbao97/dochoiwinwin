@@ -11,16 +11,32 @@ class SuperviseBackgroundTasksCommand extends Command
 {
     protected $signature = 'tasks:supervise';
 
-    protected $description = 'Tiến trình nền luôn chạy, mỗi 60 giây kiểm tra công tắc và chạy việc đang bật.';
+    protected $description = 'Chạy mãi. Mỗi 60 giây xem từng công tắc và chạy việc đang bật.';
 
     public function handle(): int
     {
+        $this->info('Job nền đang chạy. Mỗi '.BackgroundTasks::INTERVAL_SECONDS.' giây kiểm tra công tắc.');
+        register_shutdown_function(static function (): void {
+            BackgroundTasks::forgetBeat();
+        });
+
         while (true) {
+            BackgroundTasks::beat();
+
             try {
-                BackgroundTasks::beat();
-                BackgroundTasks::tick();
+                $results = BackgroundTasks::tick();
+                $enabled = BackgroundTasks::enabledNames();
+                if ($enabled === []) {
+                    $this->line('['.date('H:i:s').'] Không có công tắc nào bật.');
+                } else {
+                    foreach ($enabled as $name) {
+                        $detail = (string) ($results[$name]['detail'] ?? 'Đã chạy.');
+                        $this->line('['.date('H:i:s').'] '.$name.': '.$detail);
+                    }
+                }
             } catch (Throwable $e) {
-                Log::warning('Tiến trình nền lỗi', ['message' => $e->getMessage()]);
+                Log::warning('Job nền lỗi', ['message' => $e->getMessage()]);
+                $this->error('['.date('H:i:s').'] '.$e->getMessage());
             }
 
             for ($second = 0; $second < BackgroundTasks::INTERVAL_SECONDS; $second++) {

@@ -184,8 +184,6 @@ class AppServiceImpl implements AppService
 
     public function getSapoAutoFetch(Request $request)
     {
-        BackgroundTasks::ensureRunning();
-
         $enabled = SapoAutoFetch::enabled();
 
         return response()->json(
@@ -207,8 +205,8 @@ class AppServiceImpl implements AppService
             new ApiResponseDto(
                 AppConstant::STATUS_SUCCESS,
                 $enabled
-                    ? 'Đã bật. Tiến trình nền sẽ fetch mỗi 60 giây.'
-                    : 'Đã tắt. Tiến trình nền bỏ qua việc này.',
+                    ? 'Đã bật. Job sẽ fetch mỗi 60 giây khi đang chạy.'
+                    : 'Đã tắt. Job bỏ qua việc này.',
                 [
                     'ENABLED' => $enabled,
                     'INTERVAL_SECONDS' => BackgroundTasks::INTERVAL_SECONDS,

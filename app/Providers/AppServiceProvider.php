@@ -1,7 +1,6 @@
 <?php
 namespace App\Providers;
 
-use App\Support\BackgroundTasks;
 use App\Support\Socialite\ZaloProvider;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -265,12 +264,6 @@ class AppServiceProvider extends ServiceProvider
                 PassportKeys::ensure();
             } catch (\Throwable $e) {
                 Log::warning('Không tạo được Passport OAuth keys', ['message' => $e->getMessage()]);
-            }
-
-            try {
-                BackgroundTasks::ensureRunning();
-            } catch (\Throwable $e) {
-                Log::warning('Không bật được tiến trình nền', ['message' => $e->getMessage()]);
             }
         }
 

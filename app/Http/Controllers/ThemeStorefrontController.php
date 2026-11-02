@@ -1105,7 +1105,7 @@ class ThemeStorefrontController extends Controller
             ->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
-    public function productOrQuickview(Request $request, string $themeProductSlug): View|Response
+    public function productOrQuickview(Request $request, string $themeProductSlug): View|Response|BinaryFileResponse
     {
         $file = public_path('UI-FRONTEND/'.$themeProductSlug.'.html');
 

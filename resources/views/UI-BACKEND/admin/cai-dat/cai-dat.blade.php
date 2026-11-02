@@ -441,7 +441,7 @@
 							<span class="ww-sapo-auto__track" aria-hidden="true"></span>
 							<span class="ww-sapo-auto__text">
 								<strong>Tự fetch mỗi 60 giây</strong>
-								<small>Tiến trình nền kiểm tra công tắc này mỗi 60 giây.</small>
+								<small>Job tasks:supervise kiểm tra công tắc này mỗi 60 giây.</small>
 							</span>
 						</label>
 						<p id="ww-sapo-auto-status">Đang tắt.</p>
@@ -1886,7 +1886,7 @@ $(document).ready(function () {
 				if (typeof window.wwSapoAutoFetch === 'function') {
 					window.wwSapoAutoFetch(enabled, enabled);
 				}
-				setSapoAutoStatus(enabled ? 'Đang bật. Tiến trình nền sẽ fetch mỗi 60 giây.' : 'Đang tắt. Tiến trình nền bỏ qua việc này.');
+				setSapoAutoStatus(enabled ? 'Đã bật. Job sẽ fetch mỗi 60 giây khi đang chạy.' : 'Đang tắt. Job bỏ qua việc này.');
 				showToastSuccess('top-right', data.STATUS_DETAIL || (enabled ? 'Đã bật tự fetch.' : 'Đã tắt tự fetch.'));
 			},
 			error: function(request) {
@@ -1909,7 +1909,7 @@ $(document).ready(function () {
 			var datas = (data && data.DATAS) || {};
 			var enabled = !!datas.ENABLED;
 			$('#SW_SAPO_AUTO').prop('checked', enabled);
-			setSapoAutoStatus(datas.STATUS_LINE || (enabled ? 'Đang bật. Tiến trình nền sẽ fetch mỗi 60 giây.' : 'Đang tắt. Tiến trình nền bỏ qua việc này.'));
+			setSapoAutoStatus(datas.STATUS_LINE || (enabled ? 'Đã bật. Job sẽ fetch mỗi 60 giây khi đang chạy.' : 'Đang tắt. Job bỏ qua việc này.'));
 		}
 	});
 

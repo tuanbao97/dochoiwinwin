@@ -23,15 +23,6 @@ class SapoAutoFetchTest extends TestCase
         $this->assertFalse(SapoAutoFetch::enabled());
     }
 
-    public function test_php_cli_name_rejects_fpm_binary(): void
-    {
-        $this->assertTrue(BackgroundTasks::isCliBinaryName('/usr/bin/php'));
-        $this->assertTrue(BackgroundTasks::isCliBinaryName('/usr/bin/php8.2'));
-        $this->assertTrue(BackgroundTasks::isCliBinaryName('C:\\xampp\\php\\php.exe'));
-        $this->assertFalse(BackgroundTasks::isCliBinaryName('/usr/sbin/php-fpm8.2'));
-        $this->assertFalse(BackgroundTasks::isCliBinaryName('/usr/bin/php-cgi'));
-    }
-
     public function test_background_tick_runs_sapo_fetch_only_while_the_switch_is_on(): void
     {
         SapoAutoFetch::setEnabled(false);
