@@ -31,5 +31,11 @@ php artisan optimize:clear
 echo "==> Kiểm tra Sapo"
 php artisan sapo:status --ping || true
 
+echo "==> Nhắc cron job nền (bắt buộc trên prod — đóng terminal không tắt)"
+echo "    Thêm 1 dòng cron (mỗi phút):"
+echo "    * * * * * cd $(pwd) && php artisan schedule:run >> /dev/null 2>&1"
+echo "    (Hostinger/cPanel: Cron Jobs → Command trên, Minute = *)"
+echo "    Kiểm tra: php artisan schedule:list && php artisan tasks:tick"
+
 echo "==> Xong"
 php artisan migrate:status

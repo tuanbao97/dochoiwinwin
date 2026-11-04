@@ -12,6 +12,12 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
+// Job nền (fetch Sapo khi công tắc bật…): chạy qua cron, không cần giữ terminal.
+Schedule::command('tasks:tick')
+    ->everyMinute()
+    ->withoutOverlapping(2)
+    ->name('background-tasks-tick');
+
 Schedule::job(new SyncSapoCatalogJob)
     ->everyFiveMinutes()
     ->withoutOverlapping(10)
@@ -28,6 +34,6 @@ Schedule::job(new RetryPendingSapoOrdersJob)
     ->name('sapo-order-retry');
 
 Schedule::job(new PullSapoOrderUpdatesJob)
-    ->everyThirtySeconds()
+    ->everyMinute()
     ->withoutOverlapping(5)
     ->name('sapo-order-pull-updates');

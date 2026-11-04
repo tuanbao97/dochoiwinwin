@@ -25,7 +25,7 @@ class SapoAutoFetch
                 'TYPE' => 'SETTING_SYSTEM',
                 'VALUE' => $enabled ? '1' : '0',
                 'UNIT' => 'boolean',
-                'DESCRIPTION' => 'Công tắc cho job tasks:supervise: bật thì mỗi 60 giây fetch phần sản phẩm Sapo vừa đổi.',
+                'DESCRIPTION' => 'Công tắc job nền: bật thì mỗi phút (cron schedule:run → tasks:tick) fetch phần sản phẩm Sapo vừa đổi.',
                 'STATUS' => AppConstant::STATUS_USING,
                 'IS_ACTIVE' => true,
                 'UPD_NAME' => 'ADMIN',

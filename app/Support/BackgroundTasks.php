@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Danh sách việc cho lệnh `php artisan tasks:supervise`.
- * Lệnh đó tự chạy, mỗi 60 giây xem từng công tắc và chỉ gọi việc đang bật.
+ * Danh sách việc cho job nền.
+ * Prod: cron gọi `php artisan schedule:run` mỗi phút → `tasks:tick`.
+ * Dev (tuỳ chọn): `php artisan tasks:supervise` giữ terminal.
  */
 class BackgroundTasks
 {
@@ -98,10 +99,11 @@ class BackgroundTasks
         $last = ($when && $detail) ? ' Lần fetch gần nhất '.$when.': '.$detail.'.' : ' Chưa có lần fetch nào.';
 
         if (self::isRunning()) {
-            return 'Job đang chạy, mỗi 60 giây kiểm tra công tắc.'.$last;
+            return 'Job nền đang hoạt động (cron/schedule mỗi phút kiểm tra công tắc).'.$last;
         }
 
-        return 'Job chưa chạy. Chạy: php artisan tasks:supervise.'.$last;
+        return 'Job nền chưa thấy heartbeat. Trên prod thêm cron: * * * * * php artisan schedule:run'
+            .' (hoặc tạm: php artisan tasks:supervise).'.$last;
     }
 
     public static function beat(): void
