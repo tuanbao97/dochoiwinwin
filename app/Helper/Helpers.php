@@ -481,6 +481,7 @@ use Illuminate\Support\Facades\DB;
             $n = mb_strtolower(trim((string) $name));
 
             $file = match (true) {
+                str_contains($n, 'gấu bông') || str_contains($n, 'gau bong') || str_contains($n, 'teddy') => 'gau-bong-cao-cap.svg',
                 str_contains($n, 'bé gái') || str_contains($n, 'be gai') => 'do-choi-be-gai.svg',
                 str_contains($n, 'vận động') || str_contains($n, 'van dong') => 'do-choi-van-dong.svg',
                 str_contains($n, 'bỏ pin') || str_contains($n, 'bo pin') || str_contains($n, 'tự động') || str_contains($n, 'tu dong') => 'do-choi-bo-pin-tu-dong.svg',
@@ -522,6 +523,7 @@ use Illuminate\Support\Facades\DB;
                 'lắp ghép', 'xếp hình', 'tổng hợp', 'con vật', 'đồ chơi', 'bé gái',
                 'vui nhộn', 'vận động', 'bỏ pin', 'tự động', 'giáo dục', 'mô hình', 'trẻ em',
                 'nhập vai', 'nhà bếp', 'bác sĩ', 'cứu hỏa', 'cảnh sát', 'hóa trang', 'chủ đề',
+                'gấu bông', 'cao cấp',
             ];
 
             foreach ($phrases as $phrase) {
